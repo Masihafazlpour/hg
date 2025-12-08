@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>سیستم حضور و غیاب — سبک پرس‌لاین (Local)</title>
+    <meta name="theme-color" content="#0b63d7" />
+    <link rel="manifest" href="manifest.webmanifest" id="manifest-link" />
+    <style>
+        :root {
+            --bg: #f5f8ff;
+            --card: #fff;
+            --accent: #0b63d7;
+            --muted: #6b7280;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 18px;
+            color: #0b2030
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 20px
+        }
+
+        .small {
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .controls {
+            display: flex;
+            gap: 8px
+        }
+
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: 0;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer
+        }
+
+        .btn.ghost {
+            background: transparent;
+            color: var(--accent);
+            border: 1px solid rgba(11, 99, 215, 0.12)
+        }
+
+        .card {
+            background: var(--card);
+            padding: 14px;
+            border-radius: var(--radius);
+            box-shadow: 0 8px 30px rgba(12, 24, 80, .06);
+            margin-bottom: 12px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 12px
+        }
+
+        @media (max-width:900px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+
+            .controls {
+                flex-wrap: wrap
+            }
+        }
+
+        .input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e6eef9;
+            font-size: 14px;
+            margin-top: 8px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .list-item {
+            padding: 8px;
+            background: #fbfcff;
+            border-radius: 8px;
+            border: 1px solid #eef6ff;
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid #eee;
+            padding: 8px;
+            text-align: right;
+            font-size: 13px
+        }
+
+        .note {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 8px
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 18px;
+            background: #111;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: none
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="brand">
+                <h1>سامانه حضور و غیاب — سبک پرس‌لاین (Local)</h1>
+                <div class="small">بدون سرور — کار با LocalStorage + BroadcastChannel — صرفاً برای استفاده داخلی مدرسه
+                </div>
+            </div>
+            <div class="controls">
+                <button class="btn" id="btnStudent">پنل دانش‌آموز</button>
+                <button class="btn ghost" id="btnAdmin">پنل مدیریت</button>
+                <button class="btn ghost" id="btnSyncTest">Sync تست</button>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div>
+                <!-- Student Panel -->
+                <div class="card" id="panelStudent">
+                    <h2>ثبت حضور — دانش‌آموز</h2>
+                    <label>نام</label>
+                    <input id="stu_name" class="input" placeholder="مثلاً علی رضایی" />
+                    <label>کلاس</label>
+                    <select id="stu_class" class="input"></select>
+                    <label>زنگ (اختیاری)</label>
+                    <select id="stu_bell" class="input">
+                        <option value="">(بدون)</option>
+                    </select>
+
+                    <div class="row" style="margin-top:10px">
+                        <button class="btn ghost" id="getLoc">گرفتن موقعیت</button>
+                        <button class="btn" id="stu_submit">ثبت حضور</button>
+                    </div>
+                    <div id="stu_status" class="note">وضعیت: آماده</div>
+                    <div class="note">توجه: دانش‌آموز فقط باید نام وارد کند و کلاس را از فهرست انتخاب نماید.</div>
+                </div>
+
+                <!-- Report quick -->
+                <div class="card" id="panelQuickReport">
+                    <h3>گزارش سریع</h3>
+                    <div class="row">
+                        <input id="q_date" class="input" placeholder="مثلاً 1404/09/16" />
+                        <input id="q_class" class="input" placeholder="کد کلاس (اختیاری)" />
+                    </div>
+                    <div class="row" style="margin-top:8px">
+                        <button class="btn" id="q_show">نمایش</button>
+                        <button class="btn ghost" id="q_export">خروجی CSV</button>
+                    </div>
+                    <div id="q_area" style="margin-top:12px"></div>
+                </div>
+
+                <!-- Import / Export -->
+                <div class="card">
+                    <h3>پشتیبان‌گیری / بازیابی</h3>
+                    <div class="row">
+                        <button class="btn" id="exportAll">خروجی تمام داده‌ها (JSON)</button>
+                        <input type="file" id="importFile" style="display:none" accept=".json" />
+                        <button class="btn ghost" id="importBtn">بازیابی از فایل</button>
+                    </div>
+                    <div class="note">برای انتقال به کامپیوتر دیگر: خروجی بگیر و در آن دستگاه Import کن.</div>
+                </div>
+
+            </div>
+
+            <div>
+                <!-- Admin Panel (hidden until login) -->
+                <div class="card" id="panelAdminLogin" style="display:none">
+                    <h3>ورود مدیر</h3>
+                    <input id="admin_pass" class="input" type="password" placeholder="رمز مدیر" />
+                    <div class="row" style="margin-top:8px">
+                        <button class="btn" id="admin_login">ورود</button>
+                        <button class="btn ghost" id="admin_set_default">تنظیم رمز پیش‌فرض</button>
+                    </div>
+                    <div id="admin_msg" class="note"></div>
+                </div>
+
+                <div class="card" id="panelAdminMain" style="display:none">
+                    <h3>پنل مدیریت</h3>
+                    <div class="small">حالت مدیریت فعال است</div>
+
+                    <h4 style="margin-top:8px">تغییر رمز</h4>
+                    <input id="old_pass" class="input" type="password" placeholder="رمز فعلی" />
+                    <input id="new_pass" class="input" type="password" placeholder="رمز جدید" />
+                    <div class="row" style="margin-top:8px">
+                        <button class="btn" id="change_pass">تغییر رمز</button>
+                        <button class="btn ghost" id="admin_logout">خروج</button>
+                    </div>
+
+                    <hr />
+
+                    <h4>کلاس‌ها</h4>
+                    <input id="class_name" class="input" placeholder="نام کلاس (نمایش) - مثلاً دهم ریاضی 1" />
+                    <input id="class_code" class="input" placeholder="کد کلاس (مثلاً C10A)" />
+                    <div class="row" style="margin-top:8px">
+                        <button class="btn" id="add_class">افزودن کلاس</button>
+                        <button class="btn ghost" id="clear_classes">حذف همه کلاس‌ها</button>
+                    </div>
+                    <div id="classes_list" style="margin-top:8px"></div>
+
+                    <h4 style="margin-top:8px">زنگ‌ها</h4>
+                    <input id="bell_name" class="input" placeholder="نام زنگ" />
+                    <input id="bell_code" class="input" placeholder="کد زنگ" />
+                    <div class="row" style="margin-top:8px">
+                        <button class="btn" id="add_bell">افزودن زنگ</button>
+                        <button class="btn ghost" id="clear_bells">حذف همه زنگ‌ها</button>
+                    </div>
+                    <div id="bells_list" style="margin-top:8px"></div>
+
+                    <h4 style="margin-top:8px">روزها</h4>
+                    <input id="day_val" class="input" placeholder="تاریخ شمسی (مثلاً 1404/09/16)" />
+                    <div class="row" style="margin-top:8px">
+                        <button class="btn" id="add_day">افزودن روز</button>
+                        <button class="btn ghost" id="clear_days">حذف همه روزها</button>
+                    </div>
+                    <div id="days_list" style="margin-top:8px"></div>
+
+                    <hr />
+                    <div class="note">حذف‌ها دائمی است — مراقب باشید.</div>
+                </div>
+
+                <!-- Publish / meta -->
+                <div class="card">
+                    <h3>اطلاعات سیستم</h3>
+                    <div class="small">همگام‌سازی بلادرنگ بین تب‌ها با BroadcastChannel انجام می‌شود.</div>
+                    <div class="note" style="margin-top:8px">برای همگام‌سازی بین دستگاه‌ها نیاز به سرور داریم؛ این نسخه
+                        محلی مناسب استفاده آفلاین یا شبکه داخلی است.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        /* -------------------------------------------------------
+           Core storage keys & BroadcastChannel
+        --------------------------------------------------------*/
+        const KEY = {
+            CLASSES: 'as_classes',
+            BELLS: 'as_bells',
+            DAYS: 'as_days',
+            ATT: 'as_attendance',
+            ADMIN_HASH: 'as_admin_hash'
+        };
+        const BC = new BroadcastChannel('attendance_local_v1');
+        function bcPost(type, data) { BC.postMessage({ type, data }); }
+
+        /* -------------------------------------------------------
+           UTIL: storage helpers
+        --------------------------------------------------------*/
+        function read(key) { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { return null; } }
+        function write(key, val) { localStorage.setItem(key, JSON.stringify(val)); bcPost('storage.' + key, { key }); }
+        function ensureArray(key) { const v = read(key); if (!Array.isArray(v)) { write(key, []); return []; } return v; }
+        function toast(msg, timeout = 2000) { const t = document.getElementById('toast'); t.textContent = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', timeout); }
+
+        /* -------------------------------------------------------
+           INIT: default admin hash (sha-256 of 'admin123') async
+        --------------------------------------------------------*/
+        async function sha256(text) {
+            const enc = new TextEncoder();
+            const data = enc.encode(text);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        (async () => {
+            if (!localStorage.getItem(KEY.ADMIN_HASH)) {
+                const defaultHash = await sha256('admin123');
+                localStorage.setItem(KEY.ADMIN_HASH, defaultHash);
+                console.log('Default admin password set to admin123 (hash stored). Change it after login.');
+            }
+        })();
+
+        /* -------------------------------------------------------
+           JALALI util
+        --------------------------------------------------------*/
+        function nowJalali() {
+            const d = new Date();
+            function g2j(gy, gm, gd) {
+                var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+                var gy2 = gy - 1600; var gm2 = gm - 1; var gd2 = gd - 1;
+                var g_day_no = 365 * gy2 + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400);
+                for (var i = 0; i < gm2; i++) g_day_no += g_d_m[i]; g_day_no += gd2;
+                var j_day_no = g_day_no - 79; var j_np = Math.floor(j_day_no / 12053); j_day_no %= 12053;
+                var jy = 979 + 33 * j_np + 4 * Math.floor(j_day_no / 1461); j_day_no %= 1461;
+                if (j_day_no >= 366) { jy += Math.floor((j_day_no - 366) / 365); j_day_no = (j_day_no - 366) % 365; }
+                var jmList = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29]; var i = 0;
+                for (i = 0; i < 12 && j_day_no >= jmList[i]; i++) j_day_no -= jmList[i];
+                var jm = i + 1; var jd = j_day_no + 1; return { jy, jm, jd };
+            }
+            const j = g2j(d.getFullYear(), d.getMonth() + 1, d.getDate());
+            return `${j.jy}/${String(j.jm).padStart(2, '0')}/${String(j.jd).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+
+        /* -------------------------------------------------------
+           BroadcastChannel listener: وقتی تب دیگه داده عوض کرد
+        --------------------------------------------------------*/
+        BC.onmessage = (ev) => {
+            const t = ev.data && ev.data.type;
+            if (!t) return;
+            if (t.startsWith('storage.')) {
+                // reload UI lists
+                loadPublicLists();
+                if (document.getElementById('q_area').innerHTML) document.getElementById('q_show').click();
+            }
+        };
+
+        /* -------------------------------------------------------
+           UI: tab buttons
+        --------------------------------------------------------*/
+        document.getElementById('btnStudent').addEventListener('click', () => {
+            document.getElementById('panelStudent').scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('btnAdmin').addEventListener('click', () => {
+            // toggle admin panels (show login)
+            const login = document.getElementById('panelAdminLogin');
+            login.style.display = login.style.display === 'none' ? 'block' : 'none';
+            login.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('btnSyncTest').addEventListener('click', () => {
+            toast('همگام‌سازی (BroadcastChannel) فعال است');
+        });
+
+        /* -------------------------------------------------------
+           Load public lists (classes/bells) into student selects
+        --------------------------------------------------------*/
+        function loadPublicLists() {
+            const classes = ensureArray(KEY.CLASSES);
+            const bells = ensureArray(KEY.BELLS);
+            const s = document.getElementById('stu_class');
+            const sb = document.getElementById('stu_bell');
+            s.innerHTML = '<option value="">(انتخاب کنید)</option>';
+            classes.forEach(c => {
+                const opt = document.createElement('option'); opt.value = c.code; opt.textContent = c.name + ' — ' + c.code; s.appendChild(opt);
+            });
+            sb.innerHTML = '<option value="">(بدون)</option>';
+            bells.forEach(b => { const opt = document.createElement('option'); opt.value = b.code; opt.textContent = b.name + ' — ' + b.code; sb.appendChild(opt); });
+        }
+        loadPublicLists();
+
+        /* -------------------------------------------------------
+           Student: get location & submit attendance
+        --------------------------------------------------------*/
+        let lastPos = null;
+        document.getElementById('getLoc').addEventListener('click', () => {
+            const st = document.getElementById('stu_status'); st.textContent = 'در حال گرفتن موقعیت...';
+            navigator.geolocation.getCurrentPosition(p => {
+                lastPos = p.coords; st.textContent = 'موقعیت آماده — دقت: ' + Math.round(p.coords.accuracy) + 'm';
+            }, e => { st.textContent = 'موقعیت در دسترس نیست: ' + e.message; }, { enableHighAccuracy: true, timeout: 15000 });
+        });
+
+        document.getElementById('stu_submit').addEventListener('click', () => {
+            const name = document.getElementById('stu_name').value.trim();
+            const classCode = document.getElementById('stu_class').value;
+            const bellCode = document.getElementById('stu_bell').value || null;
+            if (!name) return toast('لطفاً نام را وارد کنید');
+            if (!classCode) return toast('لطفاً کلاس را انتخاب کنید');
+            const list = ensureArray(KEY.ATT);
+            // prevent duplicate same student same day same bell & class
+            const today = nowJalali().split(' ')[0];
+            const dup = list.find(r => r.studentName === name && r.classCode === classCode && r.jalaliTimestamp.startsWith(today) && (r.bellCode || '') === (bellCode || ''));
+            if (dup) return toast('شما قبلاً برای این زنگ ثبت شده‌اید');
+            const rec = {
+                id: Date.now() + Math.floor(Math.random() * 999),
+                studentName: name,
+                classCode,
+                bellCode,
+                role: 'student',
+                jalaliTimestamp: nowJalali(),
+                geo: lastPos ? { lat: lastPos.latitude, lon: lastPos.longitude, acc: Math.round(lastPos.accuracy) } : null
+            };
+            list.push(rec);
+            write(KEY.ATT, list);
+            document.getElementById('stu_status').textContent = 'ثبت شد — متشکرم';
+            document.getElementById('stu_name').value = '';
+            lastPos = null;
+            toast('حضور ثبت شد');
+        });
+
+        /* -------------------------------------------------------
+           Quick report: show & export
+        --------------------------------------------------------*/
+        document.getElementById('q_show').addEventListener('click', () => {
+            const date = document.getElementById('q_date').value.trim();
+            const cls = document.getElementById('q_class').value.trim();
+            const list = ensureArray(KEY.ATT);
+            let rows = list.slice().reverse();
+            if (date) rows = rows.filter(r => r.jalaliTimestamp.startsWith(date));
+            if (cls) rows = rows.filter(r => r.classCode === cls);
+            renderQuickRows(rows);
+        });
+        function renderQuickRows(rows) {
+            const area = document.getElementById('q_area');
+            if (!rows || rows.length === 0) { area.innerHTML = '<div class="note">رکوردی یافت نشد</div>'; return; }
+            let html = '<table class="table"><thead><tr><th>#</th><th>کلاس</th><th>نام</th><th>زنگ</th><th>زمان</th><th>geo</th><th></th></tr></thead><tbody>';
+            rows.forEach((r, i) => {
+                html += `<tr><td>${i + 1}</td><td>${r.classCode}</td><td>${r.studentName}</td><td>${r.bellCode || '-'}</td><td>${r.jalaliTimestamp}</td><td>${r.geo ? ('lat:' + r.geo.lat + ',lon:' + r.geo.lon) : '-'}</td><td><button class="btn ghost" onclick="deleteAtt(${r.id})">حذف</button></td></tr>`;
+            });
+            html += '</tbody></table>';
+            area.innerHTML = html;
+        }
+        window.deleteAtt = function (id) {
+            if (!confirm('حذف رکورد؟')) return;
+            let list = ensureArray(KEY.ATT);
+            list = list.filter(x => x.id !== id);
+            write(KEY.ATT, list);
+            document.getElementById('q_show').click();
+        };
+
+        /* export CSV for quick report */
+        document.getElementById('q_export').addEventListener('click', () => {
+            const date = document.getElementById('q_date').value.trim();
+            const cls = document.getElementById('q_class').value.trim();
+            const list = ensureArray(KEY.ATT);
+            let rows = list.slice().reverse();
+            if (date) rows = rows.filter(r => r.jalaliTimestamp.startsWith(date));
+            if (cls) rows = rows.filter(r => r.classCode === cls);
+            if (!rows.length) return toast('رکوردی وجود ندارد');
+            const header = ['classCode', 'studentName', 'bellCode', 'role', 'jalaliTimestamp', 'geo'];
+            const lines = [header.join(',')];
+            rows.forEach(r => {
+                const geo = r.geo ? `lat:${r.geo.lat};lon:${r.geo.lon};acc:${r.geo.acc}` : '';
+                const vals = [r.classCode, r.studentName, r.bellCode || '', r.role, r.jalaliTimestamp, geo].map(v => `"${String(v || '').replace(/"/g, '""')}"`);
+                lines.push(vals.join(','));
+            });
+            downloadFile(lines.join('\\n'), 'attendance.csv', 'text/csv;charset=utf-8;');
+        });
+
+        /* -------------------------------------------------------
+           Export / Import JSON (all data)
+        --------------------------------------------------------*/
+        document.getElementById('exportAll').addEventListener('click', () => {
+            const data = {
+                classes: read(KEY.CLASSES) || [],
+                bells: read(KEY.BELLS) || [],
+                days: read(KEY.DAYS) || [],
+                attendance: read(KEY.ATT) || []
+            };
+            downloadFile(JSON.stringify(data, null, 2), 'attendance_backup.json', 'application/json;charset=utf-8;');
+        });
+        document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+        document.getElementById('importFile').addEventListener('change', (e) => {
+            const f = e.target.files[0]; if (!f) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const j = JSON.parse(reader.result);
+                    if (Array.isArray(j.classes)) write(KEY.CLASSES, j.classes);
+                    if (Array.isArray(j.bells)) write(KEY.BELLS, j.bells);
+                    if (Array.isArray(j.days)) write(KEY.DAYS, j.days);
+                    if (Array.isArray(j.attendance)) write(KEY.ATT, j.attendance);
+                    toast('بازیابی بارگذاری شد');
+                    loadPublicLists();
+                } catch (err) { alert('فایل نامعتبر'); }
+            };
+            reader.readAsText(f);
+        });
+
+        /* -------------------------------------------------------
+           Admin: login / manage
+        --------------------------------------------------------*/
+        document.getElementById('admin_login').addEventListener('click', async () => {
+            const pass = document.getElementById('admin_pass').value || '';
+            const hash = await sha256(pass);
+            const stored = localStorage.getItem(KEY.ADMIN_HASH);
+            if (hash === stored) {
+                document.getElementById('panelAdminLogin').style.display = 'none';
+                document.getElementById('panelAdminMain').style.display = 'block';
+                document.getElementById('admin_msg').textContent = 'شما وارد شدید';
+                loadAdminLists();
+                toast('ورود موفق');
+            } else {
+                document.getElementById('admin_msg').textContent = 'رمز اشتباه است';
+            }
+        });
+        document.getElementById('admin_set_default').addEventListener('click', async () => {
+            if (!confirm('رمز مدیریت به حالت پیش‌فرض (admin123) بازنشانی شود؟')) return;
+            const h = await sha256('admin123');
+            localStorage.setItem(KEY.ADMIN_HASH, h);
+            alert('رمز به admin123 بازنشانی شد (لطفاً تغییر دهید)');
+        });
+
+        document.getElementById('admin_logout').addEventListener('click', () => {
+            document.getElementById('panelAdminLogin').style.display = 'block';
+            document.getElementById('panelAdminMain').style.display = 'none';
+            document.getElementById('admin_msg').textContent = '';
+        });
+
+        /* change password */
+        document.getElementById('change_pass').addEventListener('click', async () => {
+            const oldp = document.getElementById('old_pass').value || '';
+            const newp = document.getElementById('new_pass').value || '';
+            if (!oldp || !newp) return alert('هر دو فیلد را پر کنید');
+            const hOld = await sha256(oldp);
+            if (hOld !== localStorage.getItem(KEY.ADMIN_HASH)) return alert('رمز فعلی اشتباه است');
+            const hNew = await sha256(newp);
+            localStorage.setItem(KEY.ADMIN_HASH, hNew);
+            document.getElementById('old_pass').value = ''; document.getElementById('new_pass').value = '';
+            toast('رمز تغییر کرد');
+        });
+
+        /* -------------------------------------------------------
+           Admin: classes/bells/days CRUD
+        --------------------------------------------------------*/
+        document.getElementById('add_class').addEventListener('click', () => {
+            const name = document.getElementById('class_name').value.trim();
+            const code = document.getElementById('class_code').value.trim();
+            if (!name || !code) return alert('نام و کد کلاس را وارد کنید');
+            const list = ensureArray(KEY.CLASSES);
+            list.push({ id: Date.now() + Math.floor(Math.random() * 999), name, code });
+            write(KEY.CLASSES, list); document.getElementById('class_name').value = ''; document.getElementById('class_code').value = '';
+            loadAdminLists(); loadPublicLists();
+        });
+        document.getElementById('clear_classes').addEventListener('click', () => { if (!confirm('حذف همه کلاس‌ها؟')) return; write(KEY.CLASSES, []); loadAdminLists(); loadPublicLists(); });
+
+        document.getElementById('add_bell').addEventListener('click', () => {
+            const name = document.getElementById('bell_name').value.trim();
+            const code = document.getElementById('bell_code').value.trim();
+            if (!name || !code) return alert('نام و کد زنگ را وارد کنید');
+            const list = ensureArray(KEY.BELLS);
+            list.push({ id: Date.now() + Math.floor(Math.random() * 999), name, code });
+            write(KEY.BELLS, list); document.getElementById('bell_name').value = ''; document.getElementById('bell_code').value = '';
+            loadAdminLists(); loadPublicLists();
+        });
+        document.getElementById('clear_bells').addEventListener('click', () => { if (!confirm('حذف همه زنگ‌ها؟')) return; write(KEY.BELLS, []); loadAdminLists(); loadPublicLists(); });
+
+        document.getElementById('add_day').addEventListener('click', () => {
+            const d = document.getElementById('day_val').value.trim();
+            if (!d) return alert('تاریخ را وارد کنید');
+            const list = ensureArray(KEY.DAYS);
+            if (!list.includes(d)) list.push(d);
+            write(KEY.DAYS, list); document.getElementById('day_val').value = ''; loadAdminLists();
+        });
+        document.getElementById('clear_days').addEventListener('click', () => { if (!confirm('حذف همه روزها؟')) return; write(KEY.DAYS, []); loadAdminLists(); });
+
+        function loadAdminLists() {
+            const classes = ensureArray(KEY.CLASSES);
+            const bells = ensureArray(KEY.BELLS);
+            const days = ensureArray(KEY.DAYS);
+            const elc = document.getElementById('classes_list'); elc.innerHTML = '';
+            classes.forEach(c => {
+                const d = document.createElement('div'); d.className = 'list-item';
+                d.innerHTML = `<div>${c.name} — ${c.code}</div><div><button class="btn ghost" onclick="deleteClass(${c.id})">حذف</button></div>`;
+                elc.appendChild(d);
+            });
+            const elb = document.getElementById('bells_list'); elb.innerHTML = '';
+            bells.forEach(b => {
+                const d = document.createElement('div'); d.className = 'list-item';
+                d.innerHTML = `<div>${b.name} — ${b.code}</div><div><button class="btn ghost" onclick="deleteBell(${b.id})">حذف</button></div>`;
+                elb.appendChild(d);
+            });
+            const eld = document.getElementById('days_list'); eld.innerHTML = '';
+            days.forEach(day => { const d = document.createElement('div'); d.className = 'list-item'; d.innerHTML = `<div>${day}</div><div><button class="btn ghost" onclick="deleteDay('${day}')">حذف</button></div>`; eld.appendChild(d); });
+        }
+
+        /* exposed deletes for admin items */
+        window.deleteClass = function (id) {
+            if (!confirm('حذف کلاس؟')) return;
+            let list = ensureArray(KEY.CLASSES); list = list.filter(x => x.id !== id); write(KEY.CLASSES, list); loadAdminLists(); loadPublicLists();
+        };
+        window.deleteBell = function (id) {
+            if (!confirm('حذف زنگ؟')) return;
+            let list = ensureArray(KEY.BELLS); list = list.filter(x => x.id !== id); write(KEY.BELLS, list); loadAdminLists(); loadPublicLists();
+        };
+        window.deleteDay = function (day) {
+            if (!confirm('حذف روز؟')) return;
+            let list = ensureArray(KEY.DAYS); list = list.filter(x => x !== day); write(KEY.DAYS, list); loadAdminLists();
+        };
+
+        /* -------------------------------------------------------
+           load lists on start
+        --------------------------------------------------------*/
+        loadAdminLists();
+        loadPublicLists();
+
+        /* -------------------------------------------------------
+           utility download
+        --------------------------------------------------------*/
+        function downloadFile(content, filename, mime) {
+            const blob = new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 500);
+        }
+
+        /* -------------------------------------------------------
+           Import/Export readiness, PWA (service worker)
+        --------------------------------------------------------*/
+        if ('serviceWorker' in navigator) {
+            try {
+                // register minimal service worker for offline
+                const swCode = `self.addEventListener('install', e=>{ self.skipWaiting(); }); self.addEventListener('activate', e=>{ self.clients.claim(); }); self.addEventListener('fetch', e=>{});`;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).then(() => console.log('sw registered')).catch(() => console.log('sw failed'));
+            } catch (e) { }
+        }
+
+        /* -------------------------------------------------------
+           initial create arrays if missing
+        --------------------------------------------------------*/
+        ensureArray(KEY.CLASSES); ensureArray(KEY.BELLS); ensureArray(KEY.DAYS); ensureArray(KEY.ATT);
+
+        /* -------------------------------------------------------
+           handle storage events from other tabs (fallback)
+        --------------------------------------------------------*/
+        window.addEventListener('storage', (e) => {
+            if (e.key && [KEY.CLASSES, KEY.BELLS, KEY.DAYS, KEY.ATT].includes(e.key)) {
+                loadPublicLists();
+                document.getElementById('q_show').click();
+            }
+        });
+
+        /* -------------------------------------------------------
+           final note: small guidance for user
+        --------------------------------------------------------*/
+        console.log('Attendance local app ready. Default admin password: admin123 — change it in پنل مدیریت.');
+    </script>
+</body>
+
+</html>
