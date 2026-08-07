@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سامانه حضور و غیاب مدرسه</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- xlsx -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      padding: 20px;
+      direction: rtl;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .hidden { display: none !important; }
+    .flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .flex-between { justify-content: space-between; }
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .card {
+      background: #fff;
+      padding: 18px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .card .number { font-size: 2rem; font-weight: 700; color: #1a73e8; }
+    .card .label { font-size: 0.9rem; color: #666; margin-top: 6px; }
+    .btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.2s;
+      background: #e0e0e0;
+      color: #333;
+    }
+    .btn-primary { background: #1a73e8; color: #fff; }
+    .btn-danger { background: #d32f2f; color: #fff; }
+    .btn-success { background: #2e7d32; color: #fff; }
+    .btn-warning { background: #f9a825; color: #000; }
+    .btn-sm { padding: 4px 12px; font-size: 0.8rem; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    th, td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; font-weight: 600; color: #444; }
+    tr:hover { background: #f1f5f9; }
+    .badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .badge-success { background: #d4edda; color: #155724; }
+    .badge-danger { background: #f8d7da; color: #721c24; }
+    .badge-warning { background: #fff3cd; color: #856404; }
+    .pagination {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      padding: 6px 14px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .pagination .active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-weight: 500; margin-bottom: 4px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .form-row .form-group { flex: 1; min-width: 150px; }
+    .text-center { text-align: center; }
+    .mt-20 { margin-top: 20px; }
+    .mb-20 { margin-bottom: 20px; }
+
+    /* ===== Datepicker شمسی دست‌ساز ===== */
+    .datepicker-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+    }
+    .datepicker-wrapper input {
+      width: 100%;
+      cursor: pointer;
+      background-color: #fff;
+    }
+    .datepicker-popup {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 9999;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      min-width: 250px;
+      display: none;
+      font-size: 0.9rem;
+    }
+    .datepicker-popup.show {
+      display: block;
+    }
+    .datepicker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .datepicker-header button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0 8px;
+      color: #1a73e8;
+    }
+    .datepicker-header .month-year {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .datepicker-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+    }
+    .datepicker-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+    .datepicker-days button {
+      background: none;
+      border: none;
+      padding: 6px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      text-align: center;
+      transition: 0.15s;
+    }
+    .datepicker-days button:hover {
+      background: #e8f0fe;
+    }
+    .datepicker-days button.selected {
+      background: #1a73e8;
+      color: #fff;
+    }
+    .datepicker-days button.other-month {
+      color: #ccc;
+    }
+    .datepicker-days button.today {
+      font-weight: 700;
+      border: 1px solid #1a73e8;
+    }
+
+    @media (max-width: 700px) {
+      .grid-cards { grid-template-columns: 1fr 1fr; }
+      table { font-size: 0.8rem; }
+      th, td { padding: 6px 4px; }
+      .datepicker-popup { min-width: 200px; }
+    }
+    @media (max-width: 500px) {
+      .grid-cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="app" class="container">
+
+  <!-- ===== صفحه ورود ===== -->
+  <div id="loginPage">
+    <div style="max-width:420px; margin:80px auto; background:#fff; padding:40px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
+      <h2 style="text-align:center; margin-bottom:24px;">🚪 ورود به سامانه</h2>
+      <div class="form-group">
+        <label>ایمیل</label>
+        <input type="text" id="loginEmail" value="admin@school.com" placeholder="admin@school.com" />
+      </div>
+      <div class="form-group">
+        <label>رمز عبور</label>
+        <input type="password" id="loginPassword" value="Admin123@" placeholder="Admin123@" />
+      </div>
+      <button class="btn btn-primary" style="width:100%;" id="loginBtn">ورود</button>
+      <div id="loginError" class="text-center" style="color:#d32f2f; margin-top:12px;"></div>
+      <hr style="margin:20px 0;" />
+      <button class="btn btn-warning" style="width:100%;" id="createDefaultUserBtn">
+        <i class="fas fa-user-plus"></i> ساخت کاربر پیش‌فرض (admin)
+      </button>
+      <div style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">
+        اگر کاربر ندارید، روی دکمه بالا کلیک کنید.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== صفحه اصلی ===== -->
+  <div id="mainPage" class="hidden">
+    <!-- هدر -->
+    <div class="flex flex-between" style="background:#fff; padding:12px 20px; border-radius:10px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.04);">
+      <h2 style="font-size:1.3rem;">🏫 سامانه حضور و غیاب</h2>
+      <div class="flex">
+        <span id="userDisplay" style="margin-left:16px;"></span>
+        <button class="btn btn-danger btn-sm" id="logoutBtn">خروج</button>
+      </div>
+    </div>
+
+    <!-- منو -->
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; background:#fff; padding:10px 16px; border-radius:10px;">
+      <button class="btn btn-sm btn-primary" data-tab="dashboard">داشبورد</button>
+      <button class="btn btn-sm" data-tab="classes">کلاس‌ها</button>
+      <button class="btn btn-sm" data-tab="students">دانش‌آموزان</button>
+      <button class="btn btn-sm" data-tab="attendance">حضور و غیاب</button>
+      <button class="btn btn-sm" data-tab="reports">گزارش‌ها</button>
+      <button class="btn btn-sm" data-tab="import">ورود از اکسل</button>
+      <button class="btn btn-sm" data-tab="settings">تنظیمات</button>
+    </div>
+
+    <!-- محتوا -->
+    <div id="pageContent">
+      <!-- داشبورد -->
+      <div id="tab-dashboard" class="tab-content">
+        <div class="grid-cards" id="dashboardStats"></div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:200px; background:#fff; padding:16px; border-radius:12px;">
+            <h4>وضعیت حضور امروز</h4>
+            <div id="todayStatus" style="margin-top:10px;"></div>
+          </div>
+          <div style="flex:2; min-width:300px; background:#fff; padding:16px; border-radius:12px;">
+            <h4>آخرین غیبت‌ها</h4>
+            <div id="latestAbsences" style="margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- کلاس‌ها -->
+      <div id="tab-classes" class="tab-content hidden">
+        <div class="flex flex-between mb-20">
+          <h3>مدیریت کلاس‌ها</h3>
+          <button class="btn btn-success" id="addClassBtn">+ کلاس جدید</button>
+        </div>
+        <div id="classesTableContainer"></div>
+      </div>
+
+      <!-- دانش‌آموزان -->
+      <div id="tab-students" class="tab-content hidden">
+        <div class="flex flex-between mb-20">
+          <h3>مدیریت دانش‌آموزان</h3>
+          <button class="btn btn-success" id="addStudentBtn">+ دانش‌آموز جدید</button>
+        </div>
+        <div class="flex" style="background:#fff; padding:12px; border-radius:10px; margin-bottom:16px;">
+          <input type="text" id="studentSearch" placeholder="جستجو..." style="flex:1; padding:8px; border:1px solid #ccc; border-radius:6px;" />
+          <select id="filterGrade"><option value="">همه پایه‌ها</option></select>
+          <select id="filterMajor"><option value="">همه رشته‌ها</option></select>
+          <select id="filterClass"><option value="">همه کلاس‌ها</option></select>
+          <select id="filterStatus"><option value="true">فعال</option><option value="false">غیرفعال</option><option value="all">همه</option></select>
+          <button class="btn btn-primary" id="applyStudentFilters">اعمال</button>
+        </div>
+        <div class="flex" style="margin-bottom:12px;">
+          <button class="btn btn-danger btn-sm" id="bulkDeleteBtn" disabled>حذف انتخاب‌شده</button>
+          <button class="btn btn-warning btn-sm" id="bulkEditBtn" disabled>اصلاح انتخاب‌شده</button>
+          <span style="margin-right:12px;" id="selectedCount">۰ انتخاب شده</span>
+        </div>
+        <div id="studentsTableContainer"></div>
+        <div id="studentsPagination" class="pagination"></div>
+      </div>
+
+      <!-- حضور و غیاب -->
+      <div id="tab-attendance" class="tab-content hidden">
+        <h3>ثبت حضور و غیاب</h3>
+        <div class="flex" style="background:#f8f9fa; padding:16px; border-radius:10px; margin-bottom:16px;">
+          <div class="form-group" style="min-width:150px;">
+            <label>تاریخ</label>
+            <div class="datepicker-wrapper">
+              <input type="text" class="datepicker-input" id="attendanceDate" placeholder="انتخاب تاریخ" readonly />
+            </div>
+          </div>
+          <div class="form-group" style="min-width:150px;">
+            <label>کلاس</label>
+            <select id="attendanceClass"></select>
+          </div>
+          <div class="form-group" style="min-width:130px;">
+            <label>نوع</label>
+            <select id="attendanceScope">
+              <option value="bell">زنگ</option>
+              <option value="full_day">کل روز</option>
+            </select>
+          </div>
+          <div class="form-group" style="min-width:130px;" id="bellSelector">
+            <label>شماره زنگ</label>
+            <select id="attendanceBell"></select>
+          </div>
+          <button class="btn btn-primary" style="margin-top:18px;" id="loadAttendance">بارگذاری</button>
+        </div>
+        <div id="attendanceTableContainer"></div>
+        <div class="flex" style="margin-top:16px;">
+          <button class="btn btn-success" id="saveAttendance">ذخیره حضور و غیاب</button>
+        </div>
+      </div>
+
+      <!-- گزارش‌ها -->
+      <div id="tab-reports" class="tab-content hidden">
+        <h3>گزارش‌ها</h3>
+        <div class="flex" style="background:#f8f9fa; padding:16px; border-radius:10px; margin-bottom:16px;">
+          <div class="form-group" style="min-width:150px;">
+            <label>نوع گزارش</label>
+            <select id="reportType">
+              <option value="today">امروز</option>
+              <option value="range">بازه</option>
+              <option value="student">دانش‌آموز</option>
+            </select>
+          </div>
+          <div class="form-group" style="min-width:150px;" id="reportDateGroup">
+            <label>تاریخ</label>
+            <div class="datepicker-wrapper">
+              <input type="text" class="datepicker-input" id="reportDate" placeholder="انتخاب تاریخ" readonly />
+            </div>
+          </div>
+          <div class="form-group" style="min-width:150px; display:none;" id="reportRangeGroup">
+            <label>از</label>
+            <div class="datepicker-wrapper">
+              <input type="text" class="datepicker-input" id="reportFrom" placeholder="از" readonly />
+            </div>
+            <label>تا</label>
+            <div class="datepicker-wrapper">
+              <input type="text" class="datepicker-input" id="reportTo" placeholder="تا" readonly />
+            </div>
+          </div>
+          <div class="form-group" style="min-width:150px; display:none;" id="reportStudentGroup">
+            <label>دانش‌آموز</label>
+            <select id="reportStudent"></select>
+          </div>
+          <div class="form-group" style="min-width:150px;">
+            <label>کلاس (اختیاری)</label>
+            <select id="reportClass"><option value="">همه</option></select>
+          </div>
+          <button class="btn btn-primary" style="margin-top:18px;" id="generateReport">نمایش گزارش</button>
+          <button class="btn btn-success" style="margin-top:18px;" id="exportExcel">خروجی اکسل</button>
+        </div>
+        <div id="reportResult"></div>
+      </div>
+
+      <!-- ورود از اکسل -->
+      <div id="tab-import" class="tab-content hidden">
+        <h3>ورود دانش‌آموزان از اکسل</h3>
+        <div style="background:#fff; padding:20px; border-radius:12px;">
+          <div class="form-group">
+            <label>فایل اکسل (xlsx/xls)</label>
+            <input type="file" id="excelFile" accept=".xlsx,.xls" />
+          </div>
+          <div id="excelPreview"></div>
+          <button class="btn btn-success" id="importExcelBtn" disabled>ثبت در دیتابیس</button>
+          <div id="importResult" class="mt-20"></div>
+        </div>
+      </div>
+
+      <!-- تنظیمات -->
+      <div id="tab-settings" class="tab-content hidden">
+        <h3>تنظیمات سیستم</h3>
+        <div style="background:#fff; padding:20px; border-radius:12px; max-width:600px;">
+          <div class="form-group">
+            <label>تعداد زنگ‌ها (حداکثر ۱۰)</label>
+            <input type="number" id="bellCount" min="1" max="10" value="4" />
+          </div>
+          <div id="bellNamesContainer"></div>
+          <div class="form-group">
+            <label><input type="checkbox" id="fullDayEnabled" checked /> فعال بودن «کل روز»</label>
+          </div>
+          <button class="btn btn-primary" id="saveSettings">ذخیره تنظیمات</button>
+          <hr style="margin:30px 0;" />
+          <button class="btn btn-danger" id="wipeDataBtn">حذف کامل اطلاعات</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // 1. اتصال به Supabase
+  // ============================================================
+  const SUPABASE_URL = 'https://njinbgaatbnpuulnmoui.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_G6aA1-On0kXDe_ZV4Wv79w_KLvAU1qK';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ============================================================
+  // 2. متغیرهای عمومی
+  // ============================================================
+  let currentUser = null;
+  let currentTab = 'dashboard';
+  let selectedStudentIds = new Set();
+  let currentStudentPage = 1;
+  const PAGE_SIZE = 50;
+  let studentFilters = { search: '', grade: '', major: '', classId: '', active: 'true' };
+
+  // ============================================================
+  // 3. توابع تبدیل تاریخ شمسی (دقیق و بدون خطا)
+  // ============================================================
+  // آرایه‌های کمکی برای تبدیل شمسی به میلادی
+  const jalaaliMonths = [0, 31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+  const gregorianMonths = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  function isLeapJalali(year) {
+    // الگوریتم کبیسه‌گیری شمسی
+    const y = year % 33;
+    return y === 1 || y === 5 || y === 9 || y === 13 || y === 17 || y === 22 || y === 26 || y === 30;
+  }
+
+  function isLeapGregorian(year) {
+    return (year % 400 === 0) || (year % 4 === 0 && year % 100 !== 0);
+  }
+
+  function jalaliToGregorian(jy, jm, jd) {
+    // تبدیل تاریخ شمسی به میلادی با الگوریتم دقیق
+    let jy2 = jy - 979;
+    let jm2 = jm - 1;
+    let jd2 = jd - 1;
+
+    let gDayNo = 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor((jy2 % 33 + 3) / 4);
+    for (let i = 0; i < jm2; i++) {
+      gDayNo += jalaaliMonths[i];
+    }
+    gDayNo += jd2;
+
+    let gYear = 0;
+    let gDayNo2 = gDayNo + 79;
+    let gYear2 = gDayNo2 * 400 / 146097;
+    gYear2 = Math.floor(gYear2);
+    let gDayNo3 = gDayNo2 - Math.floor(gYear2 * 146097 / 400) + 1;
+
+    let gMonth = 0;
+    let gDay = 0;
+    for (let i = 0; i < 12; i++) {
+      let daysInMonth = gregorianMonths[i + 1];
+      if (i === 1 && isLeapGregorian(gYear2 + 1)) daysInMonth = 29;
+      if (gDayNo3 <= daysInMonth) {
+        gMonth = i + 1;
+        gDay = gDayNo3;
+        break;
+      }
+      gDayNo3 -= daysInMonth;
+    }
+    gYear = gYear2 + 1;
+    return { year: gYear, month: gMonth, day: gDay };
+  }
+
+  function gregorianToJalali(gy, gm, gd) {
+    // تبدیل میلادی به شمسی
+    let gDayNo = 0;
+    for (let i = 1; i < gm; i++) {
+      gDayNo += gregorianMonths[i];
+      if (i === 2 && isLeapGregorian(gy)) gDayNo++;
+    }
+    gDayNo += gd;
+
+    let jy = gy - 621;
+    let jDayNo = gDayNo + 79;
+    let jy2 = jy - 1;
+    let jDayNo2 = jDayNo + 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor((jy2 % 33 + 3) / 4) + 1;
+    let jm = 0;
+    let jd = 0;
+    for (let i = 0; i < 12; i++) {
+      let daysInMonth = jalaaliMonths[i + 1];
+      if (i === 11 && isLeapJalali(jy)) daysInMonth = 30;
+      if (jDayNo2 <= daysInMonth) {
+        jm = i + 1;
+        jd = jDayNo2;
+        break;
+      }
+      jDayNo2 -= daysInMonth;
+    }
+    return { year: jy, month: jm, day: jd };
+  }
+
+  function toJalaali(dateStr) {
+    if (!dateStr) return '';
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return '';
+      const gy = parseInt(parts[0]);
+      const gm = parseInt(parts[1]);
+      const gd = parseInt(parts[2]);
+      if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return '';
+      const j = gregorianToJalali(gy, gm, gd);
+      return `${j.year}/${String(j.month).padStart(2,'0')}/${String(j.day).padStart(2,'0')}`;
+    } catch (e) { return ''; }
+  }
+
+  function toGregorian(jDate) {
+    if (!jDate) return '';
+    try {
+      const parts = jDate.split('/');
+      if (parts.length !== 3) return '';
+      const jy = parseInt(parts[0]);
+      const jm = parseInt(parts[1]);
+      const jd = parseInt(parts[2]);
+      if (isNaN(jy) || isNaN(jm) || isNaN(jd)) return '';
+      const g = jalaliToGregorian(jy, jm, jd);
+      return `${g.year}-${String(g.month).padStart(2,'0')}-${String(g.day).padStart(2,'0')}`;
+    } catch (e) { return ''; }
+  }
+
+  function getTodayGregorian() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function getTodayJalali() {
+    return toJalaali(getTodayGregorian());
+  }
+
+  // ============================================================
+  // 4. Datepicker شمسی دست‌ساز
+  // ============================================================
+  class JalaliDatepicker {
+    constructor(inputElement) {
+      this.input = inputElement;
+      this.popup = null;
+      this.currentYear = null;
+      this.currentMonth = null;
+      this.selectedDate = null;
+      this.isOpen = false;
+
+      // ایجاد popup
+      this.createPopup();
+
+      // رویدادها
+      this.input.addEventListener('click', () => this.toggle());
+      this.input.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') this.close();
+      });
+
+      // مقداردهی اولیه با تاریخ امروز
+      const today = getTodayJalali();
+      const parts = today.split('/');
+      if (parts.length === 3) {
+        this.currentYear = parseInt(parts[0]);
+        this.currentMonth = parseInt(parts[1]);
+        this.selectedDate = today;
+        this.input.value = today;
+      }
+
+      // بستن با کلیک خارج
+      document.addEventListener('click', (e) => {
+        if (!this.input.closest('.datepicker-wrapper')?.contains(e.target) &&
+            !this.popup.contains(e.target)) {
+          this.close();
+        }
+      });
+    }
+
+    createPopup() {
+      this.popup = document.createElement('div');
+      this.popup.className = 'datepicker-popup';
+      this.popup.innerHTML = `
+        <div class="datepicker-header">
+          <button class="prev-month"><i class="fas fa-chevron-right"></i></button>
+          <span class="month-year"></span>
+          <button class="next-month"><i class="fas fa-chevron-left"></i></button>
+        </div>
+        <div class="datepicker-weekdays">
+          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+        </div>
+        <div class="datepicker-days"></div>
+      `;
+      this.input.parentNode.appendChild(this.popup);
+
+      // رویدادهای popup
+      this.popup.querySelector('.prev-month').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.changeMonth(-1);
+      });
+      this.popup.querySelector('.next-month').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.changeMonth(1);
+      });
+    }
+
+    toggle() {
+      if (this.isOpen) {
+        this.close();
+      } else {
+        this.open();
+      }
+    }
+
+    open() {
+      if (!this.currentYear || !this.currentMonth) {
+        const today = getTodayJalali().split('/');
+        if (today.length === 3) {
+          this.currentYear = parseInt(today[0]);
+          this.currentMonth = parseInt(today[1]);
+        }
+      }
+      this.render();
+      this.popup.classList.add('show');
+      this.isOpen = true;
+    }
+
+    close() {
+      this.popup.classList.remove('show');
+      this.isOpen = false;
+    }
+
+    changeMonth(delta) {
+      let newMonth = this.currentMonth + delta;
+      let newYear = this.currentYear;
+      if (newMonth > 12) {
+        newMonth = 1;
+        newYear++;
+      } else if (newMonth < 1) {
+        newMonth = 12;
+        newYear--;
+      }
+      this.currentYear = newYear;
+      this.currentMonth = newMonth;
+      this.render();
+    }
+
+    render() {
+      const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+      const header = this.popup.querySelector('.month-year');
+      header.textContent = `${monthNames[this.currentMonth - 1]} ${this.currentYear}`;
+
+      const daysContainer = this.popup.querySelector('.datepicker-days');
+      daysContainer.innerHTML = '';
+
+      // تعیین روز اول ماه
+      const firstDayDate = jalaliToGregorian(this.currentYear, this.currentMonth, 1);
+      const firstDayGreg = new Date(firstDayDate.year, firstDayDate.month - 1, firstDayDate.day);
+      let startDayOfWeek = firstDayGreg.getDay(); // 0=شنبه در ایران (یکشنبه بین‌المللی)
+      // در تقویم شمسی، شنبه = 0
+      // اما getDay() یکشنبه = 1، دوشنبه = 2، ...، شنبه = 6 (در جاوااسکریپت یکشنبه = 1)
+      // پس باید اصلاح کنیم: روزها به ترتیب شنبه(0) تا جمعه(6)
+      // getDay() returns 0=یکشنبه, 1=دوشنبه, 2=سه‌شنبه, 3=چهارشنبه, 4=پنج‌شنبه, 5=جمعه, 6=شنبه
+      // بنابراین شنبه = 6، یکشنبه = 0
+      let startOffset = (startDayOfWeek + 1) % 7; // برای تبدیل به شنبه‌محور
+
+      const daysInMonth = jalaaliMonths[this.currentMonth];
+      const totalDays = (this.currentMonth === 12 && isLeapJalali(this.currentYear)) ? 30 : daysInMonth;
+
+      // روزهای ماه قبل
+      const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
+      const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
+      const daysInPrevMonth = (prevMonth === 12 && isLeapJalali(prevYear)) ? 30 : jalaaliMonths[prevMonth];
+      const prevMonthDays = daysInPrevMonth - startOffset + 1;
+
+      for (let i = 0; i < startOffset; i++) {
+        const day = prevMonthDays + i;
+        const btn = document.createElement('button');
+        btn.textContent = day;
+        btn.className = 'other-month';
+        btn.addEventListener('click', () => {
+          const newDate = `${prevYear}/${String(prevMonth).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
+          this.selectDate(newDate);
+        });
+        daysContainer.appendChild(btn);
+      }
+
+      // روزهای ماه جاری
+      const todayJalali = getTodayJalali();
+      for (let d = 1; d <= totalDays; d++) {
+        const btn = document.createElement('button');
+        btn.textContent = d;
+        const dateStr = `${this.currentYear}/${String(this.currentMonth).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+        if (dateStr === this.selectedDate) {
+          btn.classList.add('selected');
+        }
+        if (dateStr === todayJalali) {
+          btn.classList.add('today');
+        }
+        btn.addEventListener('click', () => {
+          this.selectDate(dateStr);
+        });
+        daysContainer.appendChild(btn);
+      }
+
+      // روزهای ماه بعد
+      const totalCells = startOffset + totalDays;
+      const remainingCells = 42 - totalCells;
+      const nextMonth = this.currentMonth === 12 ? 1 : this.currentMonth + 1;
+      const nextYear = this.currentMonth === 12 ? this.currentYear + 1 : this.currentYear;
+      for (let d = 1; d <= remainingCells; d++) {
+        const btn = document.createElement('button');
+        btn.textContent = d;
+        btn.className = 'other-month';
+        btn.addEventListener('click', () => {
+          const newDate = `${nextYear}/${String(nextMonth).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
+          this.selectDate(newDate);
+        });
+        daysContainer.appendChild(btn);
+      }
+    }
+
+    selectDate(dateStr) {
+      this.selectedDate = dateStr;
+      this.input.value = dateStr;
+      this.close();
+      // trigger change event
+      this.input.dispatchEvent(new Event('change'));
+    }
+
+    getValue() {
+      return this.input.value;
+    }
+
+    setDate(dateStr) {
+      this.selectedDate = dateStr;
+      this.input.value = dateStr;
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        this.currentYear = parseInt(parts[0]);
+        this.currentMonth = parseInt(parts[1]);
+      }
+    }
+  }
+
+  // ============================================================
+  // 5. مقداردهی Datepickerها
+  // ============================================================
+  function initDatepickers() {
+    document.querySelectorAll('.datepicker-input').forEach(el => {
+      if (el._jalaliDatepicker) return;
+      const picker = new JalaliDatepicker(el);
+      el._jalaliDatepicker = picker;
+    });
+  }
+
+  // ============================================================
+  // 6. توابع کمکی
+  // ============================================================
+  function toast(msg, type = 'success') {
+    Swal.fire({ text: msg, icon: type, timer: 3000, showConfirmButton: false });
+  }
+
+  function showModal(html) {
+    return new Promise((resolve) => {
+      Swal.fire({
+        html: html,
+        showCancelButton: true,
+        confirmButtonText: 'تأیید',
+        cancelButtonText: 'لغو',
+        preConfirm: () => {
+          const form = document.getElementById('modalForm');
+          if (form) {
+            const data = new FormData(form);
+            return Object.fromEntries(data.entries());
+          }
+          return {};
+        }
+      }).then(result => {
+        if (result.isConfirmed) resolve(result.value);
+        else resolve(null);
+      });
+    });
+  }
+
+  function renderPagination(total, page, limit, containerId, onPageChange) {
+    const totalPages = Math.ceil(total / limit);
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (totalPages <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = parseInt(btn.dataset.page);
+        onPageChange(p);
+      });
+    });
+  }
+
+  // ============================================================
+  // 7. احراز هویت
+  // ============================================================
+  async function login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    try {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      currentUser = data.user;
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('mainPage').classList.remove('hidden');
+      document.getElementById('userDisplay').textContent = `خوش آمدید ${currentUser.email}`;
+      loadDashboard();
+      loadAllSelects();
+      showTab('dashboard');
+      setTimeout(initDatepickers, 200);
+    } catch (err) {
+      document.getElementById('loginError').textContent = err.message;
+    }
+  }
+
+  async function logout() {
+    await supabaseClient.auth.signOut();
+    location.reload();
+  }
+
+  async function createDefaultUser() {
+    try {
+      const { data, error } = await supabaseClient.auth.signUp({
+        email: 'admin@school.com',
+        password: 'Admin123@'
+      });
+      if (error) throw error;
+      toast('کاربر admin ساخته شد. حالا وارد شوید.', 'success');
+    } catch (err) {
+      if (err.message.includes('already registered')) {
+        toast('کاربر قبلاً وجود دارد، مستقیماً وارد شوید.', 'info');
+      } else {
+        toast(err.message, 'error');
+      }
+    }
+  }
+
+  // ============================================================
+  // 8. تب‌ها
+  // ============================================================
+  function showTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    const target = document.getElementById(`tab-${tab}`);
+    if (target) target.classList.remove('hidden');
+    currentTab = tab;
+    document.querySelectorAll('[data-tab]').forEach(btn => {
+      btn.classList.toggle('btn-primary', btn.dataset.tab === tab);
+    });
+    if (tab === 'dashboard') loadDashboard();
+    else if (tab === 'classes') loadClasses();
+    else if (tab === 'students') loadStudents();
+    else if (tab === 'attendance') initAttendance();
+    else if (tab === 'settings') loadSettings();
+    else if (tab === 'reports') loadReportSelects();
+    else if (tab === 'import') resetImport();
+    setTimeout(initDatepickers, 300);
+  }
+
+  document.querySelectorAll('[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => showTab(btn.dataset.tab));
+  });
+  document.getElementById('loginBtn').addEventListener('click', login);
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('createDefaultUserBtn').addEventListener('click', createDefaultUser);
+  document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+  // ============================================================
+  // 9. داشبورد
+  // ============================================================
+  async function loadDashboard() {
+    try {
+      const today = getTodayGregorian();
+      const [studentsRes, classesRes, todayRes] = await Promise.all([
+        supabaseClient.from('students').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('classes').select('*', { count: 'exact', head: true }),
+        supabaseClient.from('attendance_records').select('*', { count: 'exact', head: true }).eq('date', today)
+      ]);
+      const totalStudents = studentsRes.count || 0;
+      const activeStudents = (await supabaseClient.from('students').select('*', { count: 'exact', head: true }).eq('active', true)).count || 0;
+      const totalClasses = classesRes.count || 0;
+      const todayCount = todayRes.count || 0;
+
+      document.getElementById('dashboardStats').innerHTML = `
+        <div class="card"><div class="number">${totalStudents}</div><div class="label">کل دانش‌آموزان</div></div>
+        <div class="card"><div class="number">${activeStudents}</div><div class="label">فعال</div></div>
+        <div class="card"><div class="number">${totalClasses}</div><div class="label">کلاس‌ها</div></div>
+        <div class="card"><div class="number">${todayCount}</div><div class="label">ثبت‌های امروز</div></div>
+      `;
+
+      const { data: todayRecords } = await supabaseClient
+        .from('attendance_records')
+        .select('status')
+        .eq('date', today);
+      const present = todayRecords?.filter(r => r.status === 'present').length || 0;
+      const absent = todayRecords?.filter(r => r.status === 'absent').length || 0;
+      const total = await supabaseClient.from('students').select('id', { count: 'exact', head: true });
+      const notRegistered = (total.count || 0) - (todayRecords?.length || 0);
+      document.getElementById('todayStatus').innerHTML = `
+        <p>حاضر: ${present}</p><p>غایب: ${absent}</p><p>ثبت نشده: ${notRegistered}</p>
+      `;
+
+      const { data: lastAbsences } = await supabaseClient
+        .from('attendance_records')
+        .select(`*, students(first_name, last_name, class_id, classes(name))`)
+        .eq('status', 'absent')
+        .order('date', { ascending: false })
+        .limit(5);
+      let html = '<table><tr><th>دانش‌آموز</th><th>کلاس</th><th>تاریخ</th><th>نوع</th><th>زنگ</th></tr>';
+      if (lastAbsences?.length) {
+        lastAbsences.forEach(r => {
+          const s = r.students;
+          html += `<tr><td>${s?.first_name} ${s?.last_name}</td><td>${s?.classes?.name || ''}</td>
+            <td>${toJalaali(r.date)}</td><td>${r.scope_type === 'full_day' ? 'کل روز' : 'زنگ'}</td>
+            <td>${r.bell_number || '-'}</td></tr>`;
+        });
+      } else html += '<tr><td colspan="5">هیچ غیبتی ثبت نشده</td></tr>';
+      html += '</table>';
+      document.getElementById('latestAbsences').innerHTML = html;
+    } catch (e) { console.error(e); }
+  }
+
+  // ============================================================
+  // 10. کلاس‌ها
+  // ============================================================
+  async function loadClasses() {
+    const { data, error } = await supabaseClient.from('classes').select('*').order('id');
+    if (error) return toast(error.message, 'error');
+    let html = `<table><tr><th>نام</th><th>پایه</th><th>رشته</th><th>وضعیت</th><th>عملیات</th></tr>`;
+    data.forEach(c => {
+      html += `<tr>
+        <td>${c.name}</td><td>${c.grade}</td><td>${c.major || '-'}</td>
+        <td><span class="badge ${c.active ? 'badge-success' : 'badge-danger'}">${c.active ? 'فعال' : 'غیرفعال'}</span></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="editClass('${c.id}')">ویرایش</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteClass('${c.id}')">حذف</button>
+          <button class="btn btn-sm" onclick="toggleClass('${c.id}')">${c.active ? 'غیرفعال' : 'فعال'}</button>
+        </td>
+      </tr>`;
+    });
+    html += '</table>';
+    document.getElementById('classesTableContainer').innerHTML = html;
+  }
+
+  window.editClass = async (id) => {
+    const { data: cls } = await supabaseClient.from('classes').select('*').eq('id', id).single();
+    if (!cls) return;
+    const result = await showModal(`
+      <form id="modalForm">
+        <div class="form-group"><label>نام کلاس</label><input name="name" value="${cls.name}" required/></div>
+        <div class="form-group"><label>پایه</label><input name="grade" value="${cls.grade}" required/></div>
+        <div class="form-group"><label>رشته</label><input name="major" value="${cls.major || ''}" /></div>
+        <div class="form-group"><label>توضیحات</label><textarea name="description">${cls.description || ''}</textarea></div>
+      </form>
+    `);
+    if (result) {
+      const { error } = await supabaseClient.from('classes').update(result).eq('id', id);
+      if (error) toast(error.message, 'error'); else { toast('بروزرسانی شد'); loadClasses(); }
+    }
+  };
+
+  window.deleteClass = async (id) => {
+    const { count } = await supabaseClient.from('students').select('id', { count: 'exact', head: true }).eq('class_id', id).eq('active', true);
+    if (count > 0) return toast('این کلاس دارای دانش‌آموز فعال است، ابتدا منتقل کنید.', 'error');
+    if (!confirm('آیا از حذف این کلاس مطمئن هستید؟')) return;
+    const { error } = await supabaseClient.from('classes').delete().eq('id', id);
+    if (error) toast(error.message, 'error'); else { toast('حذف شد'); loadClasses(); }
+  };
+
+  window.toggleClass = async (id) => {
+    const { data: cls } = await supabaseClient.from('classes').select('active').eq('id', id).single();
+    if (!cls) return;
+    await supabaseClient.from('classes').update({ active: !cls.active }).eq('id', id);
+    loadClasses();
+  };
+
+  document.getElementById('addClassBtn').addEventListener('click', async () => {
+    const result = await showModal(`
+      <form id="modalForm">
+        <div class="form-group"><label>نام کلاس</label><input name="name" required/></div>
+        <div class="form-group"><label>پایه</label><input name="grade" required/></div>
+        <div class="form-group"><label>رشته</label><input name="major" /></div>
+        <div class="form-group"><label>توضیحات</label><textarea name="description"></textarea></div>
+      </form>
+    `);
+    if (result) {
+      const { error } = await supabaseClient.from('classes').insert({ ...result, active: true });
+      if (error) toast(error.message, 'error'); else { toast('کلاس اضافه شد'); loadClasses(); }
+    }
+  });
+
+  // ============================================================
+  // 11. دانش‌آموزان
+  // ============================================================
+  async function loadStudents(page = 1) {
+    currentStudentPage = page;
+    const { search, grade, major, classId, active } = studentFilters;
+    let query = supabaseClient.from('students').select(`
+      id, first_name, last_name, grade, major, class_id, internal_code, active,
+      classes(name)
+    `, { count: 'exact' });
+
+    if (search) query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,internal_code.ilike.%${search}%`);
+    if (grade) query = query.eq('grade', grade);
+    if (major) query = query.eq('major', major);
+    if (classId) query = query.eq('class_id', classId);
+    if (active !== 'all') query = query.eq('active', active === 'true');
+
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    query = query.range(from, to).order('id', { ascending: false });
+
+    const { data, error, count } = await query;
+    if (error) return toast(error.message, 'error');
+
+    let html = `<table><tr><th><input type="checkbox" id="selectAllStudents" /></th>
+      <th>نام</th><th>نام خانوادگی</th><th>پایه</th><th>رشته</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>`;
+    data.forEach(s => {
+      const checked = selectedStudentIds.has(s.id) ? 'checked' : '';
+      html += `<tr>
+        <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked} /></td>
+        <td>${s.first_name}</td><td>${s.last_name}</td><td>${s.grade}</td><td>${s.major || '-'}</td>
+        <td>${s.classes?.name || '-'}</td>
+        <td><span class="badge ${s.active ? 'badge-success' : 'badge-danger'}">${s.active ? 'فعال' : 'غیرفعال'}</span></td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="editStudent('${s.id}')">ویرایش</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">حذف</button>
+        </td>
+      </tr>`;
+    });
+    html += '</table>';
+    document.getElementById('studentsTableContainer').innerHTML = html;
+
+    document.getElementById('selectAllStudents')?.addEventListener('change', (e) => {
+      document.querySelectorAll('.student-checkbox').forEach(cb => {
+        cb.checked = e.target.checked;
+        if (e.target.checked) selectedStudentIds.add(cb.dataset.id);
+        else selectedStudentIds.delete(cb.dataset.id);
+      });
+      updateBulkButtons();
+    });
+
+    document.querySelectorAll('.student-checkbox').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = cb.dataset.id;
+        if (cb.checked) selectedStudentIds.add(id);
+        else selectedStudentIds.delete(id);
+        updateBulkButtons();
+      });
+    });
+
+    renderPagination(count, page, PAGE_SIZE, 'studentsPagination', (p) => loadStudents(p));
+    updateBulkButtons();
+    populateFilterSelects();
+  }
+
+  function updateBulkButtons() {
+    const count = selectedStudentIds.size;
+    document.getElementById('selectedCount').textContent = `${count} انتخاب شده`;
+    document.getElementById('bulkDeleteBtn').disabled = count === 0;
+    document.getElementById('bulkEditBtn').disabled = count === 0;
+  }
+
+  // ============================================================
+  // 12. فیلترهای بدون تکرار
+  // ============================================================
+  async function populateFilterSelects() {
+    const { data: grades } = await supabaseClient
+      .from('students')
+      .select('grade')
+      .order('grade')
+      .limit(1000);
+    const gradeSet = new Set();
+    grades?.forEach(g => gradeSet.add(g.grade));
+    const gradeOpts = Array.from(gradeSet).map(g => `<option value="${g}">${g}</option>`).join('');
+    document.getElementById('filterGrade').innerHTML = `<option value="">همه پایه‌ها</option>${gradeOpts}`;
+
+    const { data: majors } = await supabaseClient
+      .from('students')
+      .select('major')
+      .order('major')
+      .limit(1000);
+    const majorSet = new Set();
+    majors?.forEach(m => { if (m.major) majorSet.add(m.major); });
+    const majorOpts = Array.from(majorSet).map(m => `<option value="${m}">${m}</option>`).join('');
+    document.getElementById('filterMajor').innerHTML = `<option value="">همه رشته‌ها</option>${majorOpts}`;
+
+    const { data: classes } = await supabaseClient
+      .from('classes')
+      .select('id,name')
+      .eq('active', true)
+      .order('name');
+    const classOpts = (classes || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    document.getElementById('filterClass').innerHTML = `<option value="">همه کلاس‌ها</option>${classOpts}`;
+  }
+
+  document.getElementById('applyStudentFilters').addEventListener('click', () => {
+    studentFilters.search = document.getElementById('studentSearch').value.trim();
+    studentFilters.grade = document.getElementById('filterGrade').value;
+    studentFilters.major = document.getElementById('filterMajor').value;
+    studentFilters.classId = document.getElementById('filterClass').value;
+    studentFilters.active = document.getElementById('filterStatus').value;
+    selectedStudentIds.clear();
+    loadStudents(1);
+  });
+
+  // ============================================================
+  // 13. افزودن و ویرایش دانش‌آموز
+  // ============================================================
+  document.getElementById('addStudentBtn').addEventListener('click', async () => {
+    const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
+    const classOpts = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const result = await showModal(`
+      <form id="modalForm">
+        <div class="form-row">
+          <div class="form-group"><label>نام</label><input name="first_name" required/></div>
+          <div class="form-group"><label>نام خانوادگی</label><input name="last_name" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>پایه</label><input name="grade" required/></div>
+          <div class="form-group"><label>رشته</label><input name="major" /></div>
+        </div>
+        <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
+        <div class="form-group"><label>کد داخلی</label><input name="internal_code" /></div>
+      </form>
+    `);
+    if (result) {
+      if (result.internal_code) {
+        const { data: existing } = await supabaseClient
+          .from('students')
+          .select('id')
+          .eq('internal_code', result.internal_code)
+          .maybeSingle();
+        if (existing) {
+          toast('کد داخلی قبلاً ثبت شده است.', 'error');
+          return;
+        }
+      }
+      const { error } = await supabaseClient.from('students').insert({ ...result, active: true });
+      if (error) toast(error.message, 'error'); else { toast('افزوده شد'); loadStudents(); }
+    }
+  });
+
+  window.editStudent = async (id) => {
+    const { data: s } = await supabaseClient.from('students').select('*').eq('id', id).single();
+    if (!s) return;
+    const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
+    const classOpts = classes.map(c => `<option value="${c.id}" ${c.id === s.class_id ? 'selected' : ''}>${c.name}</option>`).join('');
+    const result = await showModal(`
+      <form id="modalForm">
+        <div class="form-row">
+          <div class="form-group"><label>نام</label><input name="first_name" value="${s.first_name}" required/></div>
+          <div class="form-group"><label>نام خانوادگی</label><input name="last_name" value="${s.last_name}" required/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>پایه</label><input name="grade" value="${s.grade}" required/></div>
+          <div class="form-group"><label>رشته</label><input name="major" value="${s.major || ''}" /></div>
+        </div>
+        <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
+        <div class="form-group"><label>کد داخلی</label><input name="internal_code" value="${s.internal_code || ''}" /></div>
+        <div class="form-group"><label>وضعیت</label><select name="active"><option value="true" ${s.active ? 'selected' : ''}>فعال</option><option value="false" ${!s.active ? 'selected' : ''}>غیرفعال</option></select></div>
+      </form>
+    `);
+    if (result) {
+      result.active = result.active === 'true';
+      if (result.internal_code && result.internal_code !== s.internal_code) {
+        const { data: existing } = await supabaseClient
+          .from('students')
+          .select('id')
+          .eq('internal_code', result.internal_code)
+          .neq('id', id)
+          .maybeSingle();
+        if (existing) {
+          toast('کد داخلی قبلاً ثبت شده است.', 'error');
+          return;
+        }
+      }
+      const { error } = await supabaseClient.from('students').update(result).eq('id', id);
+      if (error) toast(error.message, 'error'); else { toast('بروزرسانی شد'); loadStudents(); }
+    }
+  };
+
+  window.deleteStudent = async (id) => {
+    if (!confirm('آیا از حذف این دانش‌آموز مطمئن هستید؟')) return;
+    const { error } = await supabaseClient.from('students').update({ active: false }).eq('id', id);
+    if (error) toast(error.message, 'error'); else { toast('غیرفعال شد'); loadStudents(); }
+  };
+
+  // ============================================================
+  // 14. عملیات گروهی
+  // ============================================================
+  document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
+    const ids = Array.from(selectedStudentIds);
+    if (ids.length === 0) return;
+    if (!confirm(`آیا از حذف ${ids.length} دانش‌آموز مطمئن هستید؟`)) return;
+    const { error } = await supabaseClient.from('students').update({ active: false }).in('id', ids);
+    if (error) toast(error.message, 'error'); else { toast('غیرفعال شدند'); selectedStudentIds.clear(); loadStudents(); }
+  });
+
+  document.getElementById('bulkEditBtn').addEventListener('click', async () => {
+    const ids = Array.from(selectedStudentIds);
+    if (ids.length === 0) return;
+    const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
+    const classOpts = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const result = await showModal(`
+      <form id="modalForm">
+        <div class="form-group"><label>پایه جدید</label><input name="grade" /></div>
+        <div class="form-group"><label>رشته جدید</label><input name="major" /></div>
+        <div class="form-group"><label>کلاس جدید</label><select name="class_id"><option value="">بدون تغییر</option>${classOpts}</select></div>
+        <div class="form-group"><label>وضعیت</label><select name="active"><option value="">بدون تغییر</option><option value="true">فعال</option><option value="false">غیرفعال</option></select></div>
+      </form>
+    `);
+    if (result) {
+      const updateData = {};
+      if (result.grade) updateData.grade = result.grade;
+      if (result.major) updateData.major = result.major;
+      if (result.class_id) updateData.class_id = result.class_id;
+      if (result.active !== '') updateData.active = result.active === 'true';
+      if (Object.keys(updateData).length === 0) return toast('هیچ فیلدی برای تغییر انتخاب نشده', 'error');
+      const { error } = await supabaseClient.from('students').update(updateData).in('id', ids);
+      if (error) toast(error.message, 'error'); else { toast('بروزرسانی شد'); selectedStudentIds.clear(); loadStudents(); }
+    }
+  });
+
+  // ============================================================
+  // 15. حضور و غیاب (با Datepicker شمسی دست‌ساز)
+  // ============================================================
+  async function initAttendance() {
+    const todayJalali = getTodayJalali();
+    const dateInput = document.getElementById('attendanceDate');
+    // مقداردهی با تاریخ امروز
+    if (dateInput._jalaliDatepicker) {
+      dateInput._jalaliDatepicker.setDate(todayJalali);
+    } else {
+      dateInput.value = todayJalali;
+      setTimeout(() => {
+        const picker = new JalaliDatepicker(dateInput);
+        dateInput._jalaliDatepicker = picker;
+        picker.setDate(todayJalali);
+      }, 100);
+    }
+
+    const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
+    const sel = document.getElementById('attendanceClass');
+    sel.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    await loadBellsForAttendance();
+
+    document.getElementById('attendanceScope').addEventListener('change', toggleBellSelector);
+    toggleBellSelector();
+
+    document.getElementById('loadAttendance').click();
+  }
+
+  async function loadBellsForAttendance() {
+    const { data: settings } = await supabaseClient.from('attendance_settings').select('*').maybeSingle();
+    const count = settings?.bell_count || 4;
+    const sel = document.getElementById('attendanceBell');
+    sel.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+      const name = settings?.[`bell_${i}_name`] || `زنگ ${i}`;
+      sel.innerHTML += `<option value="${i}">${name}</option>`;
+    }
+  }
+
+  function toggleBellSelector() {
+    const scope = document.getElementById('attendanceScope').value;
+    document.getElementById('bellSelector').style.display = scope === 'bell' ? 'block' : 'none';
+  }
+
+  document.getElementById('loadAttendance').addEventListener('click', async () => {
+    const jalaliDate = document.getElementById('attendanceDate').value;
+    const date = toGregorian(jalaliDate);
+    if (!date) {
+      toast('تاریخ نامعتبر است. لطفاً از تقویم شمسی انتخاب کنید.', 'error');
+      return;
+    }
+
+    const classId = document.getElementById('attendanceClass').value;
+    const scope = document.getElementById('attendanceScope').value;
+    const bell = parseInt(document.getElementById('attendanceBell').value) || null;
+
+    if (!classId) return toast('کلاس را انتخاب کنید', 'error');
+
+    const { data: students } = await supabaseClient
+      .from('students')
+      .select('id, first_name, last_name')
+      .eq('class_id', classId)
+      .eq('active', true);
+    if (!students || students.length === 0) return toast('دانش‌آموزی یافت نشد', 'warning');
+
+    let query = supabaseClient
+      .from('attendance_records')
+      .select('student_id, status, note, scope_type, bell_number')
+      .eq('date', date)
+      .eq('scope_type', scope);
+    if (scope === 'bell') query = query.eq('bell_number', bell);
+    const { data: records } = await query;
+
+    const recordMap = {};
+    (records || []).forEach(r => {
+      recordMap[r.student_id] = r;
+    });
+
+    let html = `<table><tr><th>دانش‌آموز</th><th>وضعیت</th><th>یادداشت</th></tr>`;
+    students.forEach(s => {
+      const rec = recordMap[s.id] || { status: 'present', note: '' };
+      const checked = rec.status === 'present' ? 'checked' : '';
+      html += `<tr>
+        <td>${s.first_name} ${s.last_name}</td>
+        <td>
+          <label><input type="radio" name="status_${s.id}" value="present" ${checked} /> حاضر</label>
+          <label><input type="radio" name="status_${s.id}" value="absent" ${!checked ? 'checked' : ''} /> غایب</label>
+        </td>
+        <td><input type="text" class="attendance-note" data-id="${s.id}" value="${rec.note || ''}" style="width:100%;"/></td>
+      </tr>`;
+    });
+    html += '</table>';
+    document.getElementById('attendanceTableContainer').innerHTML = html;
+  });
+
+  document.getElementById('saveAttendance').addEventListener('click', async () => {
+    const jalaliDate = document.getElementById('attendanceDate').value;
+    const date = toGregorian(jalaliDate);
+    if (!date) {
+      toast('تاریخ نامعتبر است. لطفاً از تقویم شمسی انتخاب کنید.', 'error');
+      return;
+    }
+
+    const classId = document.getElementById('attendanceClass').value;
+    const scope = document.getElementById('attendanceScope').value;
+    const bell = parseInt(document.getElementById('attendanceBell').value) || null;
+
+    const records = [];
+    document.querySelectorAll('#attendanceTableContainer tr').forEach((tr, idx) => {
+      if (idx === 0) return;
+      const idInput = tr.querySelector('input[type="radio"]');
+      if (!idInput) return;
+      const studentId = idInput.name.split('_')[1];
+      const status = tr.querySelector('input[type="radio"]:checked')?.value || 'present';
+      const note = tr.querySelector('.attendance-note')?.value || '';
+      records.push({ student_id: studentId, status, note });
+    });
+
+    if (records.length === 0) return toast('هیچ دانش‌آموزی برای ثبت وجود ندارد', 'error');
+
+    try {
+      const { data, error } = await supabaseClient.rpc('save_attendance_batch', {
+        p_date: date,
+        p_class_id: classId,
+        p_scope: scope,
+        p_bell: bell,
+        p_records: records
+      });
+      if (error) throw error;
+      toast('حضور و غیاب با موفقیت ذخیره شد');
+      document.getElementById('loadAttendance').click();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  });
+
+  // ============================================================
+  // 16. تنظیمات
+  // ============================================================
+  async function loadSettings() {
+    const { data: settings } = await supabaseClient.from('attendance_settings').select('*').maybeSingle();
+    if (!settings) {
+      await supabaseClient.from('attendance_settings').insert({ bell_count: 4 });
+      return loadSettings();
+    }
+    document.getElementById('bellCount').value = settings.bell_count || 4;
+    document.getElementById('fullDayEnabled').checked = settings.full_day_enabled !== false;
+    generateBellInputs(settings.bell_count || 4, settings);
+  }
+
+  function generateBellInputs(count, settings) {
+    const container = document.getElementById('bellNamesContainer');
+    let html = '';
+    for (let i = 1; i <= count; i++) {
+      const name = settings?.[`bell_${i}_name`] || `زنگ ${i}`;
+      html += `<div class="form-group"><label>نام زنگ ${i}</label><input type="text" id="bellName_${i}" value="${name}" /></div>`;
+    }
+    container.innerHTML = html;
+    document.getElementById('bellCount').addEventListener('change', (e) => {
+      const newCount = parseInt(e.target.value) || 1;
+      generateBellInputs(newCount, {});
+    });
+  }
+
+  document.getElementById('saveSettings').addEventListener('click', async () => {
+    const count = parseInt(document.getElementById('bellCount').value) || 4;
+    const fullDay = document.getElementById('fullDayEnabled').checked;
+    const updateObj = { bell_count: count, full_day_enabled: fullDay };
+    for (let i = 1; i <= count; i++) {
+      const name = document.getElementById(`bellName_${i}`)?.value || `زنگ ${i}`;
+      updateObj[`bell_${i}_name`] = name;
+    }
+    const { data: setting } = await supabaseClient.from('attendance_settings').select('id').maybeSingle();
+    if (!setting) {
+      await supabaseClient.from('attendance_settings').insert(updateObj);
+    } else {
+      await supabaseClient.from('attendance_settings').update(updateObj).eq('id', setting.id);
+    }
+    toast('تنظیمات ذخیره شد');
+  });
+
+  document.getElementById('wipeDataBtn').addEventListener('click', async () => {
+    const result = await Swal.fire({
+      title: 'هشدار!',
+      html: `
+        <p style="color:red;">تمام اطلاعات سیستم برای همیشه حذف خواهد شد.</p>
+        <p>برای تأیید عبارت <b>DELETE</b> را وارد کنید:</p>
+        <input type="text" id="wipeConfirm" class="swal2-input" placeholder="DELETE" />
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'حذف کامل',
+      cancelButtonText: 'لغو',
+      preConfirm: () => document.getElementById('wipeConfirm').value
+    });
+    if (result.isConfirmed && result.value === 'DELETE') {
+      const { error } = await supabaseClient.rpc('wipe_all_data');
+      if (error) toast(error.message, 'error'); else {
+        toast('تمام اطلاعات پاک شد', 'success');
+        loadSettings();
+      }
+    } else if (result.isConfirmed) {
+      toast('عبارت وارد شده صحیح نیست', 'error');
+    }
+  });
+
+  // ============================================================
+  // 17. گزارش‌ها
+  // ============================================================
+  async function loadReportSelects() {
+    const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
+    const selClass = document.getElementById('reportClass');
+    selClass.innerHTML = `<option value="">همه</option>` + classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const selStudent = document.getElementById('reportStudent');
+    const students = (await supabaseClient.from('students').select('id, first_name, last_name').eq('active', true).limit(1000)).data || [];
+    selStudent.innerHTML = students.map(s => `<option value="${s.id}">${s.first_name} ${s.last_name}</option>`).join('');
+  }
+
+  document.getElementById('reportType').addEventListener('change', (e) => {
+    const type = e.target.value;
+    document.getElementById('reportDateGroup').style.display = type === 'today' ? 'block' : 'none';
+    document.getElementById('reportRangeGroup').style.display = type === 'range' ? 'flex' : 'none';
+    document.getElementById('reportStudentGroup').style.display = type === 'student' ? 'block' : 'none';
+    if (type === 'today') {
+      const today = getTodayJalali();
+      const el = document.getElementById('reportDate');
+      el.value = today;
+      if (el._jalaliDatepicker) {
+        el._jalaliDatepicker.setDate(today);
+      }
+    }
+  });
+
+  document.getElementById('generateReport').addEventListener('click', async () => {
+    const type = document.getElementById('reportType').value;
+    const classId = document.getElementById('reportClass').value;
+    let from, to, studentId;
+
+    if (type === 'today') {
+      const jalali = document.getElementById('reportDate').value;
+      from = to = toGregorian(jalali);
+      if (!from) return toast('تاریخ نامعتبر است', 'error');
+    } else if (type === 'range') {
+      const fromJ = document.getElementById('reportFrom').value;
+      const toJ = document.getElementById('reportTo').value;
+      from = toGregorian(fromJ);
+      to = toGregorian(toJ);
+      if (!from || !to) return toast('تاریخ نامعتبر است', 'error');
+    } else if (type === 'student') {
+      studentId = document.getElementById('reportStudent').value;
+      if (!studentId) return toast('دانش‌آموز را انتخاب کنید', 'error');
+    }
+
+    let query = supabaseClient.from('attendance_records').select(`
+      student_id, date, scope_type, bell_number, status,
+      students(first_name, last_name, class_id, classes(name))
+    `).eq('status', 'absent');
+
+    if (from) query = query.gte('date', from).lte('date', to);
+    if (classId) query = query.eq('students.class_id', classId);
+    if (studentId) query = query.eq('student_id', studentId);
+
+    const { data, error } = await query;
+    if (error) return toast(error.message, 'error');
+
+    const map = {};
+    data.forEach(r => {
+      const key = r.student_id;
+      if (!map[key]) {
+        map[key] = {
+          first_name: r.students.first_name,
+          last_name: r.students.last_name,
+          class_name: r.students.classes?.name || '',
+          daily: 0,
+          bell: 0,
+          last_absence: null
+        };
+      }
+      if (r.scope_type === 'full_day') map[key].daily += 1;
+      else map[key].bell += 1;
+      if (!map[key].last_absence || r.date > map[key].last_absence) map[key].last_absence = r.date;
+    });
+
+    let html = `<table><tr><th>نام</th><th>نام خانوادگی</th><th>کلاس</th><th>غیبت روزانه</th><th>غیبت زنگی</th><th>جمع</th><th>آخرین غیبت</th></tr>`;
+    Object.values(map).forEach(item => {
+      const total = item.daily + item.bell;
+      html += `<tr><td>${item.first_name}</td><td>${item.last_name}</td><td>${item.class_name}</td>
+        <td>${item.daily}</td><td>${item.bell}</td><td>${total}</td>
+        <td>${item.last_absence ? toJalaali(item.last_absence) : '-'}</td></tr>`;
+    });
+    html += '</table>';
+    document.getElementById('reportResult').innerHTML = html;
+  });
+
+  document.getElementById('exportExcel').addEventListener('click', () => {
+    const table = document.querySelector('#reportResult table');
+    if (!table) return toast('ابتدا گزارش را نمایش دهید', 'info');
+
+    const wsData = [];
+    const rows = table.querySelectorAll('tr');
+    const headers = rows[0].querySelectorAll('th');
+    rows.forEach((row, idx) => {
+      const cols = row.querySelectorAll('th, td');
+      const rowData = {};
+      if (idx === 0) {
+        headers.forEach((h, i) => { rowData[h.innerText] = ''; });
+        wsData.push(rowData);
+        return;
+      }
+      cols.forEach((col, i) => {
+        const key = headers[i]?.innerText || `ستون ${i}`;
+        rowData[key] = col.innerText;
+      });
+      wsData.push(rowData);
+    });
+
+    const ws = XLSX.utils.json_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'گزارش');
+    XLSX.writeFile(wb, `گزارش_${new Date().toISOString().slice(0,10)}.xlsx`);
+    toast('خروجی اکسل دانلود شد');
+  });
+
+  // ============================================================
+  // 18. ورود از اکسل (بهینه و بدون خطای تکراری)
+  // ============================================================
+  let excelData = [];
+  let excelHeaders = [];
+  let columnMap = {};
+
+  document.getElementById('excelFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      const data = new Uint8Array(ev.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+      if (json.length) {
+        excelHeaders = json[0].map(String);
+        excelData = json.slice(1);
+        showExcelPreview();
+        document.getElementById('importExcelBtn').disabled = false;
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  function showExcelPreview() {
+    let html = `<h4>پیش‌نمایش (۱۰ ردیف اول)</h4>
+      <div style="overflow-x:auto;"><table><tr>${excelHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+    const previewRows = excelData.slice(0, 10);
+    previewRows.forEach(row => {
+      html += `<tr>${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
+    });
+    html += '</table></div>';
+
+    html += `<h4>نگاشت ستون‌ها</h4><div class="form-row">`;
+    const fields = ['first_name', 'last_name', 'grade', 'major', 'class_name', 'internal_code'];
+    const labels = {
+      first_name: 'نام',
+      last_name: 'نام خانوادگی',
+      grade: 'پایه',
+      major: 'رشته',
+      class_name: 'نام کلاس',
+      internal_code: 'کد داخلی'
+    };
+    fields.forEach(f => {
+      html += `<div class="form-group"><label>${labels[f]}</label>
+        <select data-field="${f}" class="col-map">
+          <option value="">انتخاب نشود</option>
+          ${excelHeaders.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
+        </select></div>`;
+    });
+    html += '</div>';
+    document.getElementById('excelPreview').innerHTML = html;
+
+    document.querySelectorAll('.col-map').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const field = sel.dataset.field;
+        const idx = parseInt(sel.value);
+        if (!isNaN(idx)) columnMap[field] = idx;
+        else delete columnMap[field];
+      });
+    });
+  }
+
+  document.getElementById('importExcelBtn').addEventListener('click', async () => {
+    if (Object.keys(columnMap).length === 0) return toast('حداقل یک ستون را نگاشت کنید', 'error');
+
+    const rawStudents = [];
+    const errors = [];
+    const internalCodes = new Set();
+
+    for (let i = 0; i < excelData.length; i++) {
+      try {
+        const row = excelData[i];
+        const student = {};
+        for (const [field, idx] of Object.entries(columnMap)) {
+          student[field] = row[idx]?.toString().trim() || '';
+        }
+        if (!student.first_name || !student.last_name) {
+          errors.push(`ردیف ${i+2}: نام یا نام خانوادگی خالی`);
+          continue;
+        }
+        if (student.internal_code) {
+          if (internalCodes.has(student.internal_code)) {
+            errors.push(`ردیف ${i+2}: کد داخلی تکراری در فایل`);
+            continue;
+          }
+          internalCodes.add(student.internal_code);
+        }
+        rawStudents.push({ ...student, rowIndex: i });
+      } catch (err) {
+        errors.push(`ردیف ${i+2}: خطا - ${err.message}`);
+      }
+    }
+
+    if (rawStudents.length === 0) {
+      return toast('هیچ دانش‌آموز معتبری یافت نشد', 'error');
+    }
+
+    const codeList = rawStudents.map(s => s.internal_code).filter(c => c);
+    let existingCodesSet = new Set();
+    if (codeList.length > 0) {
+      const { data: existing } = await supabaseClient
+        .from('students')
+        .select('internal_code')
+        .in('internal_code', codeList);
+      if (existing) {
+        existing.forEach(e => existingCodesSet.add(e.internal_code));
+      }
+    }
+
+    const validStudents = rawStudents.filter(s => {
+      if (s.internal_code && existingCodesSet.has(s.internal_code)) {
+        errors.push(`ردیف ${s.rowIndex+2}: کد داخلی قبلاً ثبت شده است`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validStudents.length === 0) {
+      return toast('هیچ دانش‌آموز جدیدی برای ثبت وجود ندارد', 'warning');
+    }
+
+    const classNames = validStudents.map(s => s.class_name).filter(c => c);
+    const uniqueClassNames = [...new Set(classNames)];
+    const classMap = {};
+
+    for (const className of uniqueClassNames) {
+      let query = supabaseClient.from('classes').select('id, grade, major')
+        .eq('name', className);
+      const sample = validStudents.find(s => s.class_name === className);
+      if (sample?.grade) query = query.eq('grade', sample.grade);
+      if (sample?.major) query = query.eq('major', sample.major);
+      const { data: existing } = await query.maybeSingle();
+      if (existing) {
+        classMap[className] = existing.id;
+      } else {
+        const newClass = {
+          name: className,
+          grade: sample?.grade || 'نامشخص',
+          major: sample?.major || null,
+          active: true
+        };
+        const { data: inserted, error } = await supabaseClient
+          .from('classes')
+          .insert(newClass)
+          .select('id')
+          .single();
+        if (error) {
+          errors.push(`خطا در ایجاد کلاس ${className}: ${error.message}`);
+          continue;
+        }
+        classMap[className] = inserted.id;
+      }
+    }
+
+    const studentsToInsert = validStudents.map(s => ({
+      first_name: s.first_name,
+      last_name: s.last_name,
+      grade: s.grade || 'نامشخص',
+      major: s.major || null,
+      class_id: s.class_name ? classMap[s.class_name] : null,
+      internal_code: s.internal_code || null,
+      active: true
+    }));
+
+    const BATCH_SIZE = 100;
+    let insertedCount = 0;
+    for (let i = 0; i < studentsToInsert.length; i += BATCH_SIZE) {
+      const batch = studentsToInsert.slice(i, i + BATCH_SIZE);
+      const { error } = await supabaseClient
+        .from('students')
+        .upsert(batch, { onConflict: 'internal_code' });
+      if (error) {
+        for (const student of batch) {
+          const { error: singleError } = await supabaseClient
+            .from('students')
+            .insert(student);
+          if (singleError && singleError.code !== '23505') {
+            errors.push(`خطا در ثبت ${student.first_name} ${student.last_name}: ${singleError.message}`);
+          } else if (!singleError) {
+            insertedCount++;
+          }
+        }
+      } else {
+        insertedCount += batch.length;
+      }
+    }
+
+    toast(`${insertedCount} دانش‌آموز با موفقیت ثبت شدند. تعداد خطا: ${errors.length}`);
+    document.getElementById('importResult').innerHTML = `
+      <p>کل ردیف‌ها: ${excelData.length}</p>
+      <p>ثبت شده: ${insertedCount}</p>
+      <p>خطا: ${errors.length}</p>
+      <pre style="max-height:200px; overflow-y:auto;">${errors.join('\n')}</pre>
+    `;
+  });
+
+  function resetImport() {
+    document.getElementById('excelFile').value = '';
+    document.getElementById('excelPreview').innerHTML = '';
+    document.getElementById('importResult').innerHTML = '';
+    document.getElementById('importExcelBtn').disabled = true;
+    excelData = [];
+    excelHeaders = [];
+    columnMap = {};
+  }
+
+  // ============================================================
+  // 19. بارگذاری اولیه
+  // ============================================================
+  async function loadAllSelects() {
+    await populateFilterSelects();
+    await loadReportSelects();
+    await loadBellsForAttendance();
+  }
+
+  // ============================================================
+  // 20. بررسی وضعیت ورود
+  // ============================================================
+  (async function init() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+      currentUser = user;
+      document.getElementById('loginPage').classList.add('hidden');
+      document.getElementById('mainPage').classList.remove('hidden');
+      document.getElementById('userDisplay').textContent = `خوش آمدید ${user.email}`;
+      loadDashboard();
+      loadAllSelects();
+      showTab('dashboard');
+      setTimeout(initDatepickers, 500);
+    }
+  })();
+</script>
+</body>
+</html>
