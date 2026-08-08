@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>سامانه حضور و غیاب مدرسه</title>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
@@ -14,126 +14,212 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #4361ee;
+      --primary-dark: #3a56d4;
+      --primary-light: #eef0ff;
+      --success: #2ecc71;
+      --danger: #e74c3c;
+      --warning: #f39c12;
+      --gray: #6c757d;
+      --light-gray: #f5f7fa;
+      --white: #ffffff;
+      --shadow: 0 2px 12px rgba(67, 97, 238, 0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --transition: all 0.25s ease;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      color: #333;
-      padding: 20px;
+      background: var(--light-gray);
+      color: #2d3748;
+      padding: 10px;
       direction: rtl;
+      min-height: 100vh;
     }
     .container { max-width: 1400px; margin: 0 auto; }
     .hidden { display: none !important; }
-    .flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .flex { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .flex-between { justify-content: space-between; }
+    .flex-center { justify-content: center; }
     .grid-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
     .card {
-      background: #fff;
-      padding: 18px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      background: var(--white);
+      padding: 16px 14px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       text-align: center;
+      border: 1px solid rgba(67, 97, 238, 0.06);
+      transition: var(--transition);
     }
-    .card .number { font-size: 2rem; font-weight: 700; color: #1a73e8; }
-    .card .label { font-size: 0.9rem; color: #666; margin-top: 6px; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(67, 97, 238, 0.15); }
+    .card .number { font-size: 1.7rem; font-weight: 700; color: var(--primary); }
+    .card .label { font-size: 0.8rem; color: #718096; margin-top: 4px; }
+
+    /* ===== دکمه‌های بهبودیافته ===== */
     .btn {
       padding: 8px 18px;
       border: none;
-      border-radius: 6px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      font-size: 0.9rem;
-      transition: 0.2s;
-      background: #e0e0e0;
-      color: #333;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: var(--transition);
+      background: #e2e8f0;
+      color: #2d3748;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      touch-action: manipulation;
+      text-decoration: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
-    .btn-primary { background: #1a73e8; color: #fff; }
-    .btn-danger { background: #d32f2f; color: #fff; }
-    .btn-success { background: #2e7d32; color: #fff; }
-    .btn-warning { background: #f9a825; color: #000; }
-    .btn-sm { padding: 4px 12px; font-size: 0.8rem; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3); }
+    .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 16px rgba(67, 97, 238, 0.4); }
+    .btn-danger { background: var(--danger); color: #fff; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3); }
+    .btn-danger:hover { background: #c0392b; }
+    .btn-success { background: var(--success); color: #fff; box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3); }
+    .btn-success:hover { background: #27ae60; }
+    .btn-warning { background: var(--warning); color: #fff; box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3); }
+    .btn-warning:hover { background: #d68910; }
+    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+    .btn-outline:hover { background: var(--primary); color: #fff; }
+    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+    .btn-lg { padding: 12px 28px; font-size: 1rem; }
+    .btn-block { width: 100%; justify-content: center; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* ===== سلکت‌باکس بهبودیافته ===== */
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234365ee' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 10px center;
+      background-size: 12px;
+      padding: 10px 14px;
+      padding-left: 32px;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      background-color: var(--white);
+      color: #2d3748;
+      transition: var(--transition);
+      cursor: pointer;
+      min-width: 100px;
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+    }
+    select:hover { border-color: var(--primary); }
+    select option { padding: 8px; }
+
+    /* ===== اینپوت بهبودیافته ===== */
+    input[type="text"], input[type="number"], input[type="password"], input[type="email"], input[type="file"] {
+      padding: 10px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      background: var(--white);
+      color: #2d3748;
+      transition: var(--transition);
+      width: 100%;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12);
+    }
+
+    /* ===== جدول بهبودیافته ===== */
     table {
       width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      border-radius: 10px;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: var(--white);
+      border-radius: var(--radius);
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+      box-shadow: var(--shadow);
+      font-size: 0.85rem;
     }
-    th, td { padding: 10px 8px; text-align: center; border-bottom: 1px solid #eee; }
-    th { background: #f8f9fa; font-weight: 600; color: #444; }
-    tr:hover { background: #f1f5f9; }
-    .badge {
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
+    th {
+      background: var(--primary-light);
+      color: var(--primary-dark);
       font-weight: 600;
+      padding: 10px 8px;
+      text-align: center;
+      border-bottom: 2px solid rgba(67, 97, 238, 0.1);
+    }
+    td { padding: 9px 8px; text-align: center; border-bottom: 1px solid #edf2f7; }
+    tr:hover { background: var(--primary-light); }
+    tr:last-child td { border-bottom: none; }
+
+    /* ===== بج بهبودیافته ===== */
+    .badge {
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: inline-block;
     }
     .badge-success { background: #d4edda; color: #155724; }
     .badge-danger { background: #f8d7da; color: #721c24; }
     .badge-warning { background: #fff3cd; color: #856404; }
+    .badge-secondary { background: #e2e3e5; color: #383d41; }
+    .badge-primary { background: #cce5ff; color: #004085; }
+
+    /* ===== پیجینیشن ===== */
     .pagination {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
-      margin-top: 20px;
+      margin-top: 16px;
       flex-wrap: wrap;
     }
     .pagination button {
       padding: 6px 14px;
-      border: 1px solid #ddd;
-      background: #fff;
-      border-radius: 6px;
+      border: 2px solid #e2e8f0;
+      background: var(--white);
+      border-radius: var(--radius-sm);
       cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: var(--transition);
     }
-    .pagination .active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-weight: 500; margin-bottom: 4px; }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
-    .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .form-row .form-group { flex: 1; min-width: 150px; }
-    .text-center { text-align: center; }
-    .mt-20 { margin-top: 20px; }
-    .mb-20 { margin-bottom: 20px; }
+    .pagination button:hover { border-color: var(--primary); }
+    .pagination .active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-    /* ===== Datepicker شمسی دست‌ساز ===== */
-    .datepicker-wrapper {
-      position: relative;
-      display: inline-block;
-      width: 100%;
-    }
+    /* ===== Datepicker شمسی ===== */
+    .datepicker-wrapper { position: relative; width: 100%; }
     .datepicker-wrapper input {
-      width: 100%;
       cursor: pointer;
-      background-color: #fff;
+      background: var(--white);
     }
     .datepicker-popup {
       position: absolute;
       top: 100%;
       right: 0;
       z-index: 9999;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      background: var(--white);
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius);
       padding: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      min-width: 250px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      min-width: 240px;
       display: none;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
-    .datepicker-popup.show {
-      display: block;
-    }
+    .datepicker-popup.show { display: block; }
     .datepicker-header {
       display: flex;
       justify-content: space-between;
@@ -145,21 +231,31 @@
       border: none;
       cursor: pointer;
       font-size: 1.2rem;
-      padding: 0 8px;
-      color: #1a73e8;
+      padding: 0 10px;
+      color: var(--primary);
+      transition: var(--transition);
+      touch-action: manipulation;
     }
+    .datepicker-header button:hover { transform: scale(1.1); }
     .datepicker-header .month-year {
       font-weight: 600;
       font-size: 1rem;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+      background: var(--primary-light);
+      color: var(--primary-dark);
     }
+    .datepicker-header .month-year:hover { background: var(--primary); color: #fff; }
     .datepicker-weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       text-align: center;
       font-weight: 600;
-      color: #666;
+      color: #718096;
       margin-bottom: 6px;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
     }
     .datepicker-days {
       display: grid;
@@ -170,36 +266,186 @@
       background: none;
       border: none;
       padding: 6px 4px;
-      border-radius: 4px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       text-align: center;
-      transition: 0.15s;
+      transition: var(--transition);
+      touch-action: manipulation;
     }
-    .datepicker-days button:hover {
-      background: #e8f0fe;
+    .datepicker-days button:hover { background: var(--primary-light); }
+    .datepicker-days button.selected { background: var(--primary); color: #fff; }
+    .datepicker-days button.other-month { color: #cbd5e1; }
+    .datepicker-days button.today { font-weight: 700; border: 2px solid var(--primary); }
+
+    /* ===== منوی سایدبار ===== */
+    .sidebar {
+      background: var(--white);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      border: 1px solid rgba(67, 97, 238, 0.06);
     }
-    .datepicker-days button.selected {
-      background: #1a73e8;
-      color: #fff;
+    .sidebar .btn {
+      flex: 1 1 auto;
+      min-width: 70px;
+      justify-content: center;
+      border-radius: var(--radius-sm);
     }
-    .datepicker-days button.other-month {
-      color: #ccc;
+    .sidebar .btn.btn-primary { background: var(--primary); color: #fff; }
+    .sidebar .btn:not(.btn-primary) {
+      background: transparent;
+      color: #4a5568;
     }
-    .datepicker-days button.today {
-      font-weight: 700;
-      border: 1px solid #1a73e8;
+    .sidebar .btn:not(.btn-primary):hover {
+      background: var(--primary-light);
+      color: var(--primary);
     }
 
-    @media (max-width: 700px) {
-      .grid-cards { grid-template-columns: 1fr 1fr; }
-      table { font-size: 0.8rem; }
-      th, td { padding: 6px 4px; }
-      .datepicker-popup { min-width: 200px; }
+    /* ===== وضعیت دکمه‌های سه‌گانه ===== */
+    .status-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-    @media (max-width: 500px) {
-      .grid-cards { grid-template-columns: 1fr; }
+    .status-btn {
+      padding: 6px 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+      transition: var(--transition);
+      background: var(--white);
+      touch-action: manipulation;
+      flex: 1;
+      min-width: 55px;
+      text-align: center;
     }
+    .status-btn:hover { transform: translateY(-1px); }
+    .status-btn.active-present { border-color: var(--success); background: #d4edda; color: #155724; }
+    .status-btn.active-excused { border-color: var(--warning); background: #fff3cd; color: #856404; }
+    .status-btn.active-absent { border-color: var(--danger); background: #f8d7da; color: #721c24; }
+
+    /* ===== مودال ===== */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 16px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-box {
+      background: var(--white);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      border-radius: var(--radius);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      animation: fadeIn 0.3s ease;
+    }
+    .modal-box h3 { margin-bottom: 16px; font-size: 1.2rem; color: var(--primary-dark); }
+    .modal-close {
+      float: left;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #a0aec0;
+      transition: var(--transition);
+      padding: 0 8px;
+    }
+    .modal-close:hover { color: var(--danger); }
+
+    /* ===== منوی کشویی موبایل ===== */
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--primary);
+      padding: 6px;
+      transition: var(--transition);
+    }
+    .mobile-menu-toggle:hover { transform: scale(1.1); }
+
+    /* ===== فرم‌ها ===== */
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85rem; color: #4a5568; }
+    .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .form-row .form-group { flex: 1; min-width: 130px; }
+
+    /* ===== ریسپانسیو ===== */
+    @media (max-width: 768px) {
+      body { padding: 6px; }
+      .mobile-menu-toggle { display: block; }
+      .sidebar { display: none; flex-direction: column; border-radius: var(--radius); }
+      .sidebar.open { display: flex; }
+      .sidebar .btn { flex: 1; width: 100%; justify-content: center; padding: 10px; }
+      .grid-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .card { padding: 12px 10px; }
+      .card .number { font-size: 1.3rem; }
+      table { font-size: 0.7rem; }
+      th, td { padding: 5px 3px; }
+      .status-btn { font-size: 0.7rem; padding: 4px 8px; min-width: 40px; }
+      .form-row .form-group { min-width: 100%; }
+      .modal-box { padding: 16px; margin: 8px; }
+      .datepicker-popup { min-width: 200px; right: -10px; }
+      .btn { padding: 10px 14px; font-size: 0.85rem; }
+      .btn-sm { padding: 6px 10px; font-size: 0.75rem; }
+      select { padding: 8px 12px; font-size: 0.85rem; min-width: 70px; }
+    }
+    @media (max-width: 480px) {
+      .grid-cards { grid-template-columns: 1fr 1fr; gap: 6px; }
+      .card .number { font-size: 1.1rem; }
+      .card .label { font-size: 0.65rem; }
+      table { font-size: 0.6rem; }
+      th, td { padding: 3px 2px; }
+    }
+
+    /* ===== انیمیشن ===== */
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== اسکرول‌بار ===== */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+    /* ===== لیست ماه‌ها در Datepicker ===== */
+    .month-list {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 6px 0;
+    }
+    .month-list.show { display: grid; }
+    .month-list button {
+      background: var(--primary-light);
+      border: none;
+      padding: 6px 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: var(--transition);
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    .month-list button:hover { background: var(--primary); color: #fff; }
+    .month-list button.active { background: var(--primary); color: #fff; }
   </style>
 </head>
 <body>
@@ -207,203 +453,235 @@
 
   <!-- ===== صفحه ورود ===== -->
   <div id="loginPage">
-    <div style="max-width:420px; margin:80px auto; background:#fff; padding:40px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
-      <h2 style="text-align:center; margin-bottom:24px;">🚪 ورود به سامانه</h2>
+    <div style="max-width:400px; margin:60px auto; background:#fff; padding:30px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
+      <h2 style="text-align:center; margin-bottom:20px; color:var(--primary);">🚪 ورود به سامانه</h2>
+      <p style="text-align:center; font-size:0.85rem; color:#718096; margin-bottom:16px;">نام کاربری: <strong>admin</strong> | رمز: <strong>Admin123@</strong></p>
       <div class="form-group">
-        <label>ایمیل</label>
-        <input type="text" id="loginEmail" value="admin@school.com" placeholder="admin@school.com" />
+        <label>نام کاربری</label>
+        <input type="text" id="loginUsername" value="admin" placeholder="admin" />
       </div>
       <div class="form-group">
         <label>رمز عبور</label>
-        <input type="password" id="loginPassword" value="Admin123@" placeholder="Admin123@" />
+        <input type="password" id="loginPassword" value="Admin123@" placeholder="رمز عبور" />
       </div>
-      <button class="btn btn-primary" style="width:100%;" id="loginBtn">ورود</button>
-      <div id="loginError" class="text-center" style="color:#d32f2f; margin-top:12px;"></div>
-      <hr style="margin:20px 0;" />
-      <button class="btn btn-warning" style="width:100%;" id="createDefaultUserBtn">
-        <i class="fas fa-user-plus"></i> ساخت کاربر پیش‌فرض (admin)
+      <button class="btn btn-primary btn-block" id="loginBtn">ورود</button>
+      <div id="loginError" class="text-center" style="color:var(--danger); margin-top:10px; font-size:0.9rem;"></div>
+      <hr style="margin:16px 0;" />
+      <button class="btn btn-warning btn-block" id="createDefaultUserBtn">
+        <i class="fas fa-user-plus"></i> ساخت کاربر پیش‌فرض
       </button>
-      <div style="font-size:0.8rem; color:#666; text-align:center; margin-top:10px;">
-        اگر کاربر ندارید، روی دکمه بالا کلیک کنید.
-      </div>
     </div>
   </div>
 
   <!-- ===== صفحه اصلی ===== -->
   <div id="mainPage" class="hidden">
     <!-- هدر -->
-    <div class="flex flex-between" style="background:#fff; padding:12px 20px; border-radius:10px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.04);">
-      <h2 style="font-size:1.3rem;">🏫 سامانه حضور و غیاب</h2>
+    <div class="flex flex-between" style="background:#fff; padding:10px 16px; border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow);">
       <div class="flex">
-        <span id="userDisplay" style="margin-left:16px;"></span>
-        <button class="btn btn-danger btn-sm" id="logoutBtn">خروج</button>
+        <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+        <h2 style="font-size:1.1rem; color:var(--primary-dark);">🏫 حضور و غیاب</h2>
+      </div>
+      <div class="flex">
+        <span id="userDisplay" style="font-size:0.85rem; color:#4a5568; margin-left:10px;"></span>
+        <button class="btn btn-danger btn-sm" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>
       </div>
     </div>
 
     <!-- منو -->
-    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; background:#fff; padding:10px 16px; border-radius:10px;">
-      <button class="btn btn-sm btn-primary" data-tab="dashboard">داشبورد</button>
-      <button class="btn btn-sm" data-tab="classes">کلاس‌ها</button>
-      <button class="btn btn-sm" data-tab="students">دانش‌آموزان</button>
-      <button class="btn btn-sm" data-tab="attendance">حضور و غیاب</button>
-      <button class="btn btn-sm" data-tab="reports">گزارش‌ها</button>
-      <button class="btn btn-sm" data-tab="import">ورود از اکسل</button>
-      <button class="btn btn-sm" data-tab="settings">تنظیمات</button>
+    <div class="sidebar" id="sidebarMenu">
+      <button class="btn btn-sm btn-primary" data-tab="dashboard"><i class="fas fa-chart-pie"></i> داشبورد</button>
+      <button class="btn btn-sm" data-tab="classes"><i class="fas fa-school"></i> کلاس‌ها</button>
+      <button class="btn btn-sm" data-tab="students"><i class="fas fa-users"></i> دانش‌آموزان</button>
+      <button class="btn btn-sm" data-tab="attendance"><i class="fas fa-clipboard-check"></i> حضور</button>
+      <button class="btn btn-sm" data-tab="reports"><i class="fas fa-file-alt"></i> گزارش‌ها</button>
+      <button class="btn btn-sm" data-tab="import"><i class="fas fa-file-upload"></i> اکسل</button>
+      <button class="btn btn-sm" data-tab="settings"><i class="fas fa-cog"></i> تنظیمات</button>
     </div>
 
     <!-- محتوا -->
     <div id="pageContent">
       <!-- داشبورد -->
-      <div id="tab-dashboard" class="tab-content">
+      <div id="tab-dashboard" class="tab-content fade-in">
         <div class="grid-cards" id="dashboardStats"></div>
-        <div style="display:flex; gap:20px; flex-wrap:wrap;">
-          <div style="flex:1; min-width:200px; background:#fff; padding:16px; border-radius:12px;">
-            <h4>وضعیت حضور امروز</h4>
-            <div id="todayStatus" style="margin-top:10px;"></div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <div style="flex:1; min-width:180px; background:#fff; padding:14px; border-radius:var(--radius); box-shadow:var(--shadow);">
+            <h4 style="font-size:0.95rem; color:var(--primary-dark);">وضعیت حضور امروز</h4>
+            <div id="todayStatus" style="margin-top:8px; font-size:0.9rem;"></div>
           </div>
-          <div style="flex:2; min-width:300px; background:#fff; padding:16px; border-radius:12px;">
-            <h4>آخرین غیبت‌ها</h4>
-            <div id="latestAbsences" style="margin-top:10px;"></div>
+          <div style="flex:2; min-width:250px; background:#fff; padding:14px; border-radius:var(--radius); box-shadow:var(--shadow);">
+            <h4 style="font-size:0.95rem; color:var(--primary-dark);">آخرین غیبت‌ها</h4>
+            <div id="latestAbsences" style="margin-top:8px; font-size:0.8rem;"></div>
           </div>
         </div>
       </div>
 
       <!-- کلاس‌ها -->
-      <div id="tab-classes" class="tab-content hidden">
+      <div id="tab-classes" class="tab-content hidden fade-in">
         <div class="flex flex-between mb-20">
-          <h3>مدیریت کلاس‌ها</h3>
-          <button class="btn btn-success" id="addClassBtn">+ کلاس جدید</button>
+          <h3 style="font-size:1.1rem; color:var(--primary-dark);">مدیریت کلاس‌ها</h3>
+          <button class="btn btn-success btn-sm" id="addClassBtn"><i class="fas fa-plus"></i> جدید</button>
         </div>
-        <div id="classesTableContainer"></div>
+        <div id="classesTableContainer" style="overflow-x:auto;"></div>
       </div>
 
       <!-- دانش‌آموزان -->
-      <div id="tab-students" class="tab-content hidden">
+      <div id="tab-students" class="tab-content hidden fade-in">
         <div class="flex flex-between mb-20">
-          <h3>مدیریت دانش‌آموزان</h3>
-          <button class="btn btn-success" id="addStudentBtn">+ دانش‌آموز جدید</button>
+          <h3 style="font-size:1.1rem; color:var(--primary-dark);">مدیریت دانش‌آموزان</h3>
+          <button class="btn btn-success btn-sm" id="addStudentBtn"><i class="fas fa-plus"></i> جدید</button>
         </div>
-        <div class="flex" style="background:#fff; padding:12px; border-radius:10px; margin-bottom:16px;">
-          <input type="text" id="studentSearch" placeholder="جستجو..." style="flex:1; padding:8px; border:1px solid #ccc; border-radius:6px;" />
-          <select id="filterGrade"><option value="">همه پایه‌ها</option></select>
-          <select id="filterMajor"><option value="">همه رشته‌ها</option></select>
-          <select id="filterClass"><option value="">همه کلاس‌ها</option></select>
-          <select id="filterStatus"><option value="true">فعال</option><option value="false">غیرفعال</option><option value="all">همه</option></select>
-          <button class="btn btn-primary" id="applyStudentFilters">اعمال</button>
+        <div style="background:#fff; padding:12px; border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow);">
+          <div class="flex" style="gap:6px;">
+            <input type="text" id="studentSearch" placeholder="جستجو..." style="flex:1; padding:8px 12px; border:2px solid #e2e8f0; border-radius:var(--radius-sm); font-size:0.85rem;" />
+            <button class="btn btn-primary btn-sm" id="applyStudentFilters"><i class="fas fa-search"></i></button>
+          </div>
+          <div class="flex" style="margin-top:8px; gap:6px;">
+            <select id="filterGrade" style="flex:1;"><option value="">همه پایه‌ها</option></select>
+            <select id="filterMajor" style="flex:1;"><option value="">همه رشته‌ها</option></select>
+            <select id="filterClass" style="flex:1;"><option value="">همه کلاس‌ها</option></select>
+            <select id="filterStatus" style="flex:1;"><option value="true">فعال</option><option value="false">غیرفعال</option><option value="all">همه</option></select>
+          </div>
         </div>
-        <div class="flex" style="margin-bottom:12px;">
-          <button class="btn btn-danger btn-sm" id="bulkDeleteBtn" disabled>حذف انتخاب‌شده</button>
-          <button class="btn btn-warning btn-sm" id="bulkEditBtn" disabled>اصلاح انتخاب‌شده</button>
-          <span style="margin-right:12px;" id="selectedCount">۰ انتخاب شده</span>
+        <div class="flex" style="margin-bottom:10px; gap:6px;">
+          <button class="btn btn-danger btn-sm" id="bulkDeleteBtn" disabled><i class="fas fa-trash"></i> حذف</button>
+          <button class="btn btn-warning btn-sm" id="bulkEditBtn" disabled><i class="fas fa-edit"></i> اصلاح</button>
+          <span style="font-size:0.85rem; color:#718096;" id="selectedCount">۰ انتخاب شده</span>
         </div>
-        <div id="studentsTableContainer"></div>
+        <div id="studentsTableContainer" style="overflow-x:auto;"></div>
         <div id="studentsPagination" class="pagination"></div>
       </div>
 
       <!-- حضور و غیاب -->
-      <div id="tab-attendance" class="tab-content hidden">
-        <h3>ثبت حضور و غیاب</h3>
-        <div class="flex" style="background:#f8f9fa; padding:16px; border-radius:10px; margin-bottom:16px;">
-          <div class="form-group" style="min-width:150px;">
-            <label>تاریخ</label>
-            <div class="datepicker-wrapper">
-              <input type="text" class="datepicker-input" id="attendanceDate" placeholder="انتخاب تاریخ" readonly />
+      <div id="tab-attendance" class="tab-content hidden fade-in">
+        <h3 style="font-size:1.1rem; color:var(--primary-dark); margin-bottom:12px;">ثبت حضور و غیاب</h3>
+        <div style="background:#fff; padding:12px; border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow);">
+          <div class="form-row">
+            <div class="form-group" style="min-width:130px;">
+              <label style="font-size:0.8rem;">تاریخ</label>
+              <div class="datepicker-wrapper">
+                <input type="text" class="datepicker-input" id="attendanceDate" placeholder="انتخاب تاریخ" readonly />
+              </div>
             </div>
+            <div class="form-group" style="min-width:130px;">
+              <label style="font-size:0.8rem;">کلاس</label>
+              <select id="attendanceClass"></select>
+            </div>
+            <div class="form-group" style="min-width:110px;">
+              <label style="font-size:0.8rem;">نوع</label>
+              <select id="attendanceScope">
+                <option value="bell">زنگ</option>
+                <option value="full_day">کل روز</option>
+              </select>
+            </div>
+            <div class="form-group" style="min-width:110px;" id="bellSelector">
+              <label style="font-size:0.8rem;">شماره زنگ</label>
+              <select id="attendanceBell"></select>
+            </div>
+            <button class="btn btn-primary" style="margin-top:18px;" id="loadAttendance"><i class="fas fa-sync"></i> بارگذاری</button>
           </div>
-          <div class="form-group" style="min-width:150px;">
-            <label>کلاس</label>
-            <select id="attendanceClass"></select>
-          </div>
-          <div class="form-group" style="min-width:130px;">
-            <label>نوع</label>
-            <select id="attendanceScope">
-              <option value="bell">زنگ</option>
-              <option value="full_day">کل روز</option>
-            </select>
-          </div>
-          <div class="form-group" style="min-width:130px;" id="bellSelector">
-            <label>شماره زنگ</label>
-            <select id="attendanceBell"></select>
-          </div>
-          <button class="btn btn-primary" style="margin-top:18px;" id="loadAttendance">بارگذاری</button>
         </div>
-        <div id="attendanceTableContainer"></div>
-        <div class="flex" style="margin-top:16px;">
-          <button class="btn btn-success" id="saveAttendance">ذخیره حضور و غیاب</button>
+        <div id="attendanceTableContainer" style="overflow-x:auto;"></div>
+        <div class="flex" style="margin-top:12px;">
+          <button class="btn btn-success" id="saveAttendance"><i class="fas fa-save"></i> ذخیره</button>
         </div>
       </div>
 
       <!-- گزارش‌ها -->
-      <div id="tab-reports" class="tab-content hidden">
-        <h3>گزارش‌ها</h3>
-        <div class="flex" style="background:#f8f9fa; padding:16px; border-radius:10px; margin-bottom:16px;">
-          <div class="form-group" style="min-width:150px;">
-            <label>نوع گزارش</label>
-            <select id="reportType">
-              <option value="today">امروز</option>
-              <option value="range">بازه</option>
-              <option value="student">دانش‌آموز</option>
-            </select>
-          </div>
-          <div class="form-group" style="min-width:150px;" id="reportDateGroup">
-            <label>تاریخ</label>
-            <div class="datepicker-wrapper">
-              <input type="text" class="datepicker-input" id="reportDate" placeholder="انتخاب تاریخ" readonly />
+      <div id="tab-reports" class="tab-content hidden fade-in">
+        <h3 style="font-size:1.1rem; color:var(--primary-dark); margin-bottom:12px;">گزارش‌ها</h3>
+        <div style="background:#fff; padding:12px; border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow);">
+          <div class="form-row">
+            <div class="form-group" style="min-width:120px;">
+              <label style="font-size:0.8rem;">نوع</label>
+              <select id="reportType">
+                <option value="today">امروز</option>
+                <option value="range">بازه</option>
+                <option value="student">دانش‌آموز</option>
+              </select>
             </div>
-          </div>
-          <div class="form-group" style="min-width:150px; display:none;" id="reportRangeGroup">
-            <label>از</label>
-            <div class="datepicker-wrapper">
-              <input type="text" class="datepicker-input" id="reportFrom" placeholder="از" readonly />
+            <div class="form-group" style="min-width:120px;" id="reportDateGroup">
+              <label style="font-size:0.8rem;">تاریخ</label>
+              <div class="datepicker-wrapper">
+                <input type="text" class="datepicker-input" id="reportDate" placeholder="انتخاب" readonly />
+              </div>
             </div>
-            <label>تا</label>
-            <div class="datepicker-wrapper">
-              <input type="text" class="datepicker-input" id="reportTo" placeholder="تا" readonly />
+            <div class="form-group" style="min-width:120px; display:none;" id="reportRangeGroup">
+              <label style="font-size:0.8rem;">از</label>
+              <div class="datepicker-wrapper"><input type="text" class="datepicker-input" id="reportFrom" placeholder="از" readonly /></div>
+              <label style="font-size:0.8rem;">تا</label>
+              <div class="datepicker-wrapper"><input type="text" class="datepicker-input" id="reportTo" placeholder="تا" readonly /></div>
             </div>
+            <div class="form-group" style="min-width:130px; display:none;" id="reportStudentGroup">
+              <label style="font-size:0.8rem;">دانش‌آموز</label>
+              <select id="reportStudent"></select>
+            </div>
+            <div class="form-group" style="min-width:120px;">
+              <label style="font-size:0.8rem;">کلاس</label>
+              <select id="reportClass"><option value="">همه</option></select>
+            </div>
+            <button class="btn btn-primary" style="margin-top:18px;" id="generateReport"><i class="fas fa-chart-bar"></i> نمایش</button>
+            <button class="btn btn-success" style="margin-top:18px;" id="exportExcel"><i class="fas fa-file-excel"></i> اکسل</button>
           </div>
-          <div class="form-group" style="min-width:150px; display:none;" id="reportStudentGroup">
-            <label>دانش‌آموز</label>
-            <select id="reportStudent"></select>
-          </div>
-          <div class="form-group" style="min-width:150px;">
-            <label>کلاس (اختیاری)</label>
-            <select id="reportClass"><option value="">همه</option></select>
-          </div>
-          <button class="btn btn-primary" style="margin-top:18px;" id="generateReport">نمایش گزارش</button>
-          <button class="btn btn-success" style="margin-top:18px;" id="exportExcel">خروجی اکسل</button>
         </div>
-        <div id="reportResult"></div>
+        <div id="reportResult" style="overflow-x:auto;"></div>
       </div>
 
       <!-- ورود از اکسل -->
-      <div id="tab-import" class="tab-content hidden">
-        <h3>ورود دانش‌آموزان از اکسل</h3>
-        <div style="background:#fff; padding:20px; border-radius:12px;">
+      <div id="tab-import" class="tab-content hidden fade-in">
+        <h3 style="font-size:1.1rem; color:var(--primary-dark); margin-bottom:12px;">ورود از اکسل</h3>
+        <div style="background:#fff; padding:16px; border-radius:var(--radius); box-shadow:var(--shadow);">
           <div class="form-group">
             <label>فایل اکسل (xlsx/xls)</label>
-            <input type="file" id="excelFile" accept=".xlsx,.xls" />
+            <input type="file" id="excelFile" accept=".xlsx,.xls" style="padding:8px;" />
           </div>
           <div id="excelPreview"></div>
-          <button class="btn btn-success" id="importExcelBtn" disabled>ثبت در دیتابیس</button>
+          <button class="btn btn-success" id="importExcelBtn" disabled><i class="fas fa-upload"></i> ثبت در دیتابیس</button>
           <div id="importResult" class="mt-20"></div>
         </div>
       </div>
 
       <!-- تنظیمات -->
-      <div id="tab-settings" class="tab-content hidden">
-        <h3>تنظیمات سیستم</h3>
-        <div style="background:#fff; padding:20px; border-radius:12px; max-width:600px;">
-          <div class="form-group">
-            <label>تعداد زنگ‌ها (حداکثر ۱۰)</label>
-            <input type="number" id="bellCount" min="1" max="10" value="4" />
+      <div id="tab-settings" class="tab-content hidden fade-in">
+        <h3 style="font-size:1.1rem; color:var(--primary-dark); margin-bottom:12px;">تنظیمات سیستم</h3>
+        <div style="background:#fff; padding:16px; border-radius:var(--radius); max-width:600px; box-shadow:var(--shadow);">
+          <!-- تغییر رمز -->
+          <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #edf2f7;">
+            <h4 style="font-size:1rem; margin-bottom:10px;">🔑 تغییر رمز عبور</h4>
+            <div class="form-group">
+              <label>رمز فعلی</label>
+              <input type="password" id="currentPassword" placeholder="رمز فعلی" />
+            </div>
+            <div class="form-group">
+              <label>رمز جدید</label>
+              <input type="password" id="newPassword" placeholder="رمز جدید" />
+            </div>
+            <div class="form-group">
+              <label>تکرار رمز جدید</label>
+              <input type="password" id="confirmPassword" placeholder="تکرار رمز جدید" />
+            </div>
+            <button class="btn btn-primary" id="changePasswordBtn"><i class="fas fa-key"></i> تغییر رمز</button>
+            <div id="passwordChangeResult" style="margin-top:8px; font-size:0.9rem;"></div>
           </div>
-          <div id="bellNamesContainer"></div>
-          <div class="form-group">
-            <label><input type="checkbox" id="fullDayEnabled" checked /> فعال بودن «کل روز»</label>
+
+          <!-- تنظیمات زنگ‌ها -->
+          <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #edf2f7;">
+            <h4 style="font-size:1rem; margin-bottom:10px;">⏰ تنظیمات زنگ‌ها</h4>
+            <div class="form-group">
+              <label>تعداد زنگ‌ها (حداکثر ۱۰)</label>
+              <input type="number" id="bellCount" min="1" max="10" value="4" />
+            </div>
+            <div id="bellNamesContainer"></div>
+            <div class="form-group">
+              <label><input type="checkbox" id="fullDayEnabled" checked /> فعال بودن «کل روز»</label>
+            </div>
+            <button class="btn btn-primary" id="saveSettings"><i class="fas fa-save"></i> ذخیره</button>
           </div>
-          <button class="btn btn-primary" id="saveSettings">ذخیره تنظیمات</button>
-          <hr style="margin:30px 0;" />
-          <button class="btn btn-danger" id="wipeDataBtn">حذف کامل اطلاعات</button>
+
+          <!-- حذف کامل -->
+          <div>
+            <h4 style="font-size:1rem; margin-bottom:10px; color:var(--danger);">⚠️ حذف کامل اطلاعات</h4>
+            <button class="btn btn-danger" id="wipeDataBtn"><i class="fas fa-trash-alt"></i> حذف کامل</button>
+          </div>
         </div>
       </div>
     </div>
@@ -427,16 +705,16 @@
   let currentStudentPage = 1;
   const PAGE_SIZE = 50;
   let studentFilters = { search: '', grade: '', major: '', classId: '', active: 'true' };
+  let lastActivityTime = Date.now();
+  const SESSION_TIMEOUT_MS = 3600000;
 
   // ============================================================
-  // 3. توابع تبدیل تاریخ شمسی (دقیق و بدون خطا)
+  // 3. توابع تبدیل تاریخ شمسی (اصلاح‌شده و دقیق)
   // ============================================================
-  // آرایه‌های کمکی برای تبدیل شمسی به میلادی
   const jalaaliMonths = [0, 31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
   const gregorianMonths = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   function isLeapJalali(year) {
-    // الگوریتم کبیسه‌گیری شمسی
     const y = year % 33;
     return y === 1 || y === 5 || y === 9 || y === 13 || y === 17 || y === 22 || y === 26 || y === 30;
   }
@@ -445,66 +723,56 @@
     return (year % 400 === 0) || (year % 4 === 0 && year % 100 !== 0);
   }
 
-  function jalaliToGregorian(jy, jm, jd) {
-    // تبدیل تاریخ شمسی به میلادی با الگوریتم دقیق
-    let jy2 = jy - 979;
-    let jm2 = jm - 1;
-    let jd2 = jd - 1;
-
-    let gDayNo = 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor((jy2 % 33 + 3) / 4);
-    for (let i = 0; i < jm2; i++) {
-      gDayNo += jalaaliMonths[i];
-    }
-    gDayNo += jd2;
-
-    let gYear = 0;
-    let gDayNo2 = gDayNo + 79;
-    let gYear2 = gDayNo2 * 400 / 146097;
-    gYear2 = Math.floor(gYear2);
-    let gDayNo3 = gDayNo2 - Math.floor(gYear2 * 146097 / 400) + 1;
-
-    let gMonth = 0;
-    let gDay = 0;
-    for (let i = 0; i < 12; i++) {
-      let daysInMonth = gregorianMonths[i + 1];
-      if (i === 1 && isLeapGregorian(gYear2 + 1)) daysInMonth = 29;
-      if (gDayNo3 <= daysInMonth) {
-        gMonth = i + 1;
-        gDay = gDayNo3;
-        break;
-      }
-      gDayNo3 -= daysInMonth;
-    }
-    gYear = gYear2 + 1;
-    return { year: gYear, month: gMonth, day: gDay };
-  }
-
   function gregorianToJalali(gy, gm, gd) {
-    // تبدیل میلادی به شمسی
-    let gDayNo = 0;
+    let gDays = 0;
     for (let i = 1; i < gm; i++) {
-      gDayNo += gregorianMonths[i];
-      if (i === 2 && isLeapGregorian(gy)) gDayNo++;
+      gDays += gregorianMonths[i];
+      if (i === 2 && isLeapGregorian(gy)) gDays++;
     }
-    gDayNo += gd;
+    gDays += gd;
 
     let jy = gy - 621;
-    let jDayNo = gDayNo + 79;
+    let jDays = gDays + 79;
     let jy2 = jy - 1;
-    let jDayNo2 = jDayNo + 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor((jy2 % 33 + 3) / 4) + 1;
-    let jm = 0;
-    let jd = 0;
+    let jDays2 = jDays + 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor((jy2 % 33 + 3) / 4) + 1;
+    let jm = 0, jd = 0;
     for (let i = 0; i < 12; i++) {
-      let daysInMonth = jalaaliMonths[i + 1];
-      if (i === 11 && isLeapJalali(jy)) daysInMonth = 30;
-      if (jDayNo2 <= daysInMonth) {
+      let days = jalaaliMonths[i + 1];
+      if (i === 11 && isLeapJalali(jy)) days = 30;
+      if (jDays2 <= days) {
         jm = i + 1;
-        jd = jDayNo2;
+        jd = jDays2;
         break;
       }
-      jDayNo2 -= daysInMonth;
+      jDays2 -= days;
     }
     return { year: jy, month: jm, day: jd };
+  }
+
+  function jalaliToGregorian(jy, jm, jd) {
+    let jDays = 0;
+    for (let i = 0; i < jm - 1; i++) {
+      jDays += jalaaliMonths[i + 1];
+      if (i === 11 && isLeapJalali(jy)) jDays++;
+    }
+    jDays += jd;
+
+    let gy = jy + 621;
+    let gDays = jDays + 79;
+    let gy2 = gy - 1;
+    let gDays2 = gDays + 365 * gy2 + Math.floor(gy2 / 400) * 97 + Math.floor((gy2 % 400) / 4) + 1;
+    let gm = 0, gd2 = 0;
+    for (let i = 0; i < 12; i++) {
+      let days = gregorianMonths[i + 1];
+      if (i === 1 && isLeapGregorian(gy)) days = 29;
+      if (gDays2 <= days) {
+        gm = i + 1;
+        gd2 = gDays2;
+        break;
+      }
+      gDays2 -= days;
+    }
+    return { year: gy, month: gm, day: gd2 };
   }
 
   function toJalaali(dateStr) {
@@ -512,12 +780,8 @@
     try {
       const parts = dateStr.split('-');
       if (parts.length !== 3) return '';
-      const gy = parseInt(parts[0]);
-      const gm = parseInt(parts[1]);
-      const gd = parseInt(parts[2]);
-      if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return '';
-      const j = gregorianToJalali(gy, gm, gd);
-      return `${j.year}/${String(j.month).padStart(2,'0')}/${String(j.day).padStart(2,'0')}`;
+      const g = gregorianToJalali(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+      return `${g.year}/${String(g.month).padStart(2,'0')}/${String(g.day).padStart(2,'0')}`;
     } catch (e) { return ''; }
   }
 
@@ -526,12 +790,8 @@
     try {
       const parts = jDate.split('/');
       if (parts.length !== 3) return '';
-      const jy = parseInt(parts[0]);
-      const jm = parseInt(parts[1]);
-      const jd = parseInt(parts[2]);
-      if (isNaN(jy) || isNaN(jm) || isNaN(jd)) return '';
-      const g = jalaliToGregorian(jy, jm, jd);
-      return `${g.year}-${String(g.month).padStart(2,'0')}-${String(g.day).padStart(2,'0')}`;
+      const j = jalaliToGregorian(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+      return `${j.year}-${String(j.month).padStart(2,'0')}-${String(j.day).padStart(2,'0')}`;
     } catch (e) { return ''; }
   }
 
@@ -545,7 +805,7 @@
   }
 
   // ============================================================
-  // 4. Datepicker شمسی دست‌ساز
+  // 4. Datepicker شمسی با انتخاب ماه
   // ============================================================
   class JalaliDatepicker {
     constructor(inputElement) {
@@ -555,17 +815,10 @@
       this.currentMonth = null;
       this.selectedDate = null;
       this.isOpen = false;
-
-      // ایجاد popup
+      this.showMonthList = false;
       this.createPopup();
-
-      // رویدادها
       this.input.addEventListener('click', () => this.toggle());
-      this.input.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') this.close();
-      });
-
-      // مقداردهی اولیه با تاریخ امروز
+      this.input.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.close(); });
       const today = getTodayJalali();
       const parts = today.split('/');
       if (parts.length === 3) {
@@ -574,13 +827,9 @@
         this.selectedDate = today;
         this.input.value = today;
       }
-
-      // بستن با کلیک خارج
       document.addEventListener('click', (e) => {
         if (!this.input.closest('.datepicker-wrapper')?.contains(e.target) &&
-            !this.popup.contains(e.target)) {
-          this.close();
-        }
+            !this.popup.contains(e.target)) this.close();
       });
     }
 
@@ -593,31 +842,67 @@
           <span class="month-year"></span>
           <button class="next-month"><i class="fas fa-chevron-left"></i></button>
         </div>
-        <div class="datepicker-weekdays">
-          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
-        </div>
+        <div class="month-list"></div>
+        <div class="datepicker-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
         <div class="datepicker-days"></div>
       `;
       this.input.parentNode.appendChild(this.popup);
 
-      // رویدادهای popup
+      // رویدادهای هدر
       this.popup.querySelector('.prev-month').addEventListener('click', (e) => {
         e.stopPropagation();
-        this.changeMonth(-1);
+        if (this.showMonthList) this.toggleMonthList();
+        else this.changeMonth(-1);
       });
       this.popup.querySelector('.next-month').addEventListener('click', (e) => {
         e.stopPropagation();
-        this.changeMonth(1);
+        if (this.showMonthList) this.toggleMonthList();
+        else this.changeMonth(1);
+      });
+      this.popup.querySelector('.month-year').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleMonthList();
       });
     }
 
-    toggle() {
-      if (this.isOpen) {
-        this.close();
+    toggleMonthList() {
+      this.showMonthList = !this.showMonthList;
+      const monthList = this.popup.querySelector('.month-list');
+      const daysContainer = this.popup.querySelector('.datepicker-days');
+      const weekdays = this.popup.querySelector('.datepicker-weekdays');
+      if (this.showMonthList) {
+        monthList.classList.add('show');
+        daysContainer.style.display = 'none';
+        weekdays.style.display = 'none';
+        this.renderMonthList();
       } else {
-        this.open();
+        monthList.classList.remove('show');
+        daysContainer.style.display = 'grid';
+        weekdays.style.display = 'grid';
+        this.render();
       }
     }
+
+    renderMonthList() {
+      const monthList = this.popup.querySelector('.month-list');
+      const monthNames = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+      let html = '';
+      for (let i = 0; i < 12; i++) {
+        const isActive = (i + 1 === this.currentMonth);
+        html += `<button class="${isActive ? 'active' : ''}" data-month="${i+1}">${monthNames[i]}</button>`;
+      }
+      monthList.innerHTML = html;
+      monthList.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const month = parseInt(btn.dataset.month);
+          this.currentMonth = month;
+          this.toggleMonthList();
+          this.render();
+        });
+      });
+    }
+
+    toggle() { this.isOpen ? this.close() : this.open(); }
 
     open() {
       if (!this.currentYear || !this.currentMonth) {
@@ -627,6 +912,10 @@
           this.currentMonth = parseInt(today[1]);
         }
       }
+      this.showMonthList = false;
+      this.popup.querySelector('.month-list').classList.remove('show');
+      this.popup.querySelector('.datepicker-days').style.display = 'grid';
+      this.popup.querySelector('.datepicker-weekdays').style.display = 'grid';
       this.render();
       this.popup.classList.add('show');
       this.isOpen = true;
@@ -635,46 +924,31 @@
     close() {
       this.popup.classList.remove('show');
       this.isOpen = false;
+      this.showMonthList = false;
     }
 
     changeMonth(delta) {
-      let newMonth = this.currentMonth + delta;
-      let newYear = this.currentYear;
-      if (newMonth > 12) {
-        newMonth = 1;
-        newYear++;
-      } else if (newMonth < 1) {
-        newMonth = 12;
-        newYear--;
-      }
+      let newMonth = this.currentMonth + delta, newYear = this.currentYear;
+      if (newMonth > 12) { newMonth = 1; newYear++; }
+      else if (newMonth < 1) { newMonth = 12; newYear--; }
       this.currentYear = newYear;
       this.currentMonth = newMonth;
       this.render();
     }
 
     render() {
-      const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
-      const header = this.popup.querySelector('.month-year');
-      header.textContent = `${monthNames[this.currentMonth - 1]} ${this.currentYear}`;
+      const monthNames = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+      this.popup.querySelector('.month-year').textContent = `${monthNames[this.currentMonth-1]} ${this.currentYear}`;
+      const container = this.popup.querySelector('.datepicker-days');
+      container.innerHTML = '';
 
-      const daysContainer = this.popup.querySelector('.datepicker-days');
-      daysContainer.innerHTML = '';
-
-      // تعیین روز اول ماه
       const firstDayDate = jalaliToGregorian(this.currentYear, this.currentMonth, 1);
       const firstDayGreg = new Date(firstDayDate.year, firstDayDate.month - 1, firstDayDate.day);
-      let startDayOfWeek = firstDayGreg.getDay(); // 0=شنبه در ایران (یکشنبه بین‌المللی)
-      // در تقویم شمسی، شنبه = 0
-      // اما getDay() یکشنبه = 1، دوشنبه = 2، ...، شنبه = 6 (در جاوااسکریپت یکشنبه = 1)
-      // پس باید اصلاح کنیم: روزها به ترتیب شنبه(0) تا جمعه(6)
-      // getDay() returns 0=یکشنبه, 1=دوشنبه, 2=سه‌شنبه, 3=چهارشنبه, 4=پنج‌شنبه, 5=جمعه, 6=شنبه
-      // بنابراین شنبه = 6، یکشنبه = 0
-      let startOffset = (startDayOfWeek + 1) % 7; // برای تبدیل به شنبه‌محور
+      let startOffset = (firstDayGreg.getDay() + 1) % 7;
 
       const daysInMonth = jalaaliMonths[this.currentMonth];
       const totalDays = (this.currentMonth === 12 && isLeapJalali(this.currentYear)) ? 30 : daysInMonth;
 
-      // روزهای ماه قبل
       const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
       const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
       const daysInPrevMonth = (prevMonth === 12 && isLeapJalali(prevYear)) ? 30 : jalaaliMonths[prevMonth];
@@ -689,28 +963,20 @@
           const newDate = `${prevYear}/${String(prevMonth).padStart(2,'0')}/${String(day).padStart(2,'0')}`;
           this.selectDate(newDate);
         });
-        daysContainer.appendChild(btn);
+        container.appendChild(btn);
       }
 
-      // روزهای ماه جاری
       const todayJalali = getTodayJalali();
       for (let d = 1; d <= totalDays; d++) {
         const btn = document.createElement('button');
         btn.textContent = d;
         const dateStr = `${this.currentYear}/${String(this.currentMonth).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
-        if (dateStr === this.selectedDate) {
-          btn.classList.add('selected');
-        }
-        if (dateStr === todayJalali) {
-          btn.classList.add('today');
-        }
-        btn.addEventListener('click', () => {
-          this.selectDate(dateStr);
-        });
-        daysContainer.appendChild(btn);
+        if (dateStr === this.selectedDate) btn.classList.add('selected');
+        if (dateStr === todayJalali) btn.classList.add('today');
+        btn.addEventListener('click', () => this.selectDate(dateStr));
+        container.appendChild(btn);
       }
 
-      // روزهای ماه بعد
       const totalCells = startOffset + totalDays;
       const remainingCells = 42 - totalCells;
       const nextMonth = this.currentMonth === 12 ? 1 : this.currentMonth + 1;
@@ -723,7 +989,7 @@
           const newDate = `${nextYear}/${String(nextMonth).padStart(2,'0')}/${String(d).padStart(2,'0')}`;
           this.selectDate(newDate);
         });
-        daysContainer.appendChild(btn);
+        container.appendChild(btn);
       }
     }
 
@@ -731,13 +997,10 @@
       this.selectedDate = dateStr;
       this.input.value = dateStr;
       this.close();
-      // trigger change event
       this.input.dispatchEvent(new Event('change'));
     }
 
-    getValue() {
-      return this.input.value;
-    }
+    getValue() { return this.input.value; }
 
     setDate(dateStr) {
       this.selectedDate = dateStr;
@@ -750,9 +1013,6 @@
     }
   }
 
-  // ============================================================
-  // 5. مقداردهی Datepickerها
-  // ============================================================
   function initDatepickers() {
     document.querySelectorAll('.datepicker-input').forEach(el => {
       if (el._jalaliDatepicker) return;
@@ -762,10 +1022,10 @@
   }
 
   // ============================================================
-  // 6. توابع کمکی
+  // 5. توابع کمکی
   // ============================================================
   function toast(msg, type = 'success') {
-    Swal.fire({ text: msg, icon: type, timer: 3000, showConfirmButton: false });
+    Swal.fire({ text: msg, icon: type, timer: 2500, showConfirmButton: false });
   }
 
   function showModal(html) {
@@ -809,22 +1069,49 @@
   }
 
   // ============================================================
-  // 7. احراز هویت
+  // 6. Session Timeout
+  // ============================================================
+  function resetActivityTimer() { lastActivityTime = Date.now(); }
+  function checkSessionTimeout() {
+    if (!currentUser) return;
+    if (Date.now() - lastActivityTime > SESSION_TIMEOUT_MS) {
+      toast('مدت زمان نشست به پایان رسید.', 'warning');
+      logout();
+    }
+  }
+  document.addEventListener('click', resetActivityTimer);
+  document.addEventListener('keydown', resetActivityTimer);
+  document.addEventListener('touchstart', resetActivityTimer);
+  document.addEventListener('scroll', resetActivityTimer);
+  setInterval(checkSessionTimeout, 30000);
+
+  // ============================================================
+  // 7. احراز هویت (با تبدیل نام کاربری به ایمیل)
   // ============================================================
   async function login() {
-    const email = document.getElementById('loginEmail').value.trim();
+    let username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
+
+    // اگر نام کاربری شامل @ نبود، @school.local اضافه کن
+    if (!username.includes('@')) {
+      username = username + '@school.local';
+    }
+
     try {
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: username,
+        password: password
+      });
       if (error) throw error;
       currentUser = data.user;
       document.getElementById('loginPage').classList.add('hidden');
       document.getElementById('mainPage').classList.remove('hidden');
       document.getElementById('userDisplay').textContent = `خوش آمدید ${currentUser.email}`;
+      resetActivityTimer();
       loadDashboard();
       loadAllSelects();
       showTab('dashboard');
-      setTimeout(initDatepickers, 200);
+      setTimeout(initDatepickers, 300);
     } catch (err) {
       document.getElementById('loginError').textContent = err.message;
     }
@@ -832,17 +1119,21 @@
 
   async function logout() {
     await supabaseClient.auth.signOut();
-    location.reload();
+    currentUser = null;
+    document.getElementById('mainPage').classList.add('hidden');
+    document.getElementById('loginPage').classList.remove('hidden');
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').textContent = '';
   }
 
   async function createDefaultUser() {
     try {
       const { data, error } = await supabaseClient.auth.signUp({
-        email: 'admin@school.com',
+        email: 'admin@school.local',
         password: 'Admin123@'
       });
       if (error) throw error;
-      toast('کاربر admin ساخته شد. حالا وارد شوید.', 'success');
+      toast('کاربر admin با ایمیل admin@school.local ساخته شد.', 'success');
     } catch (err) {
       if (err.message.includes('already registered')) {
         toast('کاربر قبلاً وجود دارد، مستقیماً وارد شوید.', 'info');
@@ -853,7 +1144,51 @@
   }
 
   // ============================================================
-  // 8. تب‌ها
+  // 8. تغییر رمز عبور
+  // ============================================================
+  async function changePassword() {
+    const current = document.getElementById('currentPassword').value.trim();
+    const newPwd = document.getElementById('newPassword').value.trim();
+    const confirm = document.getElementById('confirmPassword').value.trim();
+    const resultEl = document.getElementById('passwordChangeResult');
+
+    if (!current || !newPwd || !confirm) {
+      resultEl.innerHTML = '<span style="color:var(--danger);">همه فیلدها را پر کنید.</span>';
+      return;
+    }
+    if (newPwd.length < 6) {
+      resultEl.innerHTML = '<span style="color:var(--danger);">رمز جدید باید حداقل ۶ کاراکتر باشد.</span>';
+      return;
+    }
+    if (newPwd !== confirm) {
+      resultEl.innerHTML = '<span style="color:var(--danger);">رمز جدید و تکرار آن مطابقت ندارند.</span>';
+      return;
+    }
+
+    try {
+      const { error: signInError } = await supabaseClient.auth.signInWithPassword({
+        email: currentUser.email,
+        password: current
+      });
+      if (signInError) {
+        resultEl.innerHTML = '<span style="color:var(--danger);">رمز فعلی اشتباه است.</span>';
+        return;
+      }
+
+      const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+      if (error) throw error;
+      resultEl.innerHTML = '<span style="color:var(--success);">✅ رمز عبور با موفقیت تغییر کرد.</span>';
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+      toast('رمز عبور تغییر کرد', 'success');
+    } catch (err) {
+      resultEl.innerHTML = `<span style="color:var(--danger);">${err.message}</span>`;
+    }
+  }
+
+  // ============================================================
+  // 9. تب‌ها و منو
   // ============================================================
   function showTab(tab) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
@@ -871,18 +1206,23 @@
     else if (tab === 'reports') loadReportSelects();
     else if (tab === 'import') resetImport();
     setTimeout(initDatepickers, 300);
+    document.getElementById('sidebarMenu').classList.remove('open');
   }
 
   document.querySelectorAll('[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => showTab(btn.dataset.tab));
   });
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    document.getElementById('sidebarMenu').classList.toggle('open');
+  });
   document.getElementById('loginBtn').addEventListener('click', login);
   document.getElementById('logoutBtn').addEventListener('click', logout);
   document.getElementById('createDefaultUserBtn').addEventListener('click', createDefaultUser);
+  document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
   document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
   // ============================================================
-  // 9. داشبورد
+  // 10. داشبورد
   // ============================================================
   async function loadDashboard() {
     try {
@@ -909,35 +1249,40 @@
         .select('status')
         .eq('date', today);
       const present = todayRecords?.filter(r => r.status === 'present').length || 0;
+      const excused = todayRecords?.filter(r => r.status === 'excused').length || 0;
       const absent = todayRecords?.filter(r => r.status === 'absent').length || 0;
       const total = await supabaseClient.from('students').select('id', { count: 'exact', head: true });
       const notRegistered = (total.count || 0) - (todayRecords?.length || 0);
       document.getElementById('todayStatus').innerHTML = `
-        <p>حاضر: ${present}</p><p>غایب: ${absent}</p><p>ثبت نشده: ${notRegistered}</p>
+        <p>✅ حاضر: ${present}</p>
+        <p>⚠️ غیبت موجه: ${excused}</p>
+        <p>❌ غیبت غیرموجه: ${absent}</p>
+        <p>📌 ثبت نشده: ${notRegistered}</p>
       `;
 
       const { data: lastAbsences } = await supabaseClient
         .from('attendance_records')
         .select(`*, students(first_name, last_name, class_id, classes(name))`)
-        .eq('status', 'absent')
+        .in('status', ['excused', 'absent'])
         .order('date', { ascending: false })
         .limit(5);
-      let html = '<table><tr><th>دانش‌آموز</th><th>کلاس</th><th>تاریخ</th><th>نوع</th><th>زنگ</th></tr>';
+      let html = '<table><tr><th>دانش‌آموز</th><th>کلاس</th><th>تاریخ</th><th>وضعیت</th></tr>';
       if (lastAbsences?.length) {
         lastAbsences.forEach(r => {
           const s = r.students;
+          const statusLabel = r.status === 'excused' ? 'موجه' : 'غیرموجه';
+          const badgeClass = r.status === 'excused' ? 'badge-warning' : 'badge-danger';
           html += `<tr><td>${s?.first_name} ${s?.last_name}</td><td>${s?.classes?.name || ''}</td>
-            <td>${toJalaali(r.date)}</td><td>${r.scope_type === 'full_day' ? 'کل روز' : 'زنگ'}</td>
-            <td>${r.bell_number || '-'}</td></tr>`;
+            <td>${toJalaali(r.date)}</td><td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
         });
-      } else html += '<tr><td colspan="5">هیچ غیبتی ثبت نشده</td></tr>';
+      } else html += '<tr><td colspan="4">هیچ غیبتی ثبت نشده</td></tr>';
       html += '</table>';
       document.getElementById('latestAbsences').innerHTML = html;
     } catch (e) { console.error(e); }
   }
 
   // ============================================================
-  // 10. کلاس‌ها
+  // 11. کلاس‌ها
   // ============================================================
   async function loadClasses() {
     const { data, error } = await supabaseClient.from('classes').select('*').order('id');
@@ -948,9 +1293,9 @@
         <td>${c.name}</td><td>${c.grade}</td><td>${c.major || '-'}</td>
         <td><span class="badge ${c.active ? 'badge-success' : 'badge-danger'}">${c.active ? 'فعال' : 'غیرفعال'}</span></td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="editClass('${c.id}')">ویرایش</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteClass('${c.id}')">حذف</button>
-          <button class="btn btn-sm" onclick="toggleClass('${c.id}')">${c.active ? 'غیرفعال' : 'فعال'}</button>
+          <button class="btn btn-primary btn-sm" onclick="editClass('${c.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteClass('${c.id}')"><i class="fas fa-trash"></i></button>
+          <button class="btn btn-sm" onclick="toggleClass('${c.id}')"><i class="fas ${c.active ? 'fa-eye-slash' : 'fa-eye'}"></i></button>
         </td>
       </tr>`;
     });
@@ -1006,7 +1351,7 @@
   });
 
   // ============================================================
-  // 11. دانش‌آموزان
+  // 12. دانش‌آموزان (مرتب‌سازی بر اساس internal_code)
   // ============================================================
   async function loadStudents(page = 1) {
     currentStudentPage = page;
@@ -1022,25 +1367,28 @@
     if (classId) query = query.eq('class_id', classId);
     if (active !== 'all') query = query.eq('active', active === 'true');
 
+    // مرتب‌سازی بر اساس internal_code (عدد)
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
-    query = query.range(from, to).order('id', { ascending: false });
+    query = query.range(from, to).order('internal_code', { ascending: true, nullsFirst: false });
 
     const { data, error, count } = await query;
     if (error) return toast(error.message, 'error');
 
     let html = `<table><tr><th><input type="checkbox" id="selectAllStudents" /></th>
-      <th>نام</th><th>نام خانوادگی</th><th>پایه</th><th>رشته</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>`;
+      <th>کد دانش‌آموزی</th><th>نام</th><th>نام خانوادگی</th><th>پایه</th><th>رشته</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>`;
     data.forEach(s => {
       const checked = selectedStudentIds.has(s.id) ? 'checked' : '';
       html += `<tr>
         <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked} /></td>
+        <td><strong>${s.internal_code || '-'}</strong></td>
         <td>${s.first_name}</td><td>${s.last_name}</td><td>${s.grade}</td><td>${s.major || '-'}</td>
         <td>${s.classes?.name || '-'}</td>
         <td><span class="badge ${s.active ? 'badge-success' : 'badge-danger'}">${s.active ? 'فعال' : 'غیرفعال'}</span></td>
         <td>
-          <button class="btn btn-primary btn-sm" onclick="editStudent('${s.id}')">ویرایش</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">حذف</button>
+          <button class="btn btn-primary btn-sm" onclick="editStudent('${s.id}')"><i class="fas fa-edit"></i></button>
+          <button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')"><i class="fas fa-trash"></i></button>
+          <button class="btn btn-warning btn-sm" onclick="showStudentAbsences('${s.id}')"><i class="fas fa-calendar-times"></i></button>
         </td>
       </tr>`;
     });
@@ -1078,7 +1426,107 @@
   }
 
   // ============================================================
-  // 12. فیلترهای بدون تکرار
+  // 13. مودال نمایش و ویرایش غیبت‌ها
+  // ============================================================
+  window.showStudentAbsences = async (studentId) => {
+    const { data: student } = await supabaseClient
+      .from('students')
+      .select('first_name, last_name, grade, class_id, classes(name), internal_code')
+      .eq('id', studentId)
+      .single();
+
+    if (!student) return toast('دانش‌آموز یافت نشد', 'error');
+
+    const { data: absences } = await supabaseClient
+      .from('attendance_records')
+      .select('id, date, scope_type, bell_number, status, note')
+      .eq('student_id', studentId)
+      .in('status', ['excused', 'absent'])
+      .order('date', { ascending: false });
+
+    const totalAbsences = absences?.length || 0;
+    const excusedCount = absences?.filter(a => a.status === 'excused').length || 0;
+    const unexcusedCount = absences?.filter(a => a.status === 'absent').length || 0;
+
+    let html = `
+      <div style="margin-bottom:16px;">
+        <h4>${student.first_name} ${student.last_name}</h4>
+        <p style="font-size:0.9rem; color:#718096;">
+          کد: ${student.internal_code || '-'} | کلاس: ${student.classes?.name || '-'} | پایه: ${student.grade}
+        </p>
+        <p style="font-size:0.9rem; margin-top:6px;">
+          <span class="badge badge-warning">موجه: ${excusedCount}</span>
+          <span class="badge badge-danger">غیرموجه: ${unexcusedCount}</span>
+          <span class="badge badge-secondary">جمع: ${totalAbsences}</span>
+        </p>
+      </div>
+      <div style="max-height:400px; overflow-y:auto;">
+    `;
+
+    if (absences && absences.length > 0) {
+      html += `<table>
+        <tr><th>تاریخ</th><th>نوع</th><th>وضعیت</th><th>عملیات</th></tr>`;
+      absences.forEach(a => {
+        const statusLabel = a.status === 'excused' ? 'موجه' : 'غیرموجه';
+        const badgeClass = a.status === 'excused' ? 'badge-warning' : 'badge-danger';
+        const scopeLabel = a.scope_type === 'full_day' ? 'کل روز' : `زنگ ${a.bell_number}`;
+        html += `<tr>
+          <td>${toJalaali(a.date)}</td>
+          <td>${scopeLabel}</td>
+          <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
+          <td>
+            <select class="absence-status-select" data-id="${a.id}" style="padding:4px 8px; border-radius:6px; border:2px solid #e2e8f0; font-size:0.75rem; background:#fff;">
+              <option value="present" ${a.status === 'present' ? 'selected' : ''}>✅ حاضر</option>
+              <option value="excused" ${a.status === 'excused' ? 'selected' : ''}>⚠️ موجه</option>
+              <option value="absent" ${a.status === 'absent' ? 'selected' : ''}>❌ غیرموجه</option>
+            </select>
+          </td>
+        </tr>`;
+      });
+      html += '</table>';
+    } else {
+      html += '<p style="text-align:center; color:#718096; padding:20px;">هیچ غیبتی ثبت نشده است.</p>';
+    }
+
+    html += '</div>';
+
+    const result = await Swal.fire({
+      title: `📋 غیبت‌های ${student.first_name}`,
+      html: html,
+      showCancelButton: true,
+      confirmButtonText: '💾 ذخیره تغییرات',
+      cancelButtonText: 'بستن',
+      width: 700,
+      preConfirm: () => {
+        const selects = document.querySelectorAll('.absence-status-select');
+        const updates = [];
+        selects.forEach(sel => {
+          updates.push({ id: sel.dataset.id, status: sel.value });
+        });
+        return updates;
+      }
+    });
+
+    if (result.isConfirmed && result.value && result.value.length > 0) {
+      let successCount = 0;
+      for (const update of result.value) {
+        const { error } = await supabaseClient
+          .from('attendance_records')
+          .update({ status: update.status })
+          .eq('id', update.id);
+        if (!error) successCount++;
+      }
+      if (successCount > 0) {
+        toast(`${successCount} تغییر با موفقیت ذخیره شد`, 'success');
+        loadStudents(currentStudentPage);
+      } else {
+        toast('خطا در ذخیره تغییرات', 'error');
+      }
+    }
+  };
+
+  // ============================================================
+  // 14. فیلترهای بدون تکرار
   // ============================================================
   async function populateFilterSelects() {
     const { data: grades } = await supabaseClient
@@ -1121,7 +1569,7 @@
   });
 
   // ============================================================
-  // 13. افزودن و ویرایش دانش‌آموز
+  // 15. افزودن و ویرایش دانش‌آموز
   // ============================================================
   document.getElementById('addStudentBtn').addEventListener('click', async () => {
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
@@ -1137,7 +1585,7 @@
           <div class="form-group"><label>رشته</label><input name="major" /></div>
         </div>
         <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
-        <div class="form-group"><label>کد داخلی</label><input name="internal_code" /></div>
+        <div class="form-group"><label>کد داخلی (شماره دانش‌آموزی)</label><input name="internal_code" type="number" /></div>
       </form>
     `);
     if (result) {
@@ -1173,7 +1621,7 @@
           <div class="form-group"><label>رشته</label><input name="major" value="${s.major || ''}" /></div>
         </div>
         <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
-        <div class="form-group"><label>کد داخلی</label><input name="internal_code" value="${s.internal_code || ''}" /></div>
+        <div class="form-group"><label>کد داخلی (شماره دانش‌آموزی)</label><input name="internal_code" type="number" value="${s.internal_code || ''}" /></div>
         <div class="form-group"><label>وضعیت</label><select name="active"><option value="true" ${s.active ? 'selected' : ''}>فعال</option><option value="false" ${!s.active ? 'selected' : ''}>غیرفعال</option></select></div>
       </form>
     `);
@@ -1203,7 +1651,7 @@
   };
 
   // ============================================================
-  // 14. عملیات گروهی
+  // 16. عملیات گروهی
   // ============================================================
   document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
     const ids = Array.from(selectedStudentIds);
@@ -1239,12 +1687,13 @@
   });
 
   // ============================================================
-  // 15. حضور و غیاب (با Datepicker شمسی دست‌ساز)
+  // 17. حضور و غیاب
   // ============================================================
+  let currentAttendanceData = [];
+
   async function initAttendance() {
     const todayJalali = getTodayJalali();
     const dateInput = document.getElementById('attendanceDate');
-    // مقداردهی با تاریخ امروز
     if (dateInput._jalaliDatepicker) {
       dateInput._jalaliDatepicker.setDate(todayJalali);
     } else {
@@ -1320,25 +1769,92 @@
     let html = `<table><tr><th>دانش‌آموز</th><th>وضعیت</th><th>یادداشت</th></tr>`;
     students.forEach(s => {
       const rec = recordMap[s.id] || { status: 'present', note: '' };
-      const checked = rec.status === 'present' ? 'checked' : '';
+      const isPresent = rec.status === 'present';
+      const isExcused = rec.status === 'excused';
+      const isAbsent = rec.status === 'absent';
       html += `<tr>
-        <td>${s.first_name} ${s.last_name}</td>
+        <td style="font-weight:500;">${s.first_name} ${s.last_name}</td>
         <td>
-          <label><input type="radio" name="status_${s.id}" value="present" ${checked} /> حاضر</label>
-          <label><input type="radio" name="status_${s.id}" value="absent" ${!checked ? 'checked' : ''} /> غایب</label>
+          <div class="status-buttons">
+            <button class="status-btn ${isPresent ? 'active-present' : ''}" data-student="${s.id}" data-value="present">✅ حاضر</button>
+            <button class="status-btn ${isExcused ? 'active-excused' : ''}" data-student="${s.id}" data-value="excused">⚠️ موجه</button>
+            <button class="status-btn ${isAbsent ? 'active-absent' : ''}" data-student="${s.id}" data-value="absent">❌ غیرموجه</button>
+          </div>
         </td>
-        <td><input type="text" class="attendance-note" data-id="${s.id}" value="${rec.note || ''}" style="width:100%;"/></td>
+        <td><input type="text" class="attendance-note" data-id="${s.id}" value="${rec.note || ''}" style="width:100%; padding:4px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.8rem;"/></td>
       </tr>`;
     });
     html += '</table>';
     document.getElementById('attendanceTableContainer').innerHTML = html;
+
+    document.querySelectorAll('.status-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const parent = this.closest('.status-buttons');
+        parent.querySelectorAll('.status-btn').forEach(b => {
+          b.className = 'status-btn';
+        });
+        this.classList.add(`active-${this.dataset.value}`);
+        autoSaveAttendance();
+      });
+    });
+
+    document.querySelectorAll('.attendance-note').forEach(inp => {
+      inp.addEventListener('change', autoSaveAttendance);
+      inp.addEventListener('input', debounce(autoSaveAttendance, 1000));
+    });
+
+    currentAttendanceData = students.map(s => ({ studentId: s.id }));
   });
+
+  function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+  }
+
+  async function autoSaveAttendance() {
+    const jalaliDate = document.getElementById('attendanceDate').value;
+    const date = toGregorian(jalaliDate);
+    if (!date) return;
+
+    const classId = document.getElementById('attendanceClass').value;
+    const scope = document.getElementById('attendanceScope').value;
+    const bell = parseInt(document.getElementById('attendanceBell').value) || null;
+
+    const records = [];
+    document.querySelectorAll('#attendanceTableContainer tr').forEach((tr, idx) => {
+      if (idx === 0) return;
+      const statusBtn = tr.querySelector('.status-btn.active-present, .status-btn.active-excused, .status-btn.active-absent');
+      const studentId = statusBtn?.dataset.student;
+      if (!studentId) return;
+      const status = statusBtn.dataset.value;
+      const note = tr.querySelector('.attendance-note')?.value || '';
+      records.push({ student_id: studentId, status, note });
+    });
+
+    if (records.length === 0) return;
+
+    try {
+      const { data, error } = await supabaseClient.rpc('save_attendance_batch', {
+        p_date: date,
+        p_class_id: classId,
+        p_scope: scope,
+        p_bell: bell,
+        p_records: records
+      });
+      if (error) throw error;
+    } catch (e) {
+      console.error('Auto-save error:', e);
+    }
+  }
 
   document.getElementById('saveAttendance').addEventListener('click', async () => {
     const jalaliDate = document.getElementById('attendanceDate').value;
     const date = toGregorian(jalaliDate);
     if (!date) {
-      toast('تاریخ نامعتبر است. لطفاً از تقویم شمسی انتخاب کنید.', 'error');
+      toast('تاریخ نامعتبر است.', 'error');
       return;
     }
 
@@ -1349,10 +1865,10 @@
     const records = [];
     document.querySelectorAll('#attendanceTableContainer tr').forEach((tr, idx) => {
       if (idx === 0) return;
-      const idInput = tr.querySelector('input[type="radio"]');
-      if (!idInput) return;
-      const studentId = idInput.name.split('_')[1];
-      const status = tr.querySelector('input[type="radio"]:checked')?.value || 'present';
+      const statusBtn = tr.querySelector('.status-btn.active-present, .status-btn.active-excused, .status-btn.active-absent');
+      const studentId = statusBtn?.dataset.student;
+      if (!studentId) return;
+      const status = statusBtn.dataset.value;
       const note = tr.querySelector('.attendance-note')?.value || '';
       records.push({ student_id: studentId, status, note });
     });
@@ -1376,7 +1892,7 @@
   });
 
   // ============================================================
-  // 16. تنظیمات
+  // 18. تنظیمات
   // ============================================================
   async function loadSettings() {
     const { data: settings } = await supabaseClient.from('attendance_settings').select('*').maybeSingle();
@@ -1422,9 +1938,9 @@
 
   document.getElementById('wipeDataBtn').addEventListener('click', async () => {
     const result = await Swal.fire({
-      title: 'هشدار!',
+      title: '⚠️ هشدار!',
       html: `
-        <p style="color:red;">تمام اطلاعات سیستم برای همیشه حذف خواهد شد.</p>
+        <p style="color:var(--danger);">تمام اطلاعات سیستم برای همیشه حذف خواهد شد.</p>
         <p>برای تأیید عبارت <b>DELETE</b> را وارد کنید:</p>
         <input type="text" id="wipeConfirm" class="swal2-input" placeholder="DELETE" />
       `,
@@ -1445,7 +1961,7 @@
   });
 
   // ============================================================
-  // 17. گزارش‌ها
+  // 19. گزارش‌ها
   // ============================================================
   async function loadReportSelects() {
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
@@ -1465,9 +1981,7 @@
       const today = getTodayJalali();
       const el = document.getElementById('reportDate');
       el.value = today;
-      if (el._jalaliDatepicker) {
-        el._jalaliDatepicker.setDate(today);
-      }
+      if (el._jalaliDatepicker) el._jalaliDatepicker.setDate(today);
     }
   });
 
@@ -1494,7 +2008,7 @@
     let query = supabaseClient.from('attendance_records').select(`
       student_id, date, scope_type, bell_number, status,
       students(first_name, last_name, class_id, classes(name))
-    `).eq('status', 'absent');
+    `).in('status', ['excused', 'absent']);
 
     if (from) query = query.gte('date', from).lte('date', to);
     if (classId) query = query.eq('students.class_id', classId);
@@ -1511,21 +2025,21 @@
           first_name: r.students.first_name,
           last_name: r.students.last_name,
           class_name: r.students.classes?.name || '',
-          daily: 0,
-          bell: 0,
+          excused: 0,
+          absent: 0,
           last_absence: null
         };
       }
-      if (r.scope_type === 'full_day') map[key].daily += 1;
-      else map[key].bell += 1;
+      if (r.status === 'excused') map[key].excused += 1;
+      else map[key].absent += 1;
       if (!map[key].last_absence || r.date > map[key].last_absence) map[key].last_absence = r.date;
     });
 
-    let html = `<table><tr><th>نام</th><th>نام خانوادگی</th><th>کلاس</th><th>غیبت روزانه</th><th>غیبت زنگی</th><th>جمع</th><th>آخرین غیبت</th></tr>`;
+    let html = `<table><tr><th>نام</th><th>نام خانوادگی</th><th>کلاس</th><th>موجه</th><th>غیرموجه</th><th>جمع</th><th>آخرین غیبت</th></tr>`;
     Object.values(map).forEach(item => {
-      const total = item.daily + item.bell;
+      const total = item.excused + item.absent;
       html += `<tr><td>${item.first_name}</td><td>${item.last_name}</td><td>${item.class_name}</td>
-        <td>${item.daily}</td><td>${item.bell}</td><td>${total}</td>
+        <td>${item.excused}</td><td>${item.absent}</td><td>${total}</td>
         <td>${item.last_absence ? toJalaali(item.last_absence) : '-'}</td></tr>`;
     });
     html += '</table>';
@@ -1562,7 +2076,7 @@
   });
 
   // ============================================================
-  // 18. ورود از اکسل (بهینه و بدون خطای تکراری)
+  // 20. ورود از اکسل
   // ============================================================
   let excelData = [];
   let excelHeaders = [];
@@ -1588,7 +2102,7 @@
   });
 
   function showExcelPreview() {
-    let html = `<h4>پیش‌نمایش (۱۰ ردیف اول)</h4>
+    let html = `<h4 style="font-size:0.95rem;">پیش‌نمایش (۱۰ ردیف اول)</h4>
       <div style="overflow-x:auto;"><table><tr>${excelHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
     const previewRows = excelData.slice(0, 10);
     previewRows.forEach(row => {
@@ -1596,7 +2110,7 @@
     });
     html += '</table></div>';
 
-    html += `<h4>نگاشت ستون‌ها</h4><div class="form-row">`;
+    html += `<h4 style="font-size:0.95rem; margin-top:12px;">نگاشت ستون‌ها</h4><div class="form-row">`;
     const fields = ['first_name', 'last_name', 'grade', 'major', 'class_name', 'internal_code'];
     const labels = {
       first_name: 'نام',
@@ -1607,8 +2121,8 @@
       internal_code: 'کد داخلی'
     };
     fields.forEach(f => {
-      html += `<div class="form-group"><label>${labels[f]}</label>
-        <select data-field="${f}" class="col-map">
+      html += `<div class="form-group"><label style="font-size:0.8rem;">${labels[f]}</label>
+        <select data-field="${f}" class="col-map" style="font-size:0.8rem; padding:6px;">
           <option value="">انتخاب نشود</option>
           ${excelHeaders.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
         </select></div>`;
@@ -1756,7 +2270,7 @@
       <p>کل ردیف‌ها: ${excelData.length}</p>
       <p>ثبت شده: ${insertedCount}</p>
       <p>خطا: ${errors.length}</p>
-      <pre style="max-height:200px; overflow-y:auto;">${errors.join('\n')}</pre>
+      <pre style="max-height:200px; overflow-y:auto; font-size:0.8rem; background:#f8f9fa; padding:8px; border-radius:6px;">${errors.join('\n')}</pre>
     `;
   });
 
@@ -1771,7 +2285,7 @@
   }
 
   // ============================================================
-  // 19. بارگذاری اولیه
+  // 21. بارگذاری اولیه
   // ============================================================
   async function loadAllSelects() {
     await populateFilterSelects();
@@ -1780,7 +2294,7 @@
   }
 
   // ============================================================
-  // 20. بررسی وضعیت ورود
+  // 22. بررسی وضعیت ورود
   // ============================================================
   (async function init() {
     const { data: { user } } = await supabaseClient.auth.getUser();
