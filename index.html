@@ -3,16 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>سامانه حضور و غیاب مدرسه</title>
-  <!-- Font Awesome -->
+  <title>سامان | سامانه حضور و غیاب مدرسه</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- xlsx -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
+    /* ===== استایل‌های پایه ===== */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --primary: #4361ee;
@@ -28,6 +25,7 @@
       --radius: 12px;
       --radius-sm: 8px;
       --transition: all 0.25s ease;
+      --input-height: 42px;
     }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -61,9 +59,10 @@
     .card .number { font-size: 1.7rem; font-weight: 700; color: var(--primary); }
     .card .label { font-size: 0.8rem; color: #718096; margin-top: 4px; }
 
-    /* ===== دکمه‌های بهبودیافته ===== */
+    /* ===== دکمه‌ها ===== */
     .btn {
-      padding: 8px 18px;
+      height: var(--input-height);
+      padding: 0 18px;
       border: none;
       border-radius: var(--radius-sm);
       cursor: pointer;
@@ -74,29 +73,39 @@
       color: #2d3748;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       touch-action: manipulation;
-      text-decoration: none;
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      white-space: nowrap;
     }
     .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .btn:active { transform: scale(0.96); }
     .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(67, 97, 238, 0.3); }
-    .btn-primary:hover { background: var(--primary-dark); box-shadow: 0 4px 16px rgba(67, 97, 238, 0.4); }
+    .btn-primary:hover { background: var(--primary-dark); }
     .btn-danger { background: var(--danger); color: #fff; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3); }
     .btn-danger:hover { background: #c0392b; }
     .btn-success { background: var(--success); color: #fff; box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3); }
     .btn-success:hover { background: #27ae60; }
     .btn-warning { background: var(--warning); color: #fff; box-shadow: 0 2px 8px rgba(243, 156, 18, 0.3); }
     .btn-warning:hover { background: #d68910; }
-    .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-    .btn-outline:hover { background: var(--primary); color: #fff; }
-    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
-    .btn-lg { padding: 12px 28px; font-size: 1rem; }
+    .btn-sm { height: 32px; padding: 0 12px; font-size: 0.75rem; }
     .btn-block { width: 100%; justify-content: center; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
-    /* ===== سلکت‌باکس بهبودیافته ===== */
+    /* ===== سلکت‌باکس و اینپوت یکدست ===== */
+    select, input[type="text"], input[type="number"], input[type="password"], input[type="email"], input[type="file"] {
+      height: var(--input-height);
+      padding: 0 14px;
+      border: 2px solid #e2e8f0;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      background: var(--white);
+      color: #2d3748;
+      transition: var(--transition);
+      width: 100%;
+      box-sizing: border-box;
+    }
     select {
       appearance: none;
       -webkit-appearance: none;
@@ -105,43 +114,41 @@
       background-repeat: no-repeat;
       background-position: left 10px center;
       background-size: 12px;
-      padding: 10px 14px;
       padding-left: 32px;
-      border: 2px solid #e2e8f0;
-      border-radius: var(--radius-sm);
-      font-size: 0.9rem;
-      background-color: var(--white);
-      color: #2d3748;
-      transition: var(--transition);
       cursor: pointer;
       min-width: 100px;
     }
-    select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
-    }
-    select:hover { border-color: var(--primary); }
-    select option { padding: 8px; }
-
-    /* ===== اینپوت بهبودیافته ===== */
-    input[type="text"], input[type="number"], input[type="password"], input[type="email"], input[type="file"] {
-      padding: 10px 14px;
-      border: 2px solid #e2e8f0;
-      border-radius: var(--radius-sm);
-      font-size: 0.9rem;
-      background: var(--white);
-      color: #2d3748;
-      transition: var(--transition);
-      width: 100%;
-    }
-    input:focus {
+    select:focus, input:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.12);
     }
+    select:hover, input:hover { border-color: var(--primary); }
 
-    /* ===== جدول بهبودیافته ===== */
+    /* ===== فیلدهای بازه زمانی در گزارش ===== */
+    #reportRangeGroup .datepicker-wrapper {
+      flex: 1;
+      min-width: 120px;
+    }
+    #reportRangeGroup .datepicker-wrapper input {
+      height: var(--input-height);
+      padding: 0 14px;
+    }
+    #reportRangeGroup {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    #reportRangeGroup label {
+      font-size: 0.8rem;
+      color: #4a5568;
+      font-weight: 600;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    /* ===== جدول ===== */
     table {
       width: 100%;
       border-collapse: separate;
@@ -164,7 +171,6 @@
     tr:hover { background: var(--primary-light); }
     tr:last-child td { border-bottom: none; }
 
-    /* ===== بج بهبودیافته ===== */
     .badge {
       padding: 3px 12px;
       border-radius: 20px;
@@ -176,9 +182,7 @@
     .badge-danger { background: #f8d7da; color: #721c24; }
     .badge-warning { background: #fff3cd; color: #856404; }
     .badge-secondary { background: #e2e3e5; color: #383d41; }
-    .badge-primary { background: #cce5ff; color: #004085; }
 
-    /* ===== پیجینیشن ===== */
     .pagination {
       display: flex;
       gap: 6px;
@@ -187,7 +191,8 @@
       flex-wrap: wrap;
     }
     .pagination button {
-      padding: 6px 14px;
+      height: 36px;
+      padding: 0 14px;
       border: 2px solid #e2e8f0;
       background: var(--white);
       border-radius: var(--radius-sm);
@@ -199,11 +204,12 @@
     .pagination button:hover { border-color: var(--primary); }
     .pagination .active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
-    /* ===== Datepicker شمسی ===== */
+    /* ===== Datepicker شمسی با انتخاب ماه و سال ===== */
     .datepicker-wrapper { position: relative; width: 100%; }
     .datepicker-wrapper input {
       cursor: pointer;
       background: var(--white);
+      height: var(--input-height);
     }
     .datepicker-popup {
       position: absolute;
@@ -215,7 +221,7 @@
       border-radius: var(--radius);
       padding: 12px;
       box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-      min-width: 240px;
+      min-width: 260px;
       display: none;
       font-size: 0.85rem;
     }
@@ -225,29 +231,49 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
+      gap: 4px;
     }
     .datepicker-header button {
       background: none;
       border: none;
       cursor: pointer;
       font-size: 1.2rem;
-      padding: 0 10px;
+      padding: 0 8px;
       color: var(--primary);
       transition: var(--transition);
       touch-action: manipulation;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .datepicker-header button:hover { transform: scale(1.1); }
     .datepicker-header .month-year {
       font-weight: 600;
       font-size: 1rem;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+    .datepicker-header .month-btn, .datepicker-header .year-btn {
       cursor: pointer;
-      padding: 4px 12px;
+      padding: 4px 10px;
       border-radius: var(--radius-sm);
       transition: var(--transition);
       background: var(--primary-light);
       color: var(--primary-dark);
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .datepicker-header .month-year:hover { background: var(--primary); color: #fff; }
+    .datepicker-header .month-btn:hover, .datepicker-header .year-btn:hover {
+      background: var(--primary);
+      color: #fff;
+    }
     .datepicker-weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -278,7 +304,37 @@
     .datepicker-days button.other-month { color: #cbd5e1; }
     .datepicker-days button.today { font-weight: 700; border: 2px solid var(--primary); }
 
-    /* ===== منوی سایدبار ===== */
+    /* لیست ماه‌ها و سال‌ها */
+    .month-list, .year-list {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 6px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .month-list.show, .year-list.show { display: grid; }
+    .month-list button, .year-list button {
+      background: var(--primary-light);
+      border: none;
+      padding: 6px 4px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: var(--transition);
+      color: var(--primary-dark);
+      font-weight: 500;
+    }
+    .month-list button:hover, .year-list button:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    .month-list button.active, .year-list button.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* ===== منو و سایدبار ===== */
     .sidebar {
       background: var(--white);
       padding: 10px 14px;
@@ -326,50 +382,16 @@
       flex: 1;
       min-width: 55px;
       text-align: center;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .status-btn:hover { transform: translateY(-1px); }
     .status-btn.active-present { border-color: var(--success); background: #d4edda; color: #155724; }
     .status-btn.active-excused { border-color: var(--warning); background: #fff3cd; color: #856404; }
     .status-btn.active-absent { border-color: var(--danger); background: #f8d7da; color: #721c24; }
 
-    /* ===== مودال ===== */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      padding: 16px;
-      backdrop-filter: blur(4px);
-    }
-    .modal-box {
-      background: var(--white);
-      max-width: 600px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 24px;
-      border-radius: var(--radius);
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-      animation: fadeIn 0.3s ease;
-    }
-    .modal-box h3 { margin-bottom: 16px; font-size: 1.2rem; color: var(--primary-dark); }
-    .modal-close {
-      float: left;
-      background: none;
-      border: none;
-      font-size: 1.5rem;
-      cursor: pointer;
-      color: #a0aec0;
-      transition: var(--transition);
-      padding: 0 8px;
-    }
-    .modal-close:hover { color: var(--danger); }
-
-    /* ===== منوی کشویی موبایل ===== */
     .mobile-menu-toggle {
       display: none;
       background: none;
@@ -379,14 +401,23 @@
       color: var(--primary);
       padding: 6px;
       transition: var(--transition);
+      height: 40px;
     }
     .mobile-menu-toggle:hover { transform: scale(1.1); }
 
-    /* ===== فرم‌ها ===== */
     .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85rem; color: #4a5568; }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
     .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
     .form-row .form-group { flex: 1; min-width: 130px; }
+
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ===== ریسپانسیو ===== */
     @media (max-width: 768px) {
@@ -400,13 +431,18 @@
       .card .number { font-size: 1.3rem; }
       table { font-size: 0.7rem; }
       th, td { padding: 5px 3px; }
-      .status-btn { font-size: 0.7rem; padding: 4px 8px; min-width: 40px; }
+      .status-btn { font-size: 0.7rem; padding: 4px 8px; min-width: 40px; height: 32px; }
       .form-row .form-group { min-width: 100%; }
-      .modal-box { padding: 16px; margin: 8px; }
       .datepicker-popup { min-width: 200px; right: -10px; }
-      .btn { padding: 10px 14px; font-size: 0.85rem; }
-      .btn-sm { padding: 6px 10px; font-size: 0.75rem; }
-      select { padding: 8px 12px; font-size: 0.85rem; min-width: 70px; }
+      .btn { height: 38px; padding: 0 14px; font-size: 0.85rem; }
+      .btn-sm { height: 30px; padding: 0 10px; font-size: 0.75rem; }
+      select, input[type="text"], input[type="number"], input[type="password"], input[type="email"], input[type="file"] {
+        height: 38px;
+        padding: 0 12px;
+        font-size: 0.85rem;
+      }
+      #reportRangeGroup { flex-direction: column; align-items: stretch; }
+      #reportRangeGroup .datepicker-wrapper { min-width: 100%; }
     }
     @media (max-width: 480px) {
       .grid-cards { grid-template-columns: 1fr 1fr; gap: 6px; }
@@ -415,37 +451,9 @@
       table { font-size: 0.6rem; }
       th, td { padding: 3px 2px; }
     }
-
-    /* ===== انیمیشن ===== */
-    .fade-in { animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* ===== اسکرول‌بار ===== */
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
-
-    /* ===== لیست ماه‌ها در Datepicker ===== */
-    .month-list {
-      display: none;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      padding: 6px 0;
-    }
-    .month-list.show { display: grid; }
-    .month-list button {
-      background: var(--primary-light);
-      border: none;
-      padding: 6px 4px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: var(--transition);
-      color: var(--primary-dark);
-      font-weight: 500;
-    }
-    .month-list button:hover { background: var(--primary); color: #fff; }
-    .month-list button.active { background: var(--primary); color: #fff; }
   </style>
 </head>
 <body>
@@ -479,7 +487,7 @@
     <div class="flex flex-between" style="background:#fff; padding:10px 16px; border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow);">
       <div class="flex">
         <button class="mobile-menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
-        <h2 style="font-size:1.1rem; color:var(--primary-dark);">🏫 حضور و غیاب</h2>
+        <h2 style="font-size:1.1rem; color:var(--primary-dark);">🏫 سامان | سامانه حضور و غیاب مدرسه</h2>
       </div>
       <div class="flex">
         <span id="userDisplay" style="font-size:0.85rem; color:#4a5568; margin-left:10px;"></span>
@@ -492,7 +500,7 @@
       <button class="btn btn-sm btn-primary" data-tab="dashboard"><i class="fas fa-chart-pie"></i> داشبورد</button>
       <button class="btn btn-sm" data-tab="classes"><i class="fas fa-school"></i> کلاس‌ها</button>
       <button class="btn btn-sm" data-tab="students"><i class="fas fa-users"></i> دانش‌آموزان</button>
-      <button class="btn btn-sm" data-tab="attendance"><i class="fas fa-clipboard-check"></i> حضور</button>
+      <button class="btn btn-sm" data-tab="attendance"><i class="fas fa-clipboard-check"></i> ثبت حضور و غیاب</button>
       <button class="btn btn-sm" data-tab="reports"><i class="fas fa-file-alt"></i> گزارش‌ها</button>
       <button class="btn btn-sm" data-tab="import"><i class="fas fa-file-upload"></i> اکسل</button>
       <button class="btn btn-sm" data-tab="settings"><i class="fas fa-cog"></i> تنظیمات</button>
@@ -505,7 +513,7 @@
         <div class="grid-cards" id="dashboardStats"></div>
         <div style="display:flex; gap:16px; flex-wrap:wrap;">
           <div style="flex:1; min-width:180px; background:#fff; padding:14px; border-radius:var(--radius); box-shadow:var(--shadow);">
-            <h4 style="font-size:0.95rem; color:var(--primary-dark);">وضعیت حضور امروز</h4>
+            <h4 style="font-size:0.95rem; color:var(--primary-dark);">وضعیت حضور و غیاب امروز</h4>
             <div id="todayStatus" style="margin-top:8px; font-size:0.9rem;"></div>
           </div>
           <div style="flex:2; min-width:250px; background:#fff; padding:14px; border-radius:var(--radius); box-shadow:var(--shadow);">
@@ -532,7 +540,7 @@
         </div>
         <div style="background:#fff; padding:12px; border-radius:var(--radius); margin-bottom:12px; box-shadow:var(--shadow);">
           <div class="flex" style="gap:6px;">
-            <input type="text" id="studentSearch" placeholder="جستجو..." style="flex:1; padding:8px 12px; border:2px solid #e2e8f0; border-radius:var(--radius-sm); font-size:0.85rem;" />
+            <input type="text" id="studentSearch" placeholder="جستجو..." style="flex:1;" />
             <button class="btn btn-primary btn-sm" id="applyStudentFilters"><i class="fas fa-search"></i></button>
           </div>
           <div class="flex" style="margin-top:8px; gap:6px;">
@@ -607,9 +615,13 @@
             </div>
             <div class="form-group" style="min-width:120px; display:none;" id="reportRangeGroup">
               <label style="font-size:0.8rem;">از</label>
-              <div class="datepicker-wrapper"><input type="text" class="datepicker-input" id="reportFrom" placeholder="از" readonly /></div>
+              <div class="datepicker-wrapper">
+                <input type="text" class="datepicker-input" id="reportFrom" placeholder="از" readonly />
+              </div>
               <label style="font-size:0.8rem;">تا</label>
-              <div class="datepicker-wrapper"><input type="text" class="datepicker-input" id="reportTo" placeholder="تا" readonly /></div>
+              <div class="datepicker-wrapper">
+                <input type="text" class="datepicker-input" id="reportTo" placeholder="تا" readonly />
+              </div>
             </div>
             <div class="form-group" style="min-width:130px; display:none;" id="reportStudentGroup">
               <label style="font-size:0.8rem;">دانش‌آموز</label>
@@ -644,7 +656,6 @@
       <div id="tab-settings" class="tab-content hidden fade-in">
         <h3 style="font-size:1.1rem; color:var(--primary-dark); margin-bottom:12px;">تنظیمات سیستم</h3>
         <div style="background:#fff; padding:16px; border-radius:var(--radius); max-width:600px; box-shadow:var(--shadow);">
-          <!-- تغییر رمز -->
           <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #edf2f7;">
             <h4 style="font-size:1rem; margin-bottom:10px;">🔑 تغییر رمز عبور</h4>
             <div class="form-group">
@@ -663,7 +674,6 @@
             <div id="passwordChangeResult" style="margin-top:8px; font-size:0.9rem;"></div>
           </div>
 
-          <!-- تنظیمات زنگ‌ها -->
           <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #edf2f7;">
             <h4 style="font-size:1rem; margin-bottom:10px;">⏰ تنظیمات زنگ‌ها</h4>
             <div class="form-group">
@@ -677,7 +687,6 @@
             <button class="btn btn-primary" id="saveSettings"><i class="fas fa-save"></i> ذخیره</button>
           </div>
 
-          <!-- حذف کامل -->
           <div>
             <h4 style="font-size:1rem; margin-bottom:10px; color:var(--danger);">⚠️ حذف کامل اطلاعات</h4>
             <button class="btn btn-danger" id="wipeDataBtn"><i class="fas fa-trash-alt"></i> حذف کامل</button>
@@ -709,7 +718,7 @@
   const SESSION_TIMEOUT_MS = 3600000;
 
   // ============================================================
-  // 3. توابع تبدیل تاریخ شمسی (اصلاح‌شده و دقیق)
+  // 3. توابع تبدیل تاریخ شمسی (دقیق)
   // ============================================================
   const jalaaliMonths = [0, 31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
   const gregorianMonths = [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
@@ -723,56 +732,94 @@
     return (year % 400 === 0) || (year % 4 === 0 && year % 100 !== 0);
   }
 
-  function gregorianToJalali(gy, gm, gd) {
-    let gDays = 0;
-    for (let i = 1; i < gm; i++) {
-      gDays += gregorianMonths[i];
-      if (i === 2 && isLeapGregorian(gy)) gDays++;
-    }
-    gDays += gd;
+  function daysInJalaliMonth(year, month) {
+    if (month < 1 || month > 12) return 0;
+    if (month === 12 && isLeapJalali(year)) return 30;
+    return jalaaliMonths[month] || 0;
+  }
 
-    let jy = gy - 621;
-    let jDays = gDays + 79;
-    let jy2 = jy - 1;
-    let jDays2 = jDays + 365 * jy2 + Math.floor(jy2 / 33) * 8 + Math.floor((jy2 % 33 + 3) / 4) + 1;
-    let jm = 0, jd = 0;
-    for (let i = 0; i < 12; i++) {
-      let days = jalaaliMonths[i + 1];
-      if (i === 11 && isLeapJalali(jy)) days = 30;
-      if (jDays2 <= days) {
-        jm = i + 1;
-        jd = jDays2;
-        break;
-      }
-      jDays2 -= days;
-    }
-    return { year: jy, month: jm, day: jd };
+  function daysInGregorianMonth(year, month) {
+    if (month < 1 || month > 12) return 0;
+    if (month === 2 && isLeapGregorian(year)) return 29;
+    return gregorianMonths[month] || 0;
   }
 
   function jalaliToGregorian(jy, jm, jd) {
-    let jDays = 0;
-    for (let i = 0; i < jm - 1; i++) {
-      jDays += jalaaliMonths[i + 1];
-      if (i === 11 && isLeapJalali(jy)) jDays++;
-    }
-    jDays += jd;
+    if (jy < 1 || jm < 1 || jm > 12 || jd < 1) return null;
+    const maxDay = daysInJalaliMonth(jy, jm);
+    if (jd > maxDay) return null;
 
-    let gy = jy + 621;
-    let gDays = jDays + 79;
-    let gy2 = gy - 1;
-    let gDays2 = gDays + 365 * gy2 + Math.floor(gy2 / 400) * 97 + Math.floor((gy2 % 400) / 4) + 1;
-    let gm = 0, gd2 = 0;
-    for (let i = 0; i < 12; i++) {
-      let days = gregorianMonths[i + 1];
-      if (i === 1 && isLeapGregorian(gy)) days = 29;
-      if (gDays2 <= days) {
-        gm = i + 1;
-        gd2 = gDays2;
-        break;
-      }
-      gDays2 -= days;
+    let days = 0;
+    for (let y = 1300; y < jy; y++) {
+      days += isLeapJalali(y) ? 366 : 365;
     }
-    return { year: gy, month: gm, day: gd2 };
+    for (let m = 1; m < jm; m++) {
+      days += daysInJalaliMonth(jy, m);
+    }
+    days += jd - 1;
+
+    let gy = 1921, gm = 3, gd = 21;
+    let remaining = days;
+    while (remaining > 0) {
+      const daysInMonth = daysInGregorianMonth(gy, gm);
+      if (remaining >= daysInMonth) {
+        remaining -= daysInMonth;
+        gm++;
+        if (gm > 12) { gm = 1; gy++; }
+      } else {
+        gd += remaining;
+        remaining = 0;
+        if (gd > daysInGregorianMonth(gy, gm)) {
+          gd -= daysInGregorianMonth(gy, gm);
+          gm++;
+          if (gm > 12) { gm = 1; gy++; }
+        }
+      }
+    }
+    return { year: gy, month: gm, day: gd };
+  }
+
+  function gregorianToJalali(gy, gm, gd) {
+    if (gy < 1 || gm < 1 || gm > 12 || gd < 1) return null;
+    const maxDay = daysInGregorianMonth(gy, gm);
+    if (gd > maxDay) return null;
+
+    let days = 0;
+    for (let y = 1921; y < gy; y++) {
+      days += isLeapGregorian(y) ? 366 : 365;
+    }
+    for (let m = 3; m < gm; m++) {
+      days += daysInGregorianMonth(gy, m);
+    }
+    days += gd - 21;
+
+    if (days < 0) {
+      let tempGy = gy, tempGm = gm - 1, tempGd = gd;
+      if (tempGm < 1) { tempGm = 12; tempGy--; }
+      const prevMonthDays = daysInGregorianMonth(tempGy, tempGm);
+      days = prevMonthDays - (21 - gd);
+      gy = tempGy; gm = tempGm;
+    }
+
+    let jy = 1300, jm = 1, jd2 = 1;
+    let remaining = days;
+    while (remaining > 0) {
+      const daysInMonth = daysInJalaliMonth(jy, jm);
+      if (remaining >= daysInMonth) {
+        remaining -= daysInMonth;
+        jm++;
+        if (jm > 12) { jm = 1; jy++; }
+      } else {
+        jd2 += remaining;
+        remaining = 0;
+        if (jd2 > daysInJalaliMonth(jy, jm)) {
+          jd2 -= daysInJalaliMonth(jy, jm);
+          jm++;
+          if (jm > 12) { jm = 1; jy++; }
+        }
+      }
+    }
+    return { year: jy, month: jm, day: jd2 };
   }
 
   function toJalaali(dateStr) {
@@ -780,8 +827,11 @@
     try {
       const parts = dateStr.split('-');
       if (parts.length !== 3) return '';
-      const g = gregorianToJalali(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
-      return `${g.year}/${String(g.month).padStart(2,'0')}/${String(g.day).padStart(2,'0')}`;
+      const gy = parseInt(parts[0]), gm = parseInt(parts[1]), gd = parseInt(parts[2]);
+      if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return '';
+      const result = gregorianToJalali(gy, gm, gd);
+      if (!result || result.year < 1300 || result.month < 1 || result.month > 12 || result.day < 1) return '';
+      return `${result.year}/${String(result.month).padStart(2,'0')}/${String(result.day).padStart(2,'0')}`;
     } catch (e) { return ''; }
   }
 
@@ -790,8 +840,11 @@
     try {
       const parts = jDate.split('/');
       if (parts.length !== 3) return '';
-      const j = jalaliToGregorian(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
-      return `${j.year}-${String(j.month).padStart(2,'0')}-${String(j.day).padStart(2,'0')}`;
+      const jy = parseInt(parts[0]), jm = parseInt(parts[1]), jd = parseInt(parts[2]);
+      if (isNaN(jy) || isNaN(jm) || isNaN(jd)) return '';
+      const result = jalaliToGregorian(jy, jm, jd);
+      if (!result || result.year < 1900 || result.month < 1 || result.month > 12 || result.day < 1) return '';
+      return `${result.year}-${String(result.month).padStart(2,'0')}-${String(result.day).padStart(2,'0')}`;
     } catch (e) { return ''; }
   }
 
@@ -805,7 +858,7 @@
   }
 
   // ============================================================
-  // 4. Datepicker شمسی با انتخاب ماه
+  // 4. Datepicker با انتخاب ماه و سال
   // ============================================================
   class JalaliDatepicker {
     constructor(inputElement) {
@@ -816,6 +869,7 @@
       this.selectedDate = null;
       this.isOpen = false;
       this.showMonthList = false;
+      this.showYearList = false;
       this.createPopup();
       this.input.addEventListener('click', () => this.toggle());
       this.input.addEventListener('keydown', (e) => { if (e.key === 'Escape') this.close(); });
@@ -839,37 +893,64 @@
       this.popup.innerHTML = `
         <div class="datepicker-header">
           <button class="prev-month"><i class="fas fa-chevron-right"></i></button>
-          <span class="month-year"></span>
+          <div class="month-year">
+            <button class="month-btn"></button>
+            <button class="year-btn"></button>
+          </div>
           <button class="next-month"><i class="fas fa-chevron-left"></i></button>
         </div>
         <div class="month-list"></div>
+        <div class="year-list"></div>
         <div class="datepicker-weekdays"><span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span></div>
         <div class="datepicker-days"></div>
       `;
       this.input.parentNode.appendChild(this.popup);
 
-      // رویدادهای هدر
       this.popup.querySelector('.prev-month').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (this.showMonthList) this.toggleMonthList();
-        else this.changeMonth(-1);
+        if (this.showMonthList || this.showYearList) {
+          this.hideAllLists();
+        } else {
+          this.changeMonth(-1);
+        }
       });
       this.popup.querySelector('.next-month').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (this.showMonthList) this.toggleMonthList();
-        else this.changeMonth(1);
+        if (this.showMonthList || this.showYearList) {
+          this.hideAllLists();
+        } else {
+          this.changeMonth(1);
+        }
       });
-      this.popup.querySelector('.month-year').addEventListener('click', (e) => {
+      this.popup.querySelector('.month-btn').addEventListener('click', (e) => {
         e.stopPropagation();
+        if (this.showYearList) this.hideAllLists();
         this.toggleMonthList();
       });
+      this.popup.querySelector('.year-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.showMonthList) this.hideAllLists();
+        this.toggleYearList();
+      });
+    }
+
+    hideAllLists() {
+      this.showMonthList = false;
+      this.showYearList = false;
+      this.popup.querySelector('.month-list').classList.remove('show');
+      this.popup.querySelector('.year-list').classList.remove('show');
+      this.popup.querySelector('.datepicker-days').style.display = 'grid';
+      this.popup.querySelector('.datepicker-weekdays').style.display = 'grid';
     }
 
     toggleMonthList() {
       this.showMonthList = !this.showMonthList;
+      this.showYearList = false;
       const monthList = this.popup.querySelector('.month-list');
+      const yearList = this.popup.querySelector('.year-list');
       const daysContainer = this.popup.querySelector('.datepicker-days');
       const weekdays = this.popup.querySelector('.datepicker-weekdays');
+      yearList.classList.remove('show');
       if (this.showMonthList) {
         monthList.classList.add('show');
         daysContainer.style.display = 'none';
@@ -877,6 +958,27 @@
         this.renderMonthList();
       } else {
         monthList.classList.remove('show');
+        daysContainer.style.display = 'grid';
+        weekdays.style.display = 'grid';
+        this.render();
+      }
+    }
+
+    toggleYearList() {
+      this.showYearList = !this.showYearList;
+      this.showMonthList = false;
+      const monthList = this.popup.querySelector('.month-list');
+      const yearList = this.popup.querySelector('.year-list');
+      const daysContainer = this.popup.querySelector('.datepicker-days');
+      const weekdays = this.popup.querySelector('.datepicker-weekdays');
+      monthList.classList.remove('show');
+      if (this.showYearList) {
+        yearList.classList.add('show');
+        daysContainer.style.display = 'none';
+        weekdays.style.display = 'none';
+        this.renderYearList();
+      } else {
+        yearList.classList.remove('show');
         daysContainer.style.display = 'grid';
         weekdays.style.display = 'grid';
         this.render();
@@ -902,6 +1004,24 @@
       });
     }
 
+    renderYearList() {
+      const yearList = this.popup.querySelector('.year-list');
+      let html = '';
+      for (let y = 1300; y <= 1450; y++) {
+        const isActive = (y === this.currentYear);
+        html += `<button class="${isActive ? 'active' : ''}" data-year="${y}">${y}</button>`;
+      }
+      yearList.innerHTML = html;
+      yearList.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const year = parseInt(btn.dataset.year);
+          this.currentYear = year;
+          this.toggleYearList();
+          this.render();
+        });
+      });
+    }
+
     toggle() { this.isOpen ? this.close() : this.open(); }
 
     open() {
@@ -913,7 +1033,9 @@
         }
       }
       this.showMonthList = false;
+      this.showYearList = false;
       this.popup.querySelector('.month-list').classList.remove('show');
+      this.popup.querySelector('.year-list').classList.remove('show');
       this.popup.querySelector('.datepicker-days').style.display = 'grid';
       this.popup.querySelector('.datepicker-weekdays').style.display = 'grid';
       this.render();
@@ -925,6 +1047,7 @@
       this.popup.classList.remove('show');
       this.isOpen = false;
       this.showMonthList = false;
+      this.showYearList = false;
     }
 
     changeMonth(delta) {
@@ -938,20 +1061,23 @@
 
     render() {
       const monthNames = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
-      this.popup.querySelector('.month-year').textContent = `${monthNames[this.currentMonth-1]} ${this.currentYear}`;
+      this.popup.querySelector('.month-btn').textContent = monthNames[this.currentMonth-1];
+      this.popup.querySelector('.year-btn').textContent = this.currentYear;
       const container = this.popup.querySelector('.datepicker-days');
       container.innerHTML = '';
 
-      const firstDayDate = jalaliToGregorian(this.currentYear, this.currentMonth, 1);
-      const firstDayGreg = new Date(firstDayDate.year, firstDayDate.month - 1, firstDayDate.day);
+      const firstDayResult = jalaliToGregorian(this.currentYear, this.currentMonth, 1);
+      if (!firstDayResult) {
+        container.innerHTML = '<p style="color:red;">خطا در محاسبه تاریخ</p>';
+        return;
+      }
+      const firstDayGreg = new Date(firstDayResult.year, firstDayResult.month - 1, firstDayResult.day);
       let startOffset = (firstDayGreg.getDay() + 1) % 7;
 
-      const daysInMonth = jalaaliMonths[this.currentMonth];
-      const totalDays = (this.currentMonth === 12 && isLeapJalali(this.currentYear)) ? 30 : daysInMonth;
-
+      const totalDays = daysInJalaliMonth(this.currentYear, this.currentMonth);
       const prevMonth = this.currentMonth === 1 ? 12 : this.currentMonth - 1;
       const prevYear = this.currentMonth === 1 ? this.currentYear - 1 : this.currentYear;
-      const daysInPrevMonth = (prevMonth === 12 && isLeapJalali(prevYear)) ? 30 : jalaaliMonths[prevMonth];
+      const daysInPrevMonth = daysInJalaliMonth(prevYear, prevMonth);
       const prevMonthDays = daysInPrevMonth - startOffset + 1;
 
       for (let i = 0; i < startOffset; i++) {
@@ -1022,7 +1148,7 @@
   }
 
   // ============================================================
-  // 5. توابع کمکی
+  // 5. توابع کمکی (بدون تغییر)
   // ============================================================
   function toast(msg, type = 'success') {
     Swal.fire({ text: msg, icon: type, timer: 2500, showConfirmButton: false });
@@ -1086,17 +1212,14 @@
   setInterval(checkSessionTimeout, 30000);
 
   // ============================================================
-  // 7. احراز هویت (با تبدیل نام کاربری به ایمیل)
+  // 7. احراز هویت (بدون تغییر)
   // ============================================================
   async function login() {
     let username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value.trim();
-
-    // اگر نام کاربری شامل @ نبود، @school.local اضافه کن
     if (!username.includes('@')) {
       username = username + '@school.local';
     }
-
     try {
       const { data, error } = await supabaseClient.auth.signInWithPassword({
         email: username,
@@ -1144,7 +1267,7 @@
   }
 
   // ============================================================
-  // 8. تغییر رمز عبور
+  // 8. تغییر رمز عبور (بدون تغییر)
   // ============================================================
   async function changePassword() {
     const current = document.getElementById('currentPassword').value.trim();
@@ -1222,7 +1345,7 @@
   document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
   // ============================================================
-  // 10. داشبورد
+  // 10. داشبورد (بدون تغییر)
   // ============================================================
   async function loadDashboard() {
     try {
@@ -1272,8 +1395,9 @@
           const s = r.students;
           const statusLabel = r.status === 'excused' ? 'موجه' : 'غیرموجه';
           const badgeClass = r.status === 'excused' ? 'badge-warning' : 'badge-danger';
+          const jDate = toJalaali(r.date) || r.date;
           html += `<tr><td>${s?.first_name} ${s?.last_name}</td><td>${s?.classes?.name || ''}</td>
-            <td>${toJalaali(r.date)}</td><td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+            <td>${jDate}</td><td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
         });
       } else html += '<tr><td colspan="4">هیچ غیبتی ثبت نشده</td></tr>';
       html += '</table>';
@@ -1282,7 +1406,7 @@
   }
 
   // ============================================================
-  // 11. کلاس‌ها
+  // 11. کلاس‌ها (بدون تغییر)
   // ============================================================
   async function loadClasses() {
     const { data, error } = await supabaseClient.from('classes').select('*').order('id');
@@ -1351,7 +1475,7 @@
   });
 
   // ============================================================
-  // 12. دانش‌آموزان (مرتب‌سازی بر اساس internal_code)
+  // 12. دانش‌آموزان (بدون تغییر)
   // ============================================================
   async function loadStudents(page = 1) {
     currentStudentPage = page;
@@ -1367,7 +1491,6 @@
     if (classId) query = query.eq('class_id', classId);
     if (active !== 'all') query = query.eq('active', active === 'true');
 
-    // مرتب‌سازی بر اساس internal_code (عدد)
     const from = (page - 1) * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     query = query.range(from, to).order('internal_code', { ascending: true, nullsFirst: false });
@@ -1376,7 +1499,7 @@
     if (error) return toast(error.message, 'error');
 
     let html = `<table><tr><th><input type="checkbox" id="selectAllStudents" /></th>
-      <th>کد دانش‌آموزی</th><th>نام</th><th>نام خانوادگی</th><th>پایه</th><th>رشته</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>`;
+      <th>کد</th><th>نام</th><th>نام خانوادگی</th><th>پایه</th><th>رشته</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>`;
     data.forEach(s => {
       const checked = selectedStudentIds.has(s.id) ? 'checked' : '';
       html += `<tr>
@@ -1426,7 +1549,7 @@
   }
 
   // ============================================================
-  // 13. مودال نمایش و ویرایش غیبت‌ها
+  // 13. مودال نمایش و ویرایش غیبت‌ها (بدون تغییر)
   // ============================================================
   window.showStudentAbsences = async (studentId) => {
     const { data: student } = await supabaseClient
@@ -1470,8 +1593,9 @@
         const statusLabel = a.status === 'excused' ? 'موجه' : 'غیرموجه';
         const badgeClass = a.status === 'excused' ? 'badge-warning' : 'badge-danger';
         const scopeLabel = a.scope_type === 'full_day' ? 'کل روز' : `زنگ ${a.bell_number}`;
+        const jDate = toJalaali(a.date) || a.date;
         html += `<tr>
-          <td>${toJalaali(a.date)}</td>
+          <td>${jDate}</td>
           <td>${scopeLabel}</td>
           <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
           <td>
@@ -1526,7 +1650,7 @@
   };
 
   // ============================================================
-  // 14. فیلترهای بدون تکرار
+  // 14. فیلترهای بدون تکرار (بدون تغییر)
   // ============================================================
   async function populateFilterSelects() {
     const { data: grades } = await supabaseClient
@@ -1569,7 +1693,7 @@
   });
 
   // ============================================================
-  // 15. افزودن و ویرایش دانش‌آموز
+  // 15. افزودن و ویرایش دانش‌آموز (بدون تغییر)
   // ============================================================
   document.getElementById('addStudentBtn').addEventListener('click', async () => {
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
@@ -1585,7 +1709,7 @@
           <div class="form-group"><label>رشته</label><input name="major" /></div>
         </div>
         <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
-        <div class="form-group"><label>کد داخلی (شماره دانش‌آموزی)</label><input name="internal_code" type="number" /></div>
+        <div class="form-group"><label>کد داخلی</label><input name="internal_code" type="number" /></div>
       </form>
     `);
     if (result) {
@@ -1621,7 +1745,7 @@
           <div class="form-group"><label>رشته</label><input name="major" value="${s.major || ''}" /></div>
         </div>
         <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
-        <div class="form-group"><label>کد داخلی (شماره دانش‌آموزی)</label><input name="internal_code" type="number" value="${s.internal_code || ''}" /></div>
+        <div class="form-group"><label>کد داخلی</label><input name="internal_code" type="number" value="${s.internal_code || ''}" /></div>
         <div class="form-group"><label>وضعیت</label><select name="active"><option value="true" ${s.active ? 'selected' : ''}>فعال</option><option value="false" ${!s.active ? 'selected' : ''}>غیرفعال</option></select></div>
       </form>
     `);
@@ -1651,7 +1775,7 @@
   };
 
   // ============================================================
-  // 16. عملیات گروهی
+  // 16. عملیات گروهی (بدون تغییر)
   // ============================================================
   document.getElementById('bulkDeleteBtn').addEventListener('click', async () => {
     const ids = Array.from(selectedStudentIds);
@@ -1687,7 +1811,7 @@
   });
 
   // ============================================================
-  // 17. حضور و غیاب
+  // 17. حضور و غیاب (با تاریخ شمسی)
   // ============================================================
   let currentAttendanceData = [];
 
@@ -1892,7 +2016,7 @@
   });
 
   // ============================================================
-  // 18. تنظیمات
+  // 18. تنظیمات (بدون تغییر)
   // ============================================================
   async function loadSettings() {
     const { data: settings } = await supabaseClient.from('attendance_settings').select('*').maybeSingle();
@@ -1961,7 +2085,7 @@
   });
 
   // ============================================================
-  // 19. گزارش‌ها
+  // 19. گزارش‌ها (با فیلدهای بازه هماهنگ)
   // ============================================================
   async function loadReportSelects() {
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
@@ -2038,9 +2162,10 @@
     let html = `<table><tr><th>نام</th><th>نام خانوادگی</th><th>کلاس</th><th>موجه</th><th>غیرموجه</th><th>جمع</th><th>آخرین غیبت</th></tr>`;
     Object.values(map).forEach(item => {
       const total = item.excused + item.absent;
+      const jDate = item.last_absence ? toJalaali(item.last_absence) : '-';
       html += `<tr><td>${item.first_name}</td><td>${item.last_name}</td><td>${item.class_name}</td>
         <td>${item.excused}</td><td>${item.absent}</td><td>${total}</td>
-        <td>${item.last_absence ? toJalaali(item.last_absence) : '-'}</td></tr>`;
+        <td>${jDate}</td></tr>`;
     });
     html += '</table>';
     document.getElementById('reportResult').innerHTML = html;
@@ -2076,7 +2201,7 @@
   });
 
   // ============================================================
-  // 20. ورود از اکسل
+  // 20. ورود از اکسل (بدون تغییر)
   // ============================================================
   let excelData = [];
   let excelHeaders = [];
