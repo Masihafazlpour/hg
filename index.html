@@ -463,21 +463,17 @@
   <div id="loginPage">
     <div style="max-width:400px; margin:60px auto; background:#fff; padding:30px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.1);">
       <h2 style="text-align:center; margin-bottom:20px; color:var(--primary);">🚪 ورود به سامانه</h2>
-      <p style="text-align:center; font-size:0.85rem; color:#718096; margin-bottom:16px;">نام کاربری: <strong>admin</strong> | رمز: <strong>Admin123@</strong></p>
+      <p style="text-align:center; font-size:0.85rem; color:#718096; margin-bottom:16px;">اطلاعات حساب مدیر را وارد کنید.</p>
       <div class="form-group">
         <label>نام کاربری</label>
         <input type="text" id="loginUsername" value="admin" placeholder="admin" />
       </div>
       <div class="form-group">
         <label>رمز عبور</label>
-        <input type="password" id="loginPassword" value="Admin123@" placeholder="رمز عبور" />
+        <input type="password" id="loginPassword" value="" placeholder="رمز عبور" />
       </div>
       <button class="btn btn-primary btn-block" id="loginBtn">ورود</button>
       <div id="loginError" class="text-center" style="color:var(--danger); margin-top:10px; font-size:0.9rem;"></div>
-      <hr style="margin:16px 0;" />
-      <button class="btn btn-warning btn-block" id="createDefaultUserBtn">
-        <i class="fas fa-user-plus"></i> ساخت کاربر پیش‌فرض
-      </button>
     </div>
   </div>
 
@@ -687,6 +683,12 @@
             <button class="btn btn-primary" id="saveSettings"><i class="fas fa-save"></i> ذخیره</button>
           </div>
 
+          <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid #edf2f7;">
+            <h4 style="font-size:1rem; margin-bottom:10px;">💾 پشتیبان‌گیری</h4>
+            <p style="font-size:0.8rem; color:#718096; margin-bottom:10px; line-height:1.8;">از اطلاعات سامانه شامل کلاس‌ها، دانش‌آموزان، حضور و غیاب، تاریخچه تغییرات و تنظیمات یک فایل JSON تهیه می‌شود.</p>
+            <button class="btn btn-success" id="backupJsonBtn"><i class="fas fa-download"></i> دریافت پشتیبان JSON</button>
+          </div>
+
           <div>
             <h4 style="font-size:1rem; margin-bottom:10px; color:var(--danger);">⚠️ حذف کامل اطلاعات</h4>
             <button class="btn btn-danger" id="wipeDataBtn"><i class="fas fa-trash-alt"></i> حذف کامل</button>
@@ -704,6 +706,83 @@
   const SUPABASE_URL = 'https://njinbgaatbnpuulnmoui.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_G6aA1-On0kXDe_ZV4Wv79w_KLvAU1qK';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // امنیت و کنترل دسترسی
+  let currentUserRole = null;
+
+  function escapeHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function escapeFilterValue(value) {
+    return String(value ?? '').replace(/[(),]/g, '\\$&');
+  }
+
+  function extractErrorMessage(error) {
+    if (!error) return '';
+    return String(error.message || error.error_description || error.details || error.hint || '').trim();
+  }
+
+  function showAuthError(message) {
+    document.getElementById('loginError').textContent = message || 'خطایی رخ داد. دوباره تلاش کنید.';
+  }
+
+  async function getCurrentRole() {
+    const { data, error } = await supabaseClient.rpc('get_my_role');
+    if (error) throw error;
+    currentUserRole = typeof data === 'string' ? data : null;
+    return currentUserRole;
+  }
+
+  async function bootstrapFirstAdmin() {
+    const { data, error } = await supabaseClient.rpc('bootstrap_first_admin');
+    if (error) throw error;
+    return data === true;
+  }
+
+  async function ensureAdminAccess({ bootstrap = true } = {}) {
+    if (!currentUser) return false;
+
+    let role = await getCurrentRole();
+
+    if (!role && bootstrap && String(currentUser.email || '').toLowerCase() === 'admin@school.local') {
+      const created = await bootstrapFirstAdmin();
+      if (created) role = await getCurrentRole();
+    }
+
+    if (role !== 'admin') {
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      currentUserRole = null;
+      document.getElementById('mainPage').classList.add('hidden');
+      document.getElementById('loginPage').classList.remove('hidden');
+      document.getElementById('loginPassword').value = '';
+      showAuthError('این حساب مجوز ورود به سامانه را ندارد.');
+      return false;
+    }
+
+    currentUserRole = 'admin';
+    return true;
+  }
+
+  async function finishAdminLogin(user) {
+    currentUser = user;
+    const allowed = await ensureAdminAccess({ bootstrap: true });
+    if (!allowed) return false;
+    document.getElementById('loginPage').classList.add('hidden');
+    document.getElementById('mainPage').classList.remove('hidden');
+    document.getElementById('userDisplay').textContent = `خوش آمدید ${currentUser.email}`;
+    resetActivityTimer();
+    await Promise.allSettled([loadDashboard(), loadAllSelects()]);
+    await showTab('dashboard');
+    setTimeout(initDatepickers, 300);
+    return true;
+  }
 
   // ============================================================
   // 2. متغیرهای عمومی
@@ -1212,57 +1291,43 @@
   setInterval(checkSessionTimeout, 30000);
 
   // ============================================================
-  // 7. احراز هویت (بدون تغییر)
+  // 7. احراز هویت
   // ============================================================
   async function login() {
     let username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    if (!username.includes('@')) {
-      username = username + '@school.local';
+    const password = document.getElementById('loginPassword').value;
+    if (!username) {
+      showAuthError('نام کاربری را وارد کنید.');
+      return;
     }
+    if (!username.includes('@')) username += '@school.local';
+
     try {
       const { data, error } = await supabaseClient.auth.signInWithPassword({
         email: username,
-        password: password
+        password
       });
       if (error) throw error;
-      currentUser = data.user;
-      document.getElementById('loginPage').classList.add('hidden');
-      document.getElementById('mainPage').classList.remove('hidden');
-      document.getElementById('userDisplay').textContent = `خوش آمدید ${currentUser.email}`;
-      resetActivityTimer();
-      loadDashboard();
-      loadAllSelects();
-      showTab('dashboard');
-      setTimeout(initDatepickers, 300);
+      if (!data?.user) throw new Error('حساب کاربری دریافت نشد.');
+      const ok = await finishAdminLogin(data.user);
+      if (!ok) return;
+      showAuthError('');
     } catch (err) {
-      document.getElementById('loginError').textContent = err.message;
+      console.error('login error:', err);
+      const msg = extractErrorMessage(err);
+      showAuthError(msg || 'ورود انجام نشد. اطلاعات ورود را بررسی کنید.');
     }
   }
 
   async function logout() {
-    await supabaseClient.auth.signOut();
-    currentUser = null;
-    document.getElementById('mainPage').classList.add('hidden');
-    document.getElementById('loginPage').classList.remove('hidden');
-    document.getElementById('loginPassword').value = '';
-    document.getElementById('loginError').textContent = '';
-  }
-
-  async function createDefaultUser() {
-    try {
-      const { data, error } = await supabaseClient.auth.signUp({
-        email: 'admin@school.local',
-        password: 'Admin123@'
-      });
-      if (error) throw error;
-      toast('کاربر admin با ایمیل admin@school.local ساخته شد.', 'success');
-    } catch (err) {
-      if (err.message.includes('already registered')) {
-        toast('کاربر قبلاً وجود دارد، مستقیماً وارد شوید.', 'info');
-      } else {
-        toast(err.message, 'error');
-      }
+    try { await supabaseClient.auth.signOut(); }
+    finally {
+      currentUser = null;
+      currentUserRole = null;
+      document.getElementById('mainPage').classList.add('hidden');
+      document.getElementById('loginPage').classList.remove('hidden');
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').textContent = '';
     }
   }
 
@@ -1270,9 +1335,9 @@
   // 8. تغییر رمز عبور (بدون تغییر)
   // ============================================================
   async function changePassword() {
-    const current = document.getElementById('currentPassword').value.trim();
-    const newPwd = document.getElementById('newPassword').value.trim();
-    const confirm = document.getElementById('confirmPassword').value.trim();
+    const current = document.getElementById('currentPassword').value;
+    const newPwd = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
     const resultEl = document.getElementById('passwordChangeResult');
 
     if (!current || !newPwd || !confirm) {
@@ -1306,14 +1371,15 @@
       document.getElementById('confirmPassword').value = '';
       toast('رمز عبور تغییر کرد', 'success');
     } catch (err) {
-      resultEl.innerHTML = `<span style="color:var(--danger);">${err.message}</span>`;
+      resultEl.textContent = getSafeErrorMessage(err);
     }
   }
 
   // ============================================================
   // 9. تب‌ها و منو
   // ============================================================
-  function showTab(tab) {
+  async function showTab(tab) {
+    if (!currentUser || currentUserRole !== 'admin') return;
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     const target = document.getElementById(`tab-${tab}`);
     if (target) target.classList.remove('hidden');
@@ -1340,7 +1406,6 @@
   });
   document.getElementById('loginBtn').addEventListener('click', login);
   document.getElementById('logoutBtn').addEventListener('click', logout);
-  document.getElementById('createDefaultUserBtn').addEventListener('click', createDefaultUser);
   document.getElementById('changePasswordBtn').addEventListener('click', changePassword);
   document.getElementById('loginPassword').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
 
@@ -1396,8 +1461,8 @@
           const statusLabel = r.status === 'excused' ? 'موجه' : 'غیرموجه';
           const badgeClass = r.status === 'excused' ? 'badge-warning' : 'badge-danger';
           const jDate = toJalaali(r.date) || r.date;
-          html += `<tr><td>${s?.first_name} ${s?.last_name}</td><td>${s?.classes?.name || ''}</td>
-            <td>${jDate}</td><td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
+          html += `<tr><td>${escapeHtml(s?.first_name)} ${escapeHtml(s?.last_name)}</td><td>${escapeHtml(s?.classes?.name || '')}</td>
+            <td>${escapeHtml(jDate)}</td><td><span class="badge ${badgeClass}">${statusLabel}</span></td></tr>`;
         });
       } else html += '<tr><td colspan="4">هیچ غیبتی ثبت نشده</td></tr>';
       html += '</table>';
@@ -1410,11 +1475,11 @@
   // ============================================================
   async function loadClasses() {
     const { data, error } = await supabaseClient.from('classes').select('*').order('id');
-    if (error) return toast(error.message, 'error');
+    if (error) return toast(getSafeErrorMessage(error), 'error');
     let html = `<table><tr><th>نام</th><th>پایه</th><th>رشته</th><th>وضعیت</th><th>عملیات</th></tr>`;
     data.forEach(c => {
       html += `<tr>
-        <td>${c.name}</td><td>${c.grade}</td><td>${c.major || '-'}</td>
+        <td>${escapeHtml(c.name)}</td><td>${escapeHtml(c.grade)}</td><td>${escapeHtml(c.major || '-')}</td>
         <td><span class="badge ${c.active ? 'badge-success' : 'badge-danger'}">${c.active ? 'فعال' : 'غیرفعال'}</span></td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="editClass('${c.id}')"><i class="fas fa-edit"></i></button>
@@ -1432,15 +1497,15 @@
     if (!cls) return;
     const result = await showModal(`
       <form id="modalForm">
-        <div class="form-group"><label>نام کلاس</label><input name="name" value="${cls.name}" required/></div>
-        <div class="form-group"><label>پایه</label><input name="grade" value="${cls.grade}" required/></div>
-        <div class="form-group"><label>رشته</label><input name="major" value="${cls.major || ''}" /></div>
-        <div class="form-group"><label>توضیحات</label><textarea name="description">${cls.description || ''}</textarea></div>
+        <div class="form-group"><label>نام کلاس</label><input name="name" value="${escapeHtml(cls.name)}" required/></div>
+        <div class="form-group"><label>پایه</label><input name="grade" value="${escapeHtml(cls.grade)}" required/></div>
+        <div class="form-group"><label>رشته</label><input name="major" value="${escapeHtml(cls.major || '')}" /></div>
+        <div class="form-group"><label>توضیحات</label><textarea name="description">${escapeHtml(cls.description || '')}</textarea></div>
       </form>
     `);
     if (result) {
       const { error } = await supabaseClient.from('classes').update(result).eq('id', id);
-      if (error) toast(error.message, 'error'); else { toast('بروزرسانی شد'); loadClasses(); }
+      if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('بروزرسانی شد'); loadClasses(); }
     }
   };
 
@@ -1449,7 +1514,7 @@
     if (count > 0) return toast('این کلاس دارای دانش‌آموز فعال است، ابتدا منتقل کنید.', 'error');
     if (!confirm('آیا از حذف این کلاس مطمئن هستید؟')) return;
     const { error } = await supabaseClient.from('classes').delete().eq('id', id);
-    if (error) toast(error.message, 'error'); else { toast('حذف شد'); loadClasses(); }
+    if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('حذف شد'); loadClasses(); }
   };
 
   window.toggleClass = async (id) => {
@@ -1470,7 +1535,7 @@
     `);
     if (result) {
       const { error } = await supabaseClient.from('classes').insert({ ...result, active: true });
-      if (error) toast(error.message, 'error'); else { toast('کلاس اضافه شد'); loadClasses(); }
+      if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('کلاس اضافه شد'); loadClasses(); }
     }
   });
 
@@ -1485,7 +1550,10 @@
       classes(name)
     `, { count: 'exact' });
 
-    if (search) query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,internal_code.ilike.%${search}%`);
+    if (search) {
+      const safeSearch = escapeFilterValue(search);
+      query = query.or(`first_name.ilike.%${safeSearch}%,last_name.ilike.%${safeSearch}%,internal_code.ilike.%${safeSearch}%`);
+    }
     if (grade) query = query.eq('grade', grade);
     if (major) query = query.eq('major', major);
     if (classId) query = query.eq('class_id', classId);
@@ -1496,7 +1564,7 @@
     query = query.range(from, to).order('internal_code', { ascending: true, nullsFirst: false });
 
     const { data, error, count } = await query;
-    if (error) return toast(error.message, 'error');
+    if (error) return toast(getSafeErrorMessage(error), 'error');
 
     let html = `<table><tr><th><input type="checkbox" id="selectAllStudents" /></th>
       <th>کد</th><th>نام</th><th>نام خانوادگی</th><th>پایه</th><th>رشته</th><th>کلاس</th><th>وضعیت</th><th>عملیات</th></tr>`;
@@ -1504,9 +1572,9 @@
       const checked = selectedStudentIds.has(s.id) ? 'checked' : '';
       html += `<tr>
         <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked} /></td>
-        <td><strong>${s.internal_code || '-'}</strong></td>
-        <td>${s.first_name}</td><td>${s.last_name}</td><td>${s.grade}</td><td>${s.major || '-'}</td>
-        <td>${s.classes?.name || '-'}</td>
+        <td><strong>${escapeHtml(s.internal_code || '-')}</strong></td>
+        <td>${escapeHtml(s.first_name)}</td><td>${escapeHtml(s.last_name)}</td><td>${escapeHtml(s.grade)}</td><td>${escapeHtml(s.major || '-')}</td>
+        <td>${escapeHtml(s.classes?.name || '-')}</td>
         <td><span class="badge ${s.active ? 'badge-success' : 'badge-danger'}">${s.active ? 'فعال' : 'غیرفعال'}</span></td>
         <td>
           <button class="btn btn-primary btn-sm" onclick="editStudent('${s.id}')"><i class="fas fa-edit"></i></button>
@@ -1573,9 +1641,9 @@
 
     let html = `
       <div style="margin-bottom:16px;">
-        <h4>${student.first_name} ${student.last_name}</h4>
+        <h4>${escapeHtml(student.first_name)} ${escapeHtml(student.last_name)}</h4>
         <p style="font-size:0.9rem; color:#718096;">
-          کد: ${student.internal_code || '-'} | کلاس: ${student.classes?.name || '-'} | پایه: ${student.grade}
+          کد: ${escapeHtml(student.internal_code || '-')} | کلاس: ${escapeHtml(student.classes?.name || '-')} | پایه: ${escapeHtml(student.grade)}
         </p>
         <p style="font-size:0.9rem; margin-top:6px;">
           <span class="badge badge-warning">موجه: ${excusedCount}</span>
@@ -1595,8 +1663,8 @@
         const scopeLabel = a.scope_type === 'full_day' ? 'کل روز' : `زنگ ${a.bell_number}`;
         const jDate = toJalaali(a.date) || a.date;
         html += `<tr>
-          <td>${jDate}</td>
-          <td>${scopeLabel}</td>
+          <td>${escapeHtml(jDate)}</td>
+          <td>${escapeHtml(scopeLabel)}</td>
           <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
           <td>
             <select class="absence-status-select" data-id="${a.id}" style="padding:4px 8px; border-radius:6px; border:2px solid #e2e8f0; font-size:0.75rem; background:#fff;">
@@ -1660,7 +1728,7 @@
       .limit(1000);
     const gradeSet = new Set();
     grades?.forEach(g => gradeSet.add(g.grade));
-    const gradeOpts = Array.from(gradeSet).map(g => `<option value="${g}">${g}</option>`).join('');
+    const gradeOpts = Array.from(gradeSet).map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
     document.getElementById('filterGrade').innerHTML = `<option value="">همه پایه‌ها</option>${gradeOpts}`;
 
     const { data: majors } = await supabaseClient
@@ -1670,7 +1738,7 @@
       .limit(1000);
     const majorSet = new Set();
     majors?.forEach(m => { if (m.major) majorSet.add(m.major); });
-    const majorOpts = Array.from(majorSet).map(m => `<option value="${m}">${m}</option>`).join('');
+    const majorOpts = Array.from(majorSet).map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
     document.getElementById('filterMajor').innerHTML = `<option value="">همه رشته‌ها</option>${majorOpts}`;
 
     const { data: classes } = await supabaseClient
@@ -1678,7 +1746,7 @@
       .select('id,name')
       .eq('active', true)
       .order('name');
-    const classOpts = (classes || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const classOpts = (classes || []).map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
     document.getElementById('filterClass').innerHTML = `<option value="">همه کلاس‌ها</option>${classOpts}`;
   }
 
@@ -1697,7 +1765,7 @@
   // ============================================================
   document.getElementById('addStudentBtn').addEventListener('click', async () => {
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
-    const classOpts = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const classOpts = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
     const result = await showModal(`
       <form id="modalForm">
         <div class="form-row">
@@ -1725,7 +1793,7 @@
         }
       }
       const { error } = await supabaseClient.from('students').insert({ ...result, active: true });
-      if (error) toast(error.message, 'error'); else { toast('افزوده شد'); loadStudents(); }
+      if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('افزوده شد'); loadStudents(); }
     }
   });
 
@@ -1733,19 +1801,19 @@
     const { data: s } = await supabaseClient.from('students').select('*').eq('id', id).single();
     if (!s) return;
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
-    const classOpts = classes.map(c => `<option value="${c.id}" ${c.id === s.class_id ? 'selected' : ''}>${c.name}</option>`).join('');
+    const classOpts = classes.map(c => `<option value="${escapeHtml(c.id)}" ${c.id === s.class_id ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('');
     const result = await showModal(`
       <form id="modalForm">
         <div class="form-row">
-          <div class="form-group"><label>نام</label><input name="first_name" value="${s.first_name}" required/></div>
-          <div class="form-group"><label>نام خانوادگی</label><input name="last_name" value="${s.last_name}" required/></div>
+          <div class="form-group"><label>نام</label><input name="first_name" value="${escapeHtml(s.first_name)}" required/></div>
+          <div class="form-group"><label>نام خانوادگی</label><input name="last_name" value="${escapeHtml(s.last_name)}" required/></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>پایه</label><input name="grade" value="${s.grade}" required/></div>
-          <div class="form-group"><label>رشته</label><input name="major" value="${s.major || ''}" /></div>
+          <div class="form-group"><label>پایه</label><input name="grade" value="${escapeHtml(s.grade)}" required/></div>
+          <div class="form-group"><label>رشته</label><input name="major" value="${escapeHtml(s.major || '')}" /></div>
         </div>
         <div class="form-group"><label>کلاس</label><select name="class_id">${classOpts}</select></div>
-        <div class="form-group"><label>کد داخلی</label><input name="internal_code" type="number" value="${s.internal_code || ''}" /></div>
+        <div class="form-group"><label>کد داخلی</label><input name="internal_code" type="number" value="${escapeHtml(s.internal_code || '')}" /></div>
         <div class="form-group"><label>وضعیت</label><select name="active"><option value="true" ${s.active ? 'selected' : ''}>فعال</option><option value="false" ${!s.active ? 'selected' : ''}>غیرفعال</option></select></div>
       </form>
     `);
@@ -1764,14 +1832,14 @@
         }
       }
       const { error } = await supabaseClient.from('students').update(result).eq('id', id);
-      if (error) toast(error.message, 'error'); else { toast('بروزرسانی شد'); loadStudents(); }
+      if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('بروزرسانی شد'); loadStudents(); }
     }
   };
 
   window.deleteStudent = async (id) => {
     if (!confirm('آیا از حذف این دانش‌آموز مطمئن هستید؟')) return;
     const { error } = await supabaseClient.from('students').update({ active: false }).eq('id', id);
-    if (error) toast(error.message, 'error'); else { toast('غیرفعال شد'); loadStudents(); }
+    if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('غیرفعال شد'); loadStudents(); }
   };
 
   // ============================================================
@@ -1782,14 +1850,14 @@
     if (ids.length === 0) return;
     if (!confirm(`آیا از حذف ${ids.length} دانش‌آموز مطمئن هستید؟`)) return;
     const { error } = await supabaseClient.from('students').update({ active: false }).in('id', ids);
-    if (error) toast(error.message, 'error'); else { toast('غیرفعال شدند'); selectedStudentIds.clear(); loadStudents(); }
+    if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('غیرفعال شدند'); selectedStudentIds.clear(); loadStudents(); }
   });
 
   document.getElementById('bulkEditBtn').addEventListener('click', async () => {
     const ids = Array.from(selectedStudentIds);
     if (ids.length === 0) return;
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
-    const classOpts = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    const classOpts = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
     const result = await showModal(`
       <form id="modalForm">
         <div class="form-group"><label>پایه جدید</label><input name="grade" /></div>
@@ -1806,7 +1874,7 @@
       if (result.active !== '') updateData.active = result.active === 'true';
       if (Object.keys(updateData).length === 0) return toast('هیچ فیلدی برای تغییر انتخاب نشده', 'error');
       const { error } = await supabaseClient.from('students').update(updateData).in('id', ids);
-      if (error) toast(error.message, 'error'); else { toast('بروزرسانی شد'); selectedStudentIds.clear(); loadStudents(); }
+      if (error) toast(getSafeErrorMessage(error), 'error'); else { toast('بروزرسانی شد'); selectedStudentIds.clear(); loadStudents(); }
     }
   });
 
@@ -1831,10 +1899,13 @@
 
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
     const sel = document.getElementById('attendanceClass');
-    sel.innerHTML = classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    sel.innerHTML = classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
     await loadBellsForAttendance();
 
-    document.getElementById('attendanceScope').addEventListener('change', toggleBellSelector);
+    if (!document.getElementById('attendanceScope').dataset.listenerBound) {
+      document.getElementById('attendanceScope').addEventListener('change', toggleBellSelector);
+      document.getElementById('attendanceScope').dataset.listenerBound = '1';
+    }
     toggleBellSelector();
 
     document.getElementById('loadAttendance').click();
@@ -1847,7 +1918,7 @@
     sel.innerHTML = '';
     for (let i = 1; i <= count; i++) {
       const name = settings?.[`bell_${i}_name`] || `زنگ ${i}`;
-      sel.innerHTML += `<option value="${i}">${name}</option>`;
+      sel.innerHTML += `<option value="${i}">${escapeHtml(name)}</option>`;
     }
   }
 
@@ -1897,7 +1968,7 @@
       const isExcused = rec.status === 'excused';
       const isAbsent = rec.status === 'absent';
       html += `<tr>
-        <td style="font-weight:500;">${s.first_name} ${s.last_name}</td>
+        <td style="font-weight:500;">${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}</td>
         <td>
           <div class="status-buttons">
             <button class="status-btn ${isPresent ? 'active-present' : ''}" data-student="${s.id}" data-value="present">✅ حاضر</button>
@@ -1905,7 +1976,7 @@
             <button class="status-btn ${isAbsent ? 'active-absent' : ''}" data-student="${s.id}" data-value="absent">❌ غیرموجه</button>
           </div>
         </td>
-        <td><input type="text" class="attendance-note" data-id="${s.id}" value="${rec.note || ''}" style="width:100%; padding:4px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.8rem;"/></td>
+        <td><input type="text" class="attendance-note" data-id="${s.id}" value="${escapeHtml(rec.note || '')}" style="width:100%; padding:4px 8px; border:2px solid #e2e8f0; border-radius:6px; font-size:0.8rem;"/></td>
       </tr>`;
     });
     html += '</table>';
@@ -2011,7 +2082,7 @@
       toast('حضور و غیاب با موفقیت ذخیره شد');
       document.getElementById('loadAttendance').click();
     } catch (e) {
-      toast(e.message, 'error');
+      toast(getSafeErrorMessage(e), 'error');
     }
   });
 
@@ -2019,7 +2090,8 @@
   // 18. تنظیمات (بدون تغییر)
   // ============================================================
   async function loadSettings() {
-    const { data: settings } = await supabaseClient.from('attendance_settings').select('*').maybeSingle();
+    const { data: settings, error: settingsError } = await supabaseClient.from('attendance_settings').select('*').maybeSingle();
+    if (settingsError) { toast(getSafeErrorMessage(settingsError), 'error'); return; }
     if (!settings) {
       await supabaseClient.from('attendance_settings').insert({ bell_count: 4 });
       return loadSettings();
@@ -2034,13 +2106,16 @@
     let html = '';
     for (let i = 1; i <= count; i++) {
       const name = settings?.[`bell_${i}_name`] || `زنگ ${i}`;
-      html += `<div class="form-group"><label>نام زنگ ${i}</label><input type="text" id="bellName_${i}" value="${name}" /></div>`;
+      html += `<div class="form-group"><label>نام زنگ ${i}</label><input type="text" id="bellName_${i}" value="${escapeHtml(name)}" /></div>`;
     }
     container.innerHTML = html;
-    document.getElementById('bellCount').addEventListener('change', (e) => {
-      const newCount = parseInt(e.target.value) || 1;
-      generateBellInputs(newCount, {});
-    });
+    if (!document.getElementById('bellCount').dataset.listenerBound) {
+      document.getElementById('bellCount').addEventListener('change', (e) => {
+        const newCount = parseInt(e.target.value) || 1;
+        generateBellInputs(newCount, {});
+      });
+      document.getElementById('bellCount').dataset.listenerBound = '1';
+    }
   }
 
   document.getElementById('saveSettings').addEventListener('click', async () => {
@@ -2060,27 +2135,201 @@
     toast('تنظیمات ذخیره شد');
   });
 
+  async function fetchAllRows(table, select = '*', pageSize = 1000) {
+    const rows = [];
+    let from = 0;
+    while (true) {
+      const to = from + pageSize - 1;
+      const { data, error } = await supabaseClient
+        .from(table)
+        .select(select)
+        .range(from, to);
+      if (error) throw error;
+      const batch = data || [];
+      rows.push(...batch);
+      if (batch.length < pageSize) break;
+      from += pageSize;
+    }
+    return rows;
+  }
+
+  function downloadJsonFile(filename, data) {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  document.getElementById('backupJsonBtn').addEventListener('click', async () => {
+    if (!(await ensureAdminAccess({ bootstrap: false }))) return;
+
+    const result = await Swal.fire({
+      title: 'تهیه پشتیبان',
+      text: 'از اطلاعات فعلی سامانه یک فایل JSON تهیه می‌شود.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'ایجاد پشتیبان',
+      cancelButtonText: 'لغو'
+    });
+    if (!result.isConfirmed) return;
+
+    Swal.fire({
+      title: 'در حال تهیه پشتیبان...',
+      text: 'لطفاً تا پایان عملیات صبر کنید.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    try {
+      const [classes, students, attendanceRecords, attendanceHistory, importLogs, settings] = await Promise.all([
+        fetchAllRows('classes'),
+        fetchAllRows('students'),
+        fetchAllRows('attendance_records'),
+        fetchAllRows('attendance_history'),
+        fetchAllRows('import_logs'),
+        fetchAllRows('attendance_settings')
+      ]);
+
+      const backup = {
+        backup_version: 1,
+        application: 'سامان | سامانه حضور و غیاب مدرسه',
+        created_at: new Date().toISOString(),
+        created_by: currentUser?.email || null,
+        data: {
+          classes,
+          students,
+          attendance_settings: settings,
+          attendance_records: attendanceRecords,
+          attendance_history: attendanceHistory,
+          import_logs: importLogs
+        }
+      };
+
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      downloadJsonFile(`saman-backup-${stamp}.json`, backup);
+      Swal.close();
+      toast('پشتیبان JSON با موفقیت ایجاد شد.', 'success');
+    } catch (error) {
+      Swal.close();
+      console.error('JSON backup error:', error);
+      toast(getSafeErrorMessage(error, 'تهیه پشتیبان انجام نشد. دوباره تلاش کنید.'), 'error');
+    }
+  });
+
   document.getElementById('wipeDataBtn').addEventListener('click', async () => {
     const result = await Swal.fire({
-      title: '⚠️ هشدار!',
+      title: '⚠️ حذف کامل اطلاعات',
       html: `
-        <p style="color:var(--danger);">تمام اطلاعات سیستم برای همیشه حذف خواهد شد.</p>
-        <p>برای تأیید عبارت <b>DELETE</b> را وارد کنید:</p>
-        <input type="text" id="wipeConfirm" class="swal2-input" placeholder="DELETE" />
+        <div style="text-align:right;">
+          <p style="color:var(--danger); font-weight:600; margin-bottom:10px;">تمام اطلاعات دانش‌آموزان، کلاس‌ها و سوابق حضور و غیاب برای همیشه حذف خواهد شد.</p>
+          <p style="margin-bottom:8px;">برای تأیید، عبارت <b dir="ltr">DELETE</b> را دقیقاً وارد کنید:</p>
+          <input type="text" id="wipeConfirm" class="swal2-input" placeholder="DELETE" autocomplete="off" spellcheck="false" />
+        </div>
       `,
       showCancelButton: true,
       confirmButtonText: 'حذف کامل',
       cancelButtonText: 'لغو',
-      preConfirm: () => document.getElementById('wipeConfirm').value
-    });
-    if (result.isConfirmed && result.value === 'DELETE') {
-      const { error } = await supabaseClient.rpc('wipe_all_data');
-      if (error) toast(error.message, 'error'); else {
-        toast('تمام اطلاعات پاک شد', 'success');
-        loadSettings();
+      focusConfirm: false,
+      allowOutsideClick: () => !Swal.isLoading(),
+      preConfirm: () => {
+        const value = document.getElementById('wipeConfirm')?.value.trim();
+        if (value !== 'DELETE') {
+          Swal.showValidationMessage('عبارت وارد شده باید دقیقاً DELETE باشد.');
+          return false;
+        }
+        return value;
       }
-    } else if (result.isConfirmed) {
-      toast('عبارت وارد شده صحیح نیست', 'error');
+    });
+
+    if (!result.isConfirmed) return;
+    if (!(await ensureAdminAccess({ bootstrap: false }))) return;
+
+    Swal.fire({
+      title: 'در حال حذف اطلاعات...',
+      text: 'لطفاً تا پایان عملیات صبر کنید.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const deleteAllRows = async (table) => {
+      const { error } = await supabaseClient
+        .from(table)
+        .delete()
+        .not('id', 'is', null);
+      if (error) throw new Error(`${table}: ${error.message || 'خطای حذف'}`);
+    };
+
+    const withTimeout = (promise, ms) => new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('عملیات حذف در زمان مجاز انجام نشد.')), ms);
+      promise.then(
+        value => { clearTimeout(timer); resolve(value); },
+        error => { clearTimeout(timer); reject(error); }
+      );
+    });
+
+    try {
+      // ترتیب حذف به دلیل Foreign Keyها مهم است.
+      await withTimeout(deleteAllRows('attendance_history'), 20000);
+      await withTimeout(deleteAllRows('attendance_records'), 20000);
+      await withTimeout(deleteAllRows('import_logs'), 20000);
+      await withTimeout(deleteAllRows('students'), 20000);
+      await withTimeout(deleteAllRows('classes'), 20000);
+
+      const { data: setting, error: settingReadError } = await supabaseClient
+        .from('attendance_settings')
+        .select('id')
+        .maybeSingle();
+      if (settingReadError) throw settingReadError;
+
+      const defaultSettings = {
+        bell_count: 4,
+        bell_1_name: 'زنگ اول',
+        bell_2_name: 'زنگ دوم',
+        bell_3_name: 'زنگ سوم',
+        bell_4_name: 'زنگ چهارم',
+        bell_5_name: null,
+        bell_6_name: null,
+        bell_7_name: null,
+        bell_8_name: null,
+        bell_9_name: null,
+        bell_10_name: null,
+        full_day_enabled: true,
+        updated_at: new Date().toISOString()
+      };
+
+      if (setting) {
+        const { error } = await supabaseClient
+          .from('attendance_settings')
+          .update(defaultSettings)
+          .eq('id', setting.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabaseClient
+          .from('attendance_settings')
+          .insert({ bell_count: 4, full_day_enabled: true });
+        if (error) throw error;
+      }
+
+      Swal.close();
+      selectedStudentIds.clear();
+      await loadSettings();
+      await loadAllSelects();
+      await loadDashboard();
+      toast('تمام اطلاعات سامانه با موفقیت پاک شد', 'success');
+    } catch (error) {
+      Swal.close();
+      console.error('Direct wipe error:', error);
+      toast(getSafeErrorMessage(error, 'حذف کامل اطلاعات انجام نشد. دوباره تلاش کنید.'), 'error');
     }
   });
 
@@ -2090,10 +2339,10 @@
   async function loadReportSelects() {
     const classes = (await supabaseClient.from('classes').select('id,name').eq('active', true)).data || [];
     const selClass = document.getElementById('reportClass');
-    selClass.innerHTML = `<option value="">همه</option>` + classes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    selClass.innerHTML = `<option value="">همه</option>` + classes.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('');
     const selStudent = document.getElementById('reportStudent');
     const students = (await supabaseClient.from('students').select('id, first_name, last_name').eq('active', true).limit(1000)).data || [];
-    selStudent.innerHTML = students.map(s => `<option value="${s.id}">${s.first_name} ${s.last_name}</option>`).join('');
+    selStudent.innerHTML = students.map(s => `<option value="${escapeHtml(s.id)}">${escapeHtml(s.first_name)} ${escapeHtml(s.last_name)}</option>`).join('');
   }
 
   document.getElementById('reportType').addEventListener('change', (e) => {
@@ -2139,7 +2388,7 @@
     if (studentId) query = query.eq('student_id', studentId);
 
     const { data, error } = await query;
-    if (error) return toast(error.message, 'error');
+    if (error) return toast(getSafeErrorMessage(error), 'error');
 
     const map = {};
     data.forEach(r => {
@@ -2163,9 +2412,9 @@
     Object.values(map).forEach(item => {
       const total = item.excused + item.absent;
       const jDate = item.last_absence ? toJalaali(item.last_absence) : '-';
-      html += `<tr><td>${item.first_name}</td><td>${item.last_name}</td><td>${item.class_name}</td>
+      html += `<tr><td>${escapeHtml(item.first_name)}</td><td>${escapeHtml(item.last_name)}</td><td>${escapeHtml(item.class_name)}</td>
         <td>${item.excused}</td><td>${item.absent}</td><td>${total}</td>
-        <td>${jDate}</td></tr>`;
+        <td>${escapeHtml(jDate)}</td></tr>`;
     });
     html += '</table>';
     document.getElementById('reportResult').innerHTML = html;
@@ -2228,10 +2477,10 @@
 
   function showExcelPreview() {
     let html = `<h4 style="font-size:0.95rem;">پیش‌نمایش (۱۰ ردیف اول)</h4>
-      <div style="overflow-x:auto;"><table><tr>${excelHeaders.map(h => `<th>${h}</th>`).join('')}</tr>`;
+      <div style="overflow-x:auto;"><table><tr>${excelHeaders.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
     const previewRows = excelData.slice(0, 10);
     previewRows.forEach(row => {
-      html += `<tr>${row.map(cell => `<td>${cell || ''}</td>`).join('')}</tr>`;
+      html += `<tr>${row.map(cell => `<td>${escapeHtml(cell || '')}</td>`).join('')}</tr>`;
     });
     html += '</table></div>';
 
@@ -2249,7 +2498,7 @@
       html += `<div class="form-group"><label style="font-size:0.8rem;">${labels[f]}</label>
         <select data-field="${f}" class="col-map" style="font-size:0.8rem; padding:6px;">
           <option value="">انتخاب نشود</option>
-          ${excelHeaders.map((h, idx) => `<option value="${idx}">${h}</option>`).join('')}
+          ${excelHeaders.map((h, idx) => `<option value="${idx}">${escapeHtml(h)}</option>`).join('')}
         </select></div>`;
     });
     html += '</div>';
@@ -2292,7 +2541,7 @@
         }
         rawStudents.push({ ...student, rowIndex: i });
       } catch (err) {
-        errors.push(`ردیف ${i+2}: خطا - ${err.message}`);
+        errors.push(`ردیف ${i+2}: خطا - ${escapeHtml(err.message)}`);
       }
     }
 
@@ -2395,7 +2644,7 @@
       <p>کل ردیف‌ها: ${excelData.length}</p>
       <p>ثبت شده: ${insertedCount}</p>
       <p>خطا: ${errors.length}</p>
-      <pre style="max-height:200px; overflow-y:auto; font-size:0.8rem; background:#f8f9fa; padding:8px; border-radius:6px;">${errors.join('\n')}</pre>
+      <pre style="max-height:200px; overflow-y:auto; font-size:0.8rem; background:#f8f9fa; padding:8px; border-radius:6px;">${escapeHtml(errors.join('\n'))}</pre>
     `;
   });
 
@@ -2422,16 +2671,15 @@
   // 22. بررسی وضعیت ورود
   // ============================================================
   (async function init() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (user) {
-      currentUser = user;
-      document.getElementById('loginPage').classList.add('hidden');
-      document.getElementById('mainPage').classList.remove('hidden');
-      document.getElementById('userDisplay').textContent = `خوش آمدید ${user.email}`;
-      loadDashboard();
-      loadAllSelects();
-      showTab('dashboard');
-      setTimeout(initDatepickers, 500);
+    try {
+      const { data: { user }, error } = await supabaseClient.auth.getUser();
+      if (error) throw error;
+      if (!user) return;
+      const ok = await finishAdminLogin(user);
+      if (!ok) return;
+    } catch (err) {
+      console.error('Initial authentication error:', err);
+      showAuthError(extractErrorMessage(err) || 'خطایی رخ داد. دوباره تلاش کنید.');
     }
   })();
 </script>
