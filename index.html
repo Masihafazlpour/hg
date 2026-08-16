@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{--primary:#4361ee;--primary-dark:#3048c9;--primary-light:#eef0ff;--success:#2eaf68;--danger:#df4b3f;--warning:#e79a18;--info:#2495d5;--gray:#6c757d;--light:#f5f7fb;--border:#e2e8f0;--text:#263247;--muted:#718096;--white:#fff;--shadow:0 4px 18px rgba(67,97,238,.10);--r:12px;--rs:8px;--h:42px}
-*{box-sizing:border-box;margin:0;padding:0}html,body{min-height:100%;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--light);color:var(--text)}body{padding:10px}button,input,select,textarea{font:inherit}button{touch-action:manipulation}.container{max-width:1450px;margin:auto}.hidden{display:none!important}.flex{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}.center{justify-content:center}.panel{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(67,97,238,.06);padding:14px}.grid-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.card{text-align:center}.card .num{font-size:1.7rem;font-weight:800;color:var(--primary)}.card .lbl{font-size:.8rem;color:var(--muted);margin-top:4px}.btn{min-height:var(--h);padding:0 16px;border:0;border-radius:var(--rs);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#e7ecf3;color:var(--text);transition:.18s;white-space:nowrap}.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn-sm{min-height:32px;padding:0 11px;font-size:.78rem}.btn-block{width:100%}.primary{background:var(--primary);color:#fff}.danger{background:var(--danger);color:#fff}.success{background:var(--success);color:#fff}.warning{background:var(--warning);color:#fff}.info{background:var(--info);color:#fff}input,select,textarea{width:100%;height:var(--h);padding:0 12px;border:2px solid var(--border);border-radius:var(--rs);background:#fff;color:var(--text);outline:none;transition:.18s}textarea{height:auto;min-height:95px;padding-top:10px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.12)}select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234361ee' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;padding-left:30px}.form-group{margin-bottom:11px;flex:1;min-width:140px}.form-group label{display:block;font-size:.82rem;font-weight:700;color:#4a5568;margin-bottom:5px}.form-row{display:flex;gap:10px;flex-wrap:wrap}.header{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;padding:10px 14px;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px}.header-title{font-weight:800;color:var(--primary-dark);font-size:1.06rem}.sidebar{display:flex;gap:6px;flex-wrap:wrap;background:#fff;padding:9px 10px;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px}.sidebar .btn{flex:1 1 auto}.menu-toggle{display:none;background:transparent;border:0;color:var(--primary);font-size:1.3rem;cursor:pointer}.content-title{font-size:1.05rem;font-weight:800;color:var(--primary-dark)}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);font-size:.83rem}th{background:var(--primary-light);color:var(--primary-dark);font-weight:800;padding:10px 7px;border-bottom:2px solid #dde3ff;text-align:center}td{padding:9px 7px;border-bottom:1px solid #edf2f7;text-align:center;vertical-align:middle}tbody tr:hover,table tr:hover td{background:#fafbff}table tr:last-child td{border-bottom:0}.badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800}.badge.success{background:#dff6e7;color:#17653a}.badge.danger{background:#fde3e1;color:#8c241e}.badge.warning{background:#fff0ce;color:#8c5c05}.badge.secondary{background:#e7ebef;color:#4c5663}.badge.info{background:#dff2ff;color:#145a7c}.status-buttons{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}.status-btn{height:34px;min-width:72px;padding:0 10px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}.status-btn.present.active{background:#dff6e7;border-color:var(--success);color:#17653a}.status-btn.late_excused.active{background:#e9f2ff;border-color:#4a90e2;color:#245b91}.status-btn.late_unexcused.active{background:#fff0ce;border-color:var(--warning);color:#8c5c05}.status-btn.excused.active{background:#f4e8ff;border-color:#9b59b6;color:#6f3188}.status-btn.absent.active{background:#fde3e1;border-color:var(--danger);color:#8c241e}.pager{display:flex;gap:5px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:13px}.pager button{min-width:35px;height:35px;border:2px solid var(--border);background:#fff;border-radius:8px;cursor:pointer}.pager button.active{background:var(--primary);border-color:var(--primary);color:#fff}.muted{color:var(--muted);font-size:.8rem}.datepicker{position:relative}.datepicker-popup{position:absolute;top:calc(100% + 4px);right:0;z-index:10000;background:#fff;border:2px solid var(--border);border-radius:var(--r);padding:11px;min-width:280px;box-shadow:0 12px 35px rgba(0,0,0,.15)}.dp-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}.dp-head button{border:0;background:var(--primary-light);color:var(--primary-dark);border-radius:8px;cursor:pointer;height:34px;padding:0 9px}.dp-title{display:flex;gap:5px;flex:1;justify-content:center}.dp-title button{font-weight:800}.dp-week,.dp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.dp-week span{text-align:center;color:var(--muted);font-size:.72rem;padding:4px 0;font-weight:800}.dp-days button{border:0;background:transparent;border-radius:7px;min-height:34px;cursor:pointer;font-size:.78rem}.dp-days button:hover{background:var(--primary-light)}.dp-days .other{color:#c3cad5}.dp-days .selected{background:var(--primary);color:#fff}.dp-days .today{outline:2px solid var(--primary)}.picker-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:210px;overflow:auto}.picker-list button{border:0;background:var(--primary-light);color:var(--primary-dark);border-radius:8px;padding:8px;cursor:pointer}.section-grid{display:grid;grid-template-columns:1.1fr 1.9fr;gap:14px}.login-wrap{max-width:420px;margin:60px auto}.login-wrap .panel{padding:25px}.danger-zone{border:1px solid #f0c0bd;background:#fff8f7}.table-wrap{overflow:auto}.stat-list{display:grid;gap:7px;margin-top:9px}.stat-list div{display:flex;justify-content:space-between;gap:10px}.stat-list b{font-weight:800}.small-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}.toast-mini{font-size:.85rem}.mobile-only{display:none}.role-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--primary-light);color:var(--primary-dark);font-size:.72rem;font-weight:800}.permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:280px;overflow:auto;padding:4px}.permission-item{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}.permission-item input{width:auto;height:auto}.user-table-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}@media(max-width:900px){.grid-cards{grid-template-columns:repeat(2,1fr)}.section-grid{grid-template-columns:1fr}.sidebar .btn{flex:1 1 120px}}@media(max-width:700px){body{padding:6px}.menu-toggle{display:block}.sidebar{display:none;flex-direction:column}.sidebar.open{display:flex}.sidebar .btn{width:100%}.header-title{font-size:.9rem}.grid-cards{gap:7px}.card .num{font-size:1.25rem}.card .lbl{font-size:.7rem}.form-row{flex-direction:column;gap:0}.form-group{min-width:100%}.table-wrap{margin:0 -2px}table{font-size:.7rem}th,td{padding:6px 4px}.status-btn{min-width:58px;font-size:.68rem;padding:0 6px}.datepicker-popup{right:-8px;min-width:260px}.mobile-only{display:inline-flex}}@media(max-width:460px){.grid-cards{grid-template-columns:1fr 1fr}.btn{padding:0 11px}.header{padding:8px}.header .btn-sm{min-width:34px;padding:0}}
+*{box-sizing:border-box;margin:0;padding:0}html,body{min-height:100%;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--light);color:var(--text)}body{padding:10px}button,input,select,textarea{font:inherit}button{touch-action:manipulation}.container{max-width:1450px;margin:auto}.hidden{display:none!important}.flex{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}.center{justify-content:center}.panel{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(67,97,238,.06);padding:14px}.grid-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.card{text-align:center}.card .num{font-size:1.7rem;font-weight:800;color:var(--primary)}.card .lbl{font-size:.8rem;color:var(--muted);margin-top:4px}.btn{min-height:var(--h);padding:0 16px;border:0;border-radius:var(--rs);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#e7ecf3;color:var(--text);transition:.18s;white-space:nowrap}.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn-sm{min-height:32px;padding:0 11px;font-size:.78rem}.btn-block{width:100%}.primary{background:var(--primary);color:#fff}.danger{background:var(--danger);color:#fff}.success{background:var(--success);color:#fff}.warning{background:var(--warning);color:#fff}.info{background:var(--info);color:#fff}input,select,textarea{width:100%;height:var(--h);padding:0 12px;border:2px solid var(--border);border-radius:var(--rs);background:#fff;color:var(--text);outline:none;transition:.18s}textarea{height:auto;min-height:95px;padding-top:10px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.12)}select{appearance:none;-webkit-appearance:none;appearance:none;display:block;min-width:0;line-height:normal;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234361ee' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;padding-left:30px}.form-group{margin-bottom:11px;flex:1;min-width:140px}.form-group label{display:block;font-size:.82rem;font-weight:700;color:#4a5568;margin-bottom:5px}.form-row{display:flex;gap:10px;flex-wrap:wrap}.filter-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:9px}.filter-row .form-group{min-width:0;margin-bottom:0}.filter-row select{height:44px;padding-right:12px;padding-left:38px;direction:rtl;text-align:right}.filter-row label{margin-bottom:6px}.header{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;padding:10px 14px;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px}.header-title{font-weight:800;color:var(--primary-dark);font-size:1.06rem}.sidebar{display:flex;gap:6px;flex-wrap:wrap;background:#fff;padding:9px 10px;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px}.sidebar .btn{flex:1 1 auto}.menu-toggle{display:none;background:transparent;border:0;color:var(--primary);font-size:1.3rem;cursor:pointer}.content-title{font-size:1.05rem;font-weight:800;color:var(--primary-dark)}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);font-size:.83rem}th{background:var(--primary-light);color:var(--primary-dark);font-weight:800;padding:10px 7px;border-bottom:2px solid #dde3ff;text-align:center}td{padding:9px 7px;border-bottom:1px solid #edf2f7;text-align:center;vertical-align:middle}tbody tr:hover,table tr:hover td{background:#fafbff}table tr:last-child td{border-bottom:0}.badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800}.badge.success{background:#dff6e7;color:#17653a}.badge.danger{background:#fde3e1;color:#8c241e}.badge.warning{background:#fff0ce;color:#8c5c05}.badge.secondary{background:#e7ebef;color:#4c5663}.badge.info{background:#dff2ff;color:#145a7c}.status-buttons{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}.status-btn{height:34px;min-width:72px;padding:0 10px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}.status-btn.present.active{background:#dff6e7;border-color:var(--success);color:#17653a}.status-btn.late_excused.active{background:#e9f2ff;border-color:#4a90e2;color:#245b91}.status-btn.late_unexcused.active{background:#fff0ce;border-color:var(--warning);color:#8c5c05}.status-btn.excused.active{background:#f4e8ff;border-color:#9b59b6;color:#6f3188}.status-btn.absent.active{background:#fde3e1;border-color:var(--danger);color:#8c241e}.pager{display:flex;gap:5px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:13px}.pager button{min-width:35px;height:35px;border:2px solid var(--border);background:#fff;border-radius:8px;cursor:pointer}.pager button.active{background:var(--primary);border-color:var(--primary);color:#fff}.muted{color:var(--muted);font-size:.8rem}.datepicker{position:relative}.datepicker-popup{position:absolute;top:calc(100% + 4px);right:0;z-index:10000;background:#fff;border:2px solid var(--border);border-radius:var(--r);padding:11px;min-width:280px;box-shadow:0 12px 35px rgba(0,0,0,.15)}.dp-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}.dp-head button{border:0;background:var(--primary-light);color:var(--primary-dark);border-radius:8px;cursor:pointer;height:34px;padding:0 9px}.dp-title{display:flex;gap:5px;flex:1;justify-content:center}.dp-title button{font-weight:800}.dp-week,.dp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.dp-week span{text-align:center;color:var(--muted);font-size:.72rem;padding:4px 0;font-weight:800}.dp-days button{border:0;background:transparent;border-radius:7px;min-height:34px;cursor:pointer;font-size:.78rem}.dp-days button:hover{background:var(--primary-light)}.dp-days .other{color:#c3cad5}.dp-days .selected{background:var(--primary);color:#fff}.dp-days .today{outline:2px solid var(--primary)}.picker-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:210px;overflow:auto}.picker-list button{border:0;background:var(--primary-light);color:var(--primary-dark);border-radius:8px;padding:8px;cursor:pointer}.section-grid{display:grid;grid-template-columns:1.1fr 1.9fr;gap:14px}.login-wrap{max-width:420px;margin:60px auto}.login-wrap .panel{padding:25px}.danger-zone{border:1px solid #f0c0bd;background:#fff8f7}.table-wrap{overflow:auto}.stat-list{display:grid;gap:7px;margin-top:9px}.stat-list div{display:flex;justify-content:space-between;gap:10px}.stat-list b{font-weight:800}.small-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}.toast-mini{font-size:.85rem}.mobile-only{display:none}.role-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--primary-light);color:var(--primary-dark);font-size:.72rem;font-weight:800}.permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:280px;overflow:auto;padding:4px}.permission-item{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}.permission-item input{width:auto;height:auto}.user-table-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}@media(max-width:900px){.grid-cards{grid-template-columns:repeat(2,1fr)}.section-grid{grid-template-columns:1fr}.sidebar .btn{flex:1 1 120px}}@media(max-width:700px){body{padding:6px}.menu-toggle{display:block}.sidebar{display:none;flex-direction:column}.sidebar.open{display:flex}.sidebar .btn{width:100%}.header-title{font-size:.9rem}.grid-cards{gap:7px}.card .num{font-size:1.25rem}.card .lbl{font-size:.7rem}.form-row{flex-direction:column;gap:0}.filter-row{grid-template-columns:1fr;gap:8px}.filter-row .form-group{min-width:100%}.form-group{min-width:100%}.table-wrap{margin:0 -2px}table{font-size:.7rem}th,td{padding:6px 4px}.status-btn{min-width:58px;font-size:.68rem;padding:0 6px}.datepicker-popup{right:-8px;min-width:260px}.mobile-only{display:inline-flex}}@media(max-width:460px){.grid-cards{grid-template-columns:1fr 1fr}.btn{padding:0 11px}.header{padding:8px}.header .btn-sm{min-width:34px;padding:0}}
 </style>
 </head>
 <body>
@@ -62,7 +62,7 @@
         <div class="flex between" style="margin-bottom:12px"><h3 class="content-title">مدیریت دانش‌آموزان</h3><button id="addStudentBtn" class="btn success btn-sm"><i class="fa-solid fa-plus"></i> جدید</button></div>
         <div class="panel" style="margin-bottom:12px">
           <div class="flex"><input id="studentSearch" placeholder="جستجو نام، نام خانوادگی یا کد داخلی" style="flex:2"><button id="applyStudentFilters" class="btn primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i></button></div>
-          <div class="form-row" style="margin-top:9px"><div class="form-group"><label>پایه</label><select id="filterGrade"></select></div><div class="form-group"><label>رشته</label><select id="filterMajor"></select></div><div class="form-group"><label>کلاس</label><select id="filterClass"></select></div><div class="form-group"><label>وضعیت</label><select id="filterStatus"><option value="true">فعال</option><option value="false">غیرفعال</option><option value="all">همه</option></select></div></div>
+          <div class="filter-row"><div class="form-group"><label for="filterGrade">پایه</label><select id="filterGrade"><option value="">همه پایه‌ها</option></select></div><div class="form-group"><label for="filterMajor">رشته</label><select id="filterMajor"><option value="">همه رشته‌ها</option></select></div><div class="form-group"><label for="filterClass">کلاس</label><select id="filterClass"><option value="">همه کلاس‌ها</option></select></div><div class="form-group"><label for="filterStatus">وضعیت</label><select id="filterStatus"><option value="true">فعال</option><option value="false">غیرفعال</option><option value="all">همه</option></select></div></div>
         </div>
         <div class="flex" style="margin-bottom:9px"><button class="btn danger btn-sm" id="bulkDeleteBtn" disabled><i class="fa-solid fa-user-slash"></i> غیرفعال‌سازی</button><button class="btn warning btn-sm" id="bulkEditBtn" disabled><i class="fa-solid fa-pen-to-square"></i> اصلاح گروهی</button><span id="selectedCount" class="muted">۰ انتخاب شده</span></div>
         <div id="studentsTableContainer" class="table-wrap"></div><div id="studentsPagination" class="pager"></div>
@@ -153,14 +153,8 @@ let studentFilters = { search:'', grade:'', major:'', classId:'', active:'true' 
 let excelData = [];
 let excelHeaders = [];
 let columnMap = {};
-let attendanceDirty = false;
-let attendanceSaving = false;
-let attendanceContext = {
-  date: '',
-  classId: '',
-  scope: 'bell',
-  bell: null
-};
+let attendanceAutoTimer = null;
+let attendanceAutoRunning = false;
 
 function $(id){ return document.getElementById(id); }
 function esc(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
@@ -284,146 +278,9 @@ async function logout(timeout=false){try{await db.auth.signOut()}finally{current
 db.auth.onAuthStateChange((event,session)=>{setTimeout(async()=>{try{if(session?.user){if(!currentUser||currentUser.id!==session.user.id)await finishSession(session.user)}else{currentUser=null;currentRole=null;$('mainPage').classList.add('hidden');$('loginPage').classList.remove('hidden')}}catch(e){console.error(e)}},0)});
 
 /* ===== Tabs ===== */
-async function showTab(tab){
-  if(!currentUser||!allowedTabs().includes(tab))return;
-  document.querySelectorAll('.tab-content').forEach(x=>x.classList.add('hidden'));
-  const target=$(`tab-${tab}`);
-  if(target)target.classList.remove('hidden');
-  document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.tab===tab));
-  currentTab=tab;
-  $('sidebarMenu').classList.remove('open');
-  initDatepickers();
-  try{
-    if(tab==='dashboard')await loadDashboard();
-    else if(tab==='classes')await loadClasses();
-    else if(tab==='students')await loadStudents(1);
-    else if(tab==='attendance')await initAttendance();
-    else if(tab==='reports')await initReports();
-    else if(tab==='settings')await loadSettings();
-    else if(tab==='import')resetImport();
-  }catch(e){toast(safeError(e),'error')}
+async function showTab(tab){if(!currentUser||!allowedTabs().includes(tab))return;document.querySelectorAll('.tab-content').forEach(x=>x.classList.add('hidden'));const target=$(`tab-${tab}`);if(target)target.classList.remove('hidden');document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('primary',b.dataset.tab===tab));currentTab=tab;$('sidebarMenu').classList.remove('open');initDatepickers();
+  try{if(tab==='dashboard')await loadDashboard();else if(tab==='classes')await loadClasses();else if(tab==='students'){await loadAllSelects();await loadStudents(1)}else if(tab==='attendance')await initAttendance();else if(tab==='reports')await initReports();else if(tab==='settings')await loadSettings();else if(tab==='import')resetImport()}catch(e){toast(safeError(e),'error')}
 }
-
-async function confirmAttendanceLeave(reasonText='تغییرات حضور و غیاب ذخیره نشده است.'){
-  if(!attendanceDirty)return true;
-
-  const result=await Swal.fire({
-    title:'تغییرات ذخیره نشده است',
-    html:`<div style="text-align:right;line-height:2">${esc(reasonText)}<br>آیا می‌خواهید تغییرات را ذخیره کنید؟</div>`,
-    icon:'warning',
-    showDenyButton:true,
-    showCancelButton:true,
-    confirmButtonText:'بله، ذخیره و ادامه',
-    denyButtonText:'خیر، بدون ذخیره',
-    cancelButtonText:'لغو',
-    reverseButtons:true,
-    allowOutsideClick:false,
-    allowEscapeKey:false
-  });
-
-  if(result.isConfirmed){
-    try{
-      await saveAttendance();
-      return !attendanceDirty;
-    }catch(e){
-      return false;
-    }
-  }
-
-  if(result.isDenied){
-    attendanceDirty=false;
-    $('attendanceSaveState').textContent='تغییرات ذخیره نشد.';
-    return true;
-  }
-
-  return false;
-}
-
-async function navigateToTab(tab){
-  if(tab===currentTab)return;
-  if(currentTab==='attendance'){
-    const ok=await confirmAttendanceLeave('تغییرات حضور و غیاب ذخیره نشده است.');
-    if(!ok)return;
-  }
-  await showTab(tab);
-}
-
-function getAttendanceContext(){
-  return {
-    date:$('attendanceDate').value,
-    classId:$('attendanceClass').value,
-    scope:$('attendanceScope').value,
-    bell:$('attendanceScope').value==='bell'?Number($('attendanceBell').value):null
-  };
-}
-
-function sameAttendanceContext(a,b){
-  return a.date===b.date &&
-         a.classId===b.classId &&
-         a.scope===b.scope &&
-         a.bell===b.bell;
-}
-
-async function navigateAttendanceContext(nextContext, reasonText='تغییرات حضور و غیاب ذخیره نشده است.'){
-  const previous={...attendanceContext};
-
-  if(!attendanceDirty || sameAttendanceContext(previous,nextContext)){
-    attendanceContext={...nextContext};
-    await loadAttendance();
-    return;
-  }
-
-  const result=await Swal.fire({
-    title:'تغییرات ذخیره نشده است',
-    html:`<div style="text-align:right;line-height:2">${esc(reasonText)}<br>آیا می‌خواهید قبل از رفتن تغییرات ذخیره شوند؟</div>`,
-    icon:'warning',
-    showDenyButton:true,
-    showCancelButton:true,
-    confirmButtonText:'بله، ذخیره و ادامه',
-    denyButtonText:'خیر، بدون ذخیره',
-    cancelButtonText:'لغو',
-    reverseButtons:true,
-    allowOutsideClick:false,
-    allowEscapeKey:false
-  });
-
-  if(result.isConfirmed){
-    try{
-      await saveAttendance();
-      attendanceContext={...nextContext};
-      await loadAttendance();
-    }catch(_){
-      restoreAttendanceContext(previous);
-    }
-    return;
-  }
-
-  if(result.isDenied){
-    attendanceDirty=false;
-    attendanceContext={...nextContext};
-    $('attendanceSaveState').textContent='تغییرات ذخیره نشد.';
-    await loadAttendance();
-    return;
-  }
-
-  restoreAttendanceContext(previous);
-}
-
-function restoreAttendanceContext(ctx){
-  $('attendanceDate')._picker?.setDate(ctx.date||'');
-  $('attendanceDate').value=ctx.date||'';
-  $('attendanceClass').value=ctx.classId||'';
-  $('attendanceScope').value=ctx.scope||'bell';
-  $('attendanceBell').value=ctx.bell??'';
-  $('bellSelector').classList.toggle('hidden',$('attendanceScope').value!=='bell');
-}
-
-window.addEventListener('beforeunload',e=>{
-  if(currentTab==='attendance' && attendanceDirty){
-    e.preventDefault();
-    e.returnValue='';
-  }
-});
 
 /* ===== Dashboard ===== */
 async function loadDashboard(){
@@ -511,209 +368,28 @@ async function addStudent(){const classes=await getActiveClasses();const r=await
 async function editStudent(id){const {data:s,error}=await db.from('students').select('*').eq('id',id).single();if(error)throw error;const classes=await getActiveClasses();const r=await formModal('ویرایش دانش‌آموز',[{name:'first_name',label:'نام',value:s.first_name,required:true},{name:'last_name',label:'نام خانوادگی',value:s.last_name,required:true},{name:'grade',label:'پایه',value:s.grade,required:true},{name:'major',label:'رشته',value:s.major||''},{name:'class_id',label:'کلاس',type:'select',value:s.class_id||'',options:[{value:'',label:'بدون کلاس'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'internal_code',label:'کد داخلی',type:'number',value:s.internal_code||''},{name:'active',label:'وضعیت',type:'select',value:String(s.active),options:[{value:'true',label:'فعال'},{value:'false',label:'غیرفعال'}]}]);if(!r)return;const internal=normalizeDigits(r.internal_code||'').trim();if(internal&&internal!==String(s.internal_code||'')){const {data,error:e}=await db.from('students').select('id').eq('internal_code',internal).neq('id',id).maybeSingle();if(e)throw e;if(data){toast('کد داخلی قبلاً ثبت شده است.','warning');return}}const {error:e}=await db.from('students').update({first_name:normalizeFa(r.first_name),last_name:normalizeFa(r.last_name),grade:normalizeFa(r.grade),major:normalizeFa(r.major)||null,class_id:r.class_id||null,internal_code:internal||null,active:r.active==='true'}).eq('id',id);if(e)throw e;toast('اطلاعات بروزرسانی شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
 async function disableStudent(id){if(!(await confirmDialog('غیرفعال‌سازی دانش‌آموز','دانش‌آموز حذف فیزیکی نمی‌شود و فقط غیرفعال خواهد شد. ادامه می‌دهید؟','غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).eq('id',id);if(error)throw error;toast('دانش‌آموز غیرفعال شد');selectedStudentIds.delete(id);await loadStudents(currentStudentPage)}
 async function bulkEdit(){const ids=[...selectedStudentIds];if(!ids.length)return;const classes=await getActiveClasses();const r=await formModal(`اصلاح گروهی (${toFa(ids.length)} نفر)`,[{name:'grade',label:'پایه جدید'},{name:'major',label:'رشته جدید'},{name:'class_id',label:'کلاس جدید',type:'select',options:[{value:'',label:'بدون تغییر'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'active',label:'وضعیت',type:'select',options:[{value:'',label:'بدون تغییر'},{value:'true',label:'فعال'},{value:'false',label:'غیرفعال'}]}]);if(!r)return;const update={};if(normalizeFa(r.grade))update.grade=normalizeFa(r.grade);if(r.major!==undefined&&String(r.major).trim())update.major=normalizeFa(r.major);if(r.class_id)update.class_id=r.class_id;if(r.active!=='')update.active=r.active==='true';if(!Object.keys(update).length){toast('هیچ تغییری انتخاب نشده است.','warning');return}const {error}=await db.from('students').update(update).in('id',ids);if(error)throw error;selectedStudentIds.clear();toast('اصلاح گروهی انجام شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
-async function showStudentAbsences(studentId){const [{data:s,error:se},{data:records,error:re}]=await Promise.all([db.from('students').select('id,first_name,last_name,grade,internal_code,classes(name)').eq('id',studentId).single(),db.from('attendance_records').select('id,date,scope_type,bell_number,status,note').eq('student_id',studentId).in('status',NON_PRESENT_STATUSES).order('date',{ascending:false})]);if(se)throw se;if(re)throw re;let h=`<div style="margin-bottom:10px"><b>${esc(s.first_name)} ${esc(s.last_name)}</b><div class="muted">کد: ${esc(s.internal_code||'-')} | کلاس: ${esc(s.classes?.name||'-')} | پایه: ${esc(s.grade)}</div></div>`;h+='<div class="table-wrap" style="max-height:420px"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>وضعیت</th><th>یادداشت</th></tr></thead><tbody>';if(!records?.length)h+='<tr><td colspan="4">غیبتی ثبت نشده است.</td></tr>';else records.forEach(r=>{h+=`<tr><td>${esc(toJalali(r.date))}</td><td>${r.scope_type==='full_day'?'کل روز':`زنگ ${toFa(r.bell_number)}`}</td><td><span class="badge ${r.status==='late_excused'?'info':r.status==='late_unexcused'?'warning':r.status==='excused'?'secondary':'danger'}">${esc(STATUS_LABELS[r.status]||r.status)}</span></td><td>${esc(r.note||'-')}</td></tr>`});h+='</tbody></table></div>';await Swal.fire({title:'📋 سوابق غیبت',html:h,width:760,confirmButtonText:'بستن'})}
+async function editAbsenceRecord(recordId){
+  const {data:record,error}=await db.from('attendance_records').select('id,date,scope_type,bell_number,status,note,student_id,students(first_name,last_name,classes(name))').eq('id',recordId).single();
+  if(error)throw error;
+  const options=['present','late_excused','late_unexcused','excused','absent'];
+  const html=`<form id="absenceEditForm" style="text-align:right"><div class="muted" style="margin-bottom:10px">${esc(record.students?.first_name||'')} ${esc(record.students?.last_name||'')} | ${esc(toJalali(record.date))} | ${record.scope_type==='full_day'?'کل روز':`زنگ ${toFa(record.bell_number)}`}</div><div class="form-group"><label>وضعیت جدید</label><select id="absenceEditStatus">${options.map(st=>`<option value="${st}" ${record.status===st?'selected':''}>${esc(STATUS_LABELS[st])}</option>`).join('')}</select></div><div class="form-group"><label>یادداشت</label><textarea id="absenceEditNote">${esc(record.note||'')}</textarea></div></form>`;
+  const result=await Swal.fire({title:'ویرایش سابقه حضور و غیاب',html,width:620,showCancelButton:true,confirmButtonText:'ذخیره تغییرات',cancelButtonText:'لغو',preConfirm:()=>({status:document.getElementById('absenceEditStatus').value,note:document.getElementById('absenceEditNote').value.trim()})});
+  if(!result.isConfirmed)return;
+  const {error:updateError}=await db.rpc('update_attendance_record_status',{p_record_id:recordId,p_status:result.value.status,p_note:result.value.note});
+  if(updateError)throw updateError;
+  toast('سابقه با موفقیت ویرایش شد');
+}
+
+async function showStudentAbsences(studentId){const [{data:s,error:se},{data:records,error:re}]=await Promise.all([db.from('students').select('id,first_name,last_name,grade,internal_code,classes(name)').eq('id',studentId).single(),db.from('attendance_records').select('id,date,scope_type,bell_number,status,note').eq('student_id',studentId).in('status',NON_PRESENT_STATUSES).order('date',{ascending:false})]);if(se)throw se;if(re)throw re;let h=`<div style="margin-bottom:10px"><b>${esc(s.first_name)} ${esc(s.last_name)}</b><div class="muted">کد: ${esc(s.internal_code||'-')} | کلاس: ${esc(s.classes?.name||'-')} | پایه: ${esc(s.grade)}</div></div>`;h+='<div class="table-wrap" style="max-height:420px"><table><thead><tr><th>تاریخ</th><th>نوع</th><th>وضعیت</th><th>یادداشت</th><th>عملیات</th></tr></thead><tbody>';if(!records?.length)h+='<tr><td colspan="5">غیبتی ثبت نشده است.</td></tr>';else records.forEach(r=>{h+=`<tr><td>${esc(toJalali(r.date))}</td><td>${r.scope_type==='full_day'?'کل روز':`زنگ ${toFa(r.bell_number)}`}</td><td><span class="badge ${r.status==='late_excused'?'info':r.status==='late_unexcused'?'warning':r.status==='excused'?'secondary':'danger'}">${esc(STATUS_LABELS[r.status]||r.status)}</span></td><td>${esc(r.note||'-')}</td><td><button class="btn primary btn-sm absence-edit-btn" data-record-id="${esc(r.id)}"><i class="fa-solid fa-pen"></i> ویرایش</button></td></tr>`});h+='</tbody></table></div>';const modal=await Swal.fire({title:'📋 سوابق غیبت',html:h,width:900,confirmButtonText:'بستن',didOpen:()=>{document.querySelectorAll('.absence-edit-btn').forEach(btn=>btn.addEventListener('click',async()=>{try{await editAbsenceRecord(btn.dataset.recordId);Swal.close();await showStudentAbsences(studentId)}catch(e){toast(safeError(e),'error')}}))}})}
 
 /* ===== Attendance ===== */
-async function loadBellsForAttendance(){
-  const {data,error}=await db.from('attendance_settings')
-    .select('bell_count,bell_1_name,bell_2_name,bell_3_name,bell_4_name,bell_5_name,bell_6_name,bell_7_name,bell_8_name,bell_9_name,bell_10_name,full_day_enabled')
-    .order('updated_at',{ascending:false})
-    .limit(1)
-    .maybeSingle();
-  if(error)throw error;
-
-  const count=Math.min(10,Math.max(1,Number(data?.bell_count||4)));
-  const sel=$('attendanceBell');
-  const previous=sel.value;
-  sel.innerHTML='';
-
-  for(let i=1;i<=count;i++){
-    sel.insertAdjacentHTML(
-      'beforeend',
-      `<option value="${i}">${esc(data?.[`bell_${i}_name`]||`زنگ ${i}`)}</option>`
-    );
-  }
-
-  if(previous && [...sel.options].some(o=>o.value===previous)){
-    sel.value=previous;
-  }
-
-  $('attendanceScope').querySelector('option[value="full_day"]').disabled=data?.full_day_enabled===false;
-
-  if(data?.full_day_enabled===false && $('attendanceScope').value==='full_day'){
-    $('attendanceScope').value='bell';
-  }
-
-  $('bellSelector').classList.toggle('hidden',$('attendanceScope').value!=='bell');
-}
-
-async function initAttendance(){
-  const today=getTodayJalali();
-
-  if(!$('attendanceDate')._picker)initDatepickers();
-
-  if(!$('attendanceDate').value){
-    $('attendanceDate')._picker.setDate(today);
-  }
-
-  await refreshClassLists();
-  await loadBellsForAttendance();
-
-  const classSel=$('attendanceClass');
-
-  if(!classSel.value && classSel.options.length>1){
-    classSel.selectedIndex=1;
-  }
-
-  attendanceContext=getAttendanceContext();
-  attendanceDirty=false;
-  $('attendanceSaveState').textContent='';
-
-  if(classSel.value){
-    await loadAttendance();
-  }
-}
-
-async function loadAttendance(){
-  const date=toGregorian($('attendanceDate').value);
-  const classId=$('attendanceClass').value;
-  const scope=$('attendanceScope').value;
-  const bell=scope==='bell'?Number($('attendanceBell').value):null;
-
-  if(!date)return toast('تاریخ نامعتبر است.','error');
-  if(!classId)return toast('کلاس را انتخاب کنید.','warning');
-
-  const [{data:students,error:se},{data:records,error:re}]=await Promise.all([
-    db.from('students')
-      .select('id,first_name,last_name')
-      .eq('class_id',classId)
-      .eq('active',true)
-      .order('last_name')
-      .order('first_name'),
-
-    (() => {
-      let q=db.from('attendance_records')
-        .select('student_id,status,note')
-        .eq('date',date)
-        .eq('scope_type',scope);
-
-      if(scope==='bell')q=q.eq('bell_number',bell);
-      else q=q.is('bell_number',null);
-
-      return q;
-    })()
-  ]);
-
-  if(se)throw se;
-  if(re)throw re;
-
-  if(!students?.length){
-    $('attendanceTableContainer').innerHTML='<div class="panel" style="text-align:center">دانش‌آموز فعال برای این کلاس یافت نشد.</div>';
-    attendanceContext={date,classId,scope,bell};
-    attendanceDirty=false;
-    $('attendanceSaveState').textContent='';
-    return;
-  }
-
-  const map=new Map((records||[]).map(r=>[r.student_id,r]));
-  let h='<table><thead><tr><th>دانش‌آموز</th><th>وضعیت</th><th>یادداشت</th></tr></thead><tbody>';
-
-  students.forEach(s=>{
-    const r=map.get(s.id)||{status:'present',note:''};
-
-    h+=`<tr data-student="${esc(s.id)}">
-      <td style="font-weight:700">${esc(s.first_name)} ${esc(s.last_name)}</td>
-      <td>
-        <div class="status-buttons">
-          <button class="status-btn present ${r.status==='present'?'active':''}" data-value="present">✅ حاضر</button>
-          <button class="status-btn late_excused ${r.status==='late_excused'?'active':''}" data-value="late_excused">🕘 تأخیر موجه</button>
-          <button class="status-btn late_unexcused ${r.status==='late_unexcused'?'active':''}" data-value="late_unexcused">🕘 تأخیر غیرموجه</button>
-          <button class="status-btn excused ${r.status==='excused'?'active':''}" data-value="excused">⚠️ غیبت موجه</button>
-          <button class="status-btn absent ${r.status==='absent'?'active':''}" data-value="absent">❌ غیبت غیرموجه</button>
-        </div>
-      </td>
-      <td><input class="attendance-note" value="${esc(r.note||'')}" placeholder="یادداشت"></td>
-    </tr>`;
-  });
-
-  h+='</tbody></table>';
-  $('attendanceTableContainer').innerHTML=h;
-
-  document.querySelectorAll('.status-btn').forEach(b=>{
-    b.onclick=()=>{
-      const row=b.closest('tr');
-      row.querySelectorAll('.status-btn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      attendanceDirty=true;
-      $('attendanceSaveState').textContent='تغییرات ذخیره نشده است.';
-    };
-  });
-
-  document.querySelectorAll('.attendance-note').forEach(x=>{
-    x.addEventListener('input',()=>{
-      attendanceDirty=true;
-      $('attendanceSaveState').textContent='تغییرات ذخیره نشده است.';
-    });
-  });
-
-  attendanceContext={date,classId,scope,bell};
-  attendanceDirty=false;
-  $('attendanceSaveState').textContent='';
-}
-
-function collectAttendanceRows(){
-  return [...document.querySelectorAll('#attendanceTableContainer tbody tr')].map(tr=>{
-    const active=tr.querySelector('.status-btn.active');
-
-    return {
-      student_id:tr.dataset.student,
-      status:active?.dataset.value||'present',
-      note:tr.querySelector('.attendance-note')?.value?.trim()||''
-    };
-  });
-}
-
-async function saveAttendance(){
-  const date=toGregorian($('attendanceDate').value);
-  const classId=$('attendanceClass').value;
-  const scope=$('attendanceScope').value;
-  const bell=scope==='bell'?Number($('attendanceBell').value):null;
-  const records=collectAttendanceRows();
-
-  if(!date||!classId||!records.length){
-    throw new Error('اطلاعات حضور و غیاب کامل نیست.');
-  }
-
-  if(attendanceSaving)return;
-
-  attendanceSaving=true;
-  $('attendanceSaveState').textContent='در حال ذخیره تغییرات...';
-
-  try{
-    const {error}=await db.rpc('save_attendance_batch',{
-      p_date:date,
-      p_class_id:classId,
-      p_scope:scope,
-      p_bell:bell,
-      p_records:records
-    });
-
-    if(error)throw error;
-
-    attendanceDirty=false;
-    attendanceContext={date,classId,scope,bell};
-    $('attendanceSaveState').textContent='✅ تغییرات ذخیره شد';
-    return true;
-
-  }catch(e){
-    $('attendanceSaveState').textContent='❌ ذخیره انجام نشد';
-    throw e;
-
-  }finally{
-    attendanceSaving=false;
-  }
-}
-
+async function loadBellsForAttendance(){const {data,error}=await db.from('attendance_settings').select('*').order('updated_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;const count=Math.min(10,Math.max(1,Number(data?.bell_count||4)));const sel=$('attendanceBell');sel.innerHTML='';for(let i=1;i<=count;i++)sel.insertAdjacentHTML('beforeend',`<option value="${i}">${esc(data?.[`bell_${i}_name`]||`زنگ ${i}`)}</option>`);$('attendanceScope').querySelector('option[value="full_day"]').disabled=data?.full_day_enabled===false;if(data?.full_day_enabled===false&&$('attendanceScope').value==='full_day')$('attendanceScope').value='bell';$('bellSelector').classList.toggle('hidden',$('attendanceScope').value!=='bell')}
+async function initAttendance(){const today=getTodayJalali();if(!$('attendanceDate')._picker)initDatepickers();$('attendanceDate')._picker.setDate(today);await refreshClassLists();await loadBellsForAttendance();$('attendanceScope').onchange=()=>{$('bellSelector').classList.toggle('hidden',$('attendanceScope').value!=='bell')};const classSel=$('attendanceClass');if(!classSel.value&&classSel.options.length>1)classSel.selectedIndex=1;if(classSel.value)await loadAttendance();}
+async function loadAttendance(){const date=toGregorian($('attendanceDate').value);const classId=$('attendanceClass').value;const scope=$('attendanceScope').value;const bell=scope==='bell'?Number($('attendanceBell').value):null;if(!date)return toast('تاریخ نامعتبر است.','error');if(!classId)return toast('کلاس را انتخاب کنید.','warning');const [{data:students,error:se},{data:records,error:re}]=await Promise.all([db.from('students').select('id,first_name,last_name').eq('class_id',classId).eq('active',true).order('last_name').order('first_name'),(()=>{let q=db.from('attendance_records').select('student_id,status,note').eq('date',date).eq('scope_type',scope);if(scope==='bell')q=q.eq('bell_number',bell);else q=q.is('bell_number',null);return q})()]);if(se)throw se;if(re)throw re;if(!students?.length){$('attendanceTableContainer').innerHTML='<div class="panel" style="text-align:center">دانش‌آموز فعال برای این کلاس یافت نشد.</div>';return}const map=new Map((records||[]).map(r=>[r.student_id,r]));let h='<table><thead><tr><th>دانش‌آموز</th><th>وضعیت</th><th>یادداشت</th></tr></thead><tbody>';students.forEach(s=>{const r=map.get(s.id)||{status:'present',note:''};h+=`<tr data-student="${esc(s.id)}"><td style="font-weight:700">${esc(s.first_name)} ${esc(s.last_name)}</td><td><div class="status-buttons"><button class="status-btn present ${r.status==='present'?'active':''}" data-value="present">✅ حاضر</button><button class="status-btn late_excused ${r.status==='late_excused'?'active':''}" data-value="late_excused">🕘 تأخیر موجه</button><button class="status-btn late_unexcused ${r.status==='late_unexcused'?'active':''}" data-value="late_unexcused">🕘 تأخیر غیرموجه</button><button class="status-btn excused ${r.status==='excused'?'active':''}" data-value="excused">⚠️ غیبت موجه</button><button class="status-btn absent ${r.status==='absent'?'active':''}" data-value="absent">❌ غیبت غیرموجه</button></div></td><td><input class="attendance-note" value="${esc(r.note||'')}" placeholder="یادداشت"></td></tr>`});h+='</tbody></table>';$('attendanceTableContainer').innerHTML=h;document.querySelectorAll('.status-btn').forEach(b=>b.onclick=()=>{const row=b.closest('tr');row.querySelectorAll('.status-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');scheduleAttendanceAutosave()});document.querySelectorAll('.attendance-note').forEach(x=>x.addEventListener('input',scheduleAttendanceAutosave));$('attendanceSaveState').textContent=''}
+function collectAttendanceRows(){return [...document.querySelectorAll('#attendanceTableContainer tbody tr')].map(tr=>{const active=tr.querySelector('.status-btn.active');return {student_id:tr.dataset.student,status:active?.dataset.value||'present',note:tr.querySelector('.attendance-note')?.value?.trim()||''}})}
+function scheduleAttendanceAutosave(){clearTimeout(attendanceAutoTimer);attendanceAutoTimer=setTimeout(()=>autoSaveAttendance(),800);$('attendanceSaveState').textContent='تغییرات ثبت نشده...'}
+async function autoSaveAttendance(){if(attendanceAutoRunning)return;const date=toGregorian($('attendanceDate').value),classId=$('attendanceClass').value,scope=$('attendanceScope').value,bell=scope==='bell'?Number($('attendanceBell').value):null,records=collectAttendanceRows();if(!date||!classId||!records.length)return;attendanceAutoRunning=true;try{const {error}=await db.rpc('save_attendance_batch',{p_date:date,p_class_id:classId,p_scope:scope,p_bell:bell,p_records:records});if(error)throw error;$('attendanceSaveState').textContent='✅ ذخیره خودکار شد'}catch(e){console.error(e);$('attendanceSaveState').textContent='خطا در ذخیره خودکار'}finally{attendanceAutoRunning=false}}
+async function saveAttendance(){const date=toGregorian($('attendanceDate').value),classId=$('attendanceClass').value,scope=$('attendanceScope').value,bell=scope==='bell'?Number($('attendanceBell').value):null,records=collectAttendanceRows();if(!date||!classId||!records.length)return toast('اطلاعات حضور و غیاب کامل نیست.','error');try{const {error}=await db.rpc('save_attendance_batch',{p_date:date,p_class_id:classId,p_scope:scope,p_bell:bell,p_records:records});if(error)throw error;clearTimeout(attendanceAutoTimer);toast('حضور و غیاب با موفقیت ذخیره شد');$('attendanceSaveState').textContent='✅ ذخیره نهایی شد'}catch(e){toast(safeError(e,'ذخیره حضور و غیاب انجام نشد.'),'error')}}
 
 /* ===== Reports ===== */
 async function initReports(){await refreshClassLists();await refreshStudentReportList();if(!$('reportDate').value)$('reportDate')._picker?.setDate(getTodayJalali());$('reportType').dispatchEvent(new Event('change'))}
@@ -872,7 +548,7 @@ async function deleteManagedUser(userId){
 /* ===== Import ===== */
 function resetImport(){excelData=[];excelHeaders=[];columnMap={};$('excelFile').value='';$('excelPreview').innerHTML='';$('importResult').innerHTML='';$('importExcelBtn').disabled=true}
 function showExcelPreview(){if(!excelHeaders.length)return;let h='<div style="margin:12px 0 8px;font-weight:800">پیش‌نمایش ۱۰ ردیف اول</div><div class="table-wrap"><table><thead><tr>'+excelHeaders.map(x=>`<th>${esc(x)}</th>`).join('')+'</tr></thead><tbody>'+excelData.slice(0,10).map(r=>`<tr>${excelHeaders.map((_,i)=>`<td>${esc(r[i]??'')}</td>`).join('')}</tr>`).join('')+'</tbody></table></div><div style="margin:12px 0 8px;font-weight:800">نگاشت ستون‌ها</div><div class="form-row">';const fields=[['first_name','نام'],['last_name','نام خانوادگی'],['grade','پایه'],['major','رشته'],['class_name','نام کلاس'],['internal_code','کد داخلی']];fields.forEach(([f,l])=>{h+=`<div class="form-group"><label>${l}</label><select class="col-map" data-field="${f}"><option value="">انتخاب نشود</option>${excelHeaders.map((x,i)=>`<option value="${i}">${esc(x)}</option>`).join('')}</select></div>`});h+='</div>';$('excelPreview').innerHTML=h;document.querySelectorAll('.col-map').forEach(s=>s.onchange=()=>{if(s.value==='')delete columnMap[s.dataset.field];else columnMap[s.dataset.field]=Number(s.value)})}
-async function importExcel(){if(!excelData.length)return;if(!Object.prototype.hasOwnProperty.call(columnMap,'first_name') || !Object.prototype.hasOwnProperty.call(columnMap,'last_name')) return toast('نگاشت نام و نام خانوادگی الزامی است.','error');const errors=[],raw=[],seen=new Set();for(let i=0;i<excelData.length;i++){const row=excelData[i];const st={};Object.entries(columnMap).forEach(([f,idx])=>st[f]=normalizeFa(row[idx]??''));st.internal_code=normalizeDigits(st.internal_code||'').replace(/\D/g,'');if(!st.first_name||!st.last_name){errors.push(`ردیف ${i+2}: نام یا نام خانوادگی خالی است.`);continue}if(st.internal_code){if(seen.has(st.internal_code)){errors.push(`ردیف ${i+2}: کد داخلی در فایل تکراری است.`);continue}seen.add(st.internal_code)}raw.push({...st,rowIndex:i});}
+async function importExcel(){if(!excelData.length)return;if(!Object.prototype.hasOwnProperty.call(columnMap,'first_name')||!Object.prototype.hasOwnProperty.call(columnMap,'last_name'))return toast('نگاشت نام و نام خانوادگی الزامی است.','error');const errors=[],raw=[],seen=new Set();for(let i=0;i<excelData.length;i++){const row=excelData[i];const st={};Object.entries(columnMap).forEach(([f,idx])=>st[f]=normalizeFa(row[idx]??''));st.internal_code=normalizeDigits(st.internal_code||'').replace(/\D/g,'');if(!st.first_name||!st.last_name){errors.push(`ردیف ${i+2}: نام یا نام خانوادگی خالی است.`);continue}if(st.internal_code){if(seen.has(st.internal_code)){errors.push(`ردیف ${i+2}: کد داخلی در فایل تکراری است.`);continue}seen.add(st.internal_code)}raw.push({...st,rowIndex:i});}
   const codes=raw.map(x=>x.internal_code).filter(Boolean);const existingSet=new Set();if(codes.length){for(let i=0;i<codes.length;i+=500){const {data,error}=await db.from('students').select('internal_code').in('internal_code',codes.slice(i,i+500));if(error)throw error;(data||[]).forEach(x=>existingSet.add(x.internal_code))}}
   const valid=raw.filter(x=>{if(x.internal_code&&existingSet.has(x.internal_code)){errors.push(`ردیف ${x.rowIndex+2}: کد داخلی قبلاً ثبت شده است.`);return false}return true});if(!valid.length)return toast('دانش‌آموز جدیدی برای ثبت وجود ندارد.','warning');
   const classMap=new Map();for(const s of valid){if(!s.class_name)continue;const key=classKey(s.class_name,s.grade,s.major);if(classMap.has(key))continue;let q=db.from('classes').select('id').eq('name',s.class_name).eq('grade',s.grade);if(s.major)q=q.eq('major',s.major);else q=q.is('major',null);let {data,error}=await q.maybeSingle();if(error)throw error;if(!data){const ins=await db.from('classes').insert({name:s.class_name,grade:s.grade||'نامشخص',major:s.major||null,active:true}).select('id').single();if(ins.error){if(ins.error.code==='23505'){let rq=db.from('classes').select('id').eq('name',s.class_name).eq('grade',s.grade||'نامشخص');rq=s.major?rq.eq('major',s.major):rq.is('major',null);const again=await rq.single();if(again.error)throw again.error;data=again.data}else{errors.push(`ردیف ${s.rowIndex+2}: خطا در ایجاد کلاس`);continue}}else data=ins.data}classMap.set(key,data.id)}
@@ -883,101 +559,8 @@ async function importExcel(){if(!excelData.length)return;if(!Object.prototype.ha
 function classKey(name,grade,major){return [normalizeFa(name),normalizeFa(grade),normalizeFa(major||'')].join('|')}
 
 /* ===== Events ===== */
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>navigateToTab(b.dataset.tab)));
-$('menuToggle').onclick=()=>$('sidebarMenu').classList.toggle('open');
-$('loginBtn').onclick=login;
-$('loginPassword').onkeydown=e=>{if(e.key==='Enter')login()};
-$('logoutBtn').onclick=async()=>{
-  if(currentTab==='attendance'){
-    const ok=await confirmAttendanceLeave('تغییرات حضور و غیاب ذخیره نشده است.');
-    if(!ok)return;
-  }
-  await logout(false);
-};
-$('addClassBtn').onclick=()=>addClass().catch(e=>toast(safeError(e),'error'));
-$('addStudentBtn').onclick=()=>addStudent().catch(e=>toast(safeError(e),'error'));
-$('applyStudentFilters').onclick=async()=>{
-  studentFilters={search:normalizeFa($('studentSearch').value),grade:$('filterGrade').value,major:$('filterMajor').value,classId:$('filterClass').value,active:$('filterStatus').value};
-  selectedStudentIds.clear();
-  await loadStudents(1)
-};
-$('bulkDeleteBtn').onclick=async()=>{
-  const ids=[...selectedStudentIds];
-  if(!ids.length)return;
-  if(!(await confirmDialog('غیرفعال‌سازی گروهی',`تعداد ${toFa(ids.length)} دانش‌آموز غیرفعال می‌شوند. ادامه می‌دهید؟`,'غیرفعال‌سازی')))return;
-  const {error}=await db.from('students').update({active:false}).in('id',ids);
-  if(error)return toast(safeError(error),'error');
-  selectedStudentIds.clear();
-  toast('دانش‌آموزان غیرفعال شدند');
-  await loadStudents(currentStudentPage)
-};
-$('bulkEditBtn').onclick=()=>bulkEdit().catch(e=>toast(safeError(e),'error'));
-
-$('loadAttendance').onclick=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));
-
-$('saveAttendance').onclick=async()=>{
-  try{
-    await saveAttendance();
-    toast('حضور و غیاب با موفقیت ذخیره شد','success');
-  }catch(e){
-    toast(safeError(e,'ذخیره حضور و غیاب انجام نشد.'),'error');
-  }
-};
-
-$('attendanceDate').onchange=async()=>{
-  const next={...getAttendanceContext(),date:$('attendanceDate').value};
-  await navigateAttendanceContext(next,'تغییرات حضور و غیاب برای تاریخ فعلی ذخیره نشده است.');
-};
-
-$('attendanceClass').onchange=async()=>{
-  const next={...getAttendanceContext(),classId:$('attendanceClass').value};
-  await navigateAttendanceContext(next,'تغییرات حضور و غیاب برای این کلاس ذخیره نشده است.');
-};
-
-$('attendanceScope').onchange=async()=>{
-  const next={...getAttendanceContext(),scope:$('attendanceScope').value,bell:$('attendanceScope').value==='bell'?Number($('attendanceBell').value):null};
-  $('bellSelector').classList.toggle('hidden',$('attendanceScope').value!=='bell');
-  await navigateAttendanceContext(next,'تغییرات حضور و غیاب ذخیره نشده است.');
-};
-
-$('attendanceBell').onchange=async()=>{
-  const next={...getAttendanceContext(),bell:Number($('attendanceBell').value)};
-  await navigateAttendanceContext(next,'تغییرات حضور و غیاب برای این زنگ ذخیره نشده است.');
-};
-
-$('reportType').onchange=()=>{
-  const t=$('reportType').value;
-  $('reportDateGroup').classList.toggle('hidden',t!=='today');
-  $('reportRangeGroup').classList.toggle('hidden',t!=='range');
-  $('reportStudentGroup').classList.toggle('hidden',t!=='student');
-  if(t==='today'&&!$('reportDate').value)$('reportDate')._picker?.setDate(getTodayJalali())
-};
-
-$('generateReport').onclick=()=>generateReport().catch(e=>toast(safeError(e),'error'));
-$('exportExcel').onclick=exportReport;
-$('bellCount').oninput=()=>renderBellInputs(Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||1)),{});
-$('saveSettings').onclick=()=>saveSettings().catch(e=>toast(safeError(e),'error'));
-$('changePasswordBtn').onclick=()=>changePassword();
-$('backupJsonBtn').onclick=()=>backupJson();
-$('wipeDataBtn').onclick=()=>wipeData();
-$('excelFile').onchange=async e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-  try{
-    const ab=await file.arrayBuffer();
-    const wb=XLSX.read(new Uint8Array(ab),{type:'array'});
-    const ws=wb.Sheets[wb.SheetNames[0]];
-    const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    if(!json.length)throw new Error('فایل خالی است.');
-    excelHeaders=json[0].map(x=>String(x));
-    excelData=json.slice(1);
-    columnMap={};
-    showExcelPreview();
-    $('importExcelBtn').disabled=!excelData.length;
-  }catch(err){
-    toast(safeError(err),'error')
-  }
-}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+$('menuToggle').onclick=()=>$('sidebarMenu').classList.toggle('open');$('loginBtn').onclick=login;$('loginPassword').onkeydown=e=>{if(e.key==='Enter')login()};$('logoutBtn').onclick=()=>logout(false);$('addClassBtn').onclick=()=>addClass().catch(e=>toast(safeError(e),'error'));$('addStudentBtn').onclick=()=>addStudent().catch(e=>toast(safeError(e),'error'));$('applyStudentFilters').onclick=async()=>{studentFilters={search:normalizeFa($('studentSearch').value),grade:$('filterGrade').value,major:$('filterMajor').value,classId:$('filterClass').value,active:$('filterStatus').value};selectedStudentIds.clear();await loadStudents(1)};$('bulkDeleteBtn').onclick=async()=>{const ids=[...selectedStudentIds];if(!ids.length)return;if(!(await confirmDialog('غیرفعال‌سازی گروهی',`تعداد ${toFa(ids.length)} دانش‌آموز غیرفعال می‌شوند. ادامه می‌دهید؟`,'غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).in('id',ids);if(error)return toast(safeError(error),'error');selectedStudentIds.clear();toast('دانش‌آموزان غیرفعال شدند');await loadStudents(currentStudentPage)};$('bulkEditBtn').onclick=()=>bulkEdit().catch(e=>toast(safeError(e),'error'));$('loadAttendance').onclick=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('saveAttendance').onclick=()=>saveAttendance().catch(e=>toast(safeError(e),'error'));$('attendanceDate').onchange=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('attendanceClass').onchange=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('attendanceScope').onchange=()=>{loadBellsForAttendance().then(()=>loadAttendance()).catch(e=>toast(safeError(e),'error'))};$('attendanceBell').onchange=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('reportType').onchange=()=>{const t=$('reportType').value;$('reportDateGroup').classList.toggle('hidden',t!=='today');$('reportRangeGroup').classList.toggle('hidden',t!=='range');$('reportStudentGroup').classList.toggle('hidden',t!=='student');if(t==='today'&&!$('reportDate').value)$('reportDate')._picker?.setDate(getTodayJalali())};$('generateReport').onclick=()=>generateReport().catch(e=>toast(safeError(e),'error'));$('exportExcel').onclick=exportReport;$('bellCount').oninput=()=>renderBellInputs(Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||1)),{});$('saveSettings').onclick=()=>saveSettings().catch(e=>toast(safeError(e),'error'));$('changePasswordBtn').onclick=()=>changePassword();$('backupJsonBtn').onclick=()=>backupJson();$('wipeDataBtn').onclick=()=>wipeData();$('excelFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const ab=await file.arrayBuffer();const wb=XLSX.read(new Uint8Array(ab),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!json.length)throw new Error('فایل خالی است.');excelHeaders=json[0].map(x=>String(x));excelData=json.slice(1);columnMap={};showExcelPreview();$('importExcelBtn').disabled=!excelData.length}catch(err){toast(safeError(err),'error')}}
 $('importExcelBtn').onclick=()=>importExcel().catch(e=>toast(safeError(e),'error'));$('addUserBtn').onclick=()=>openUserModal().catch(e=>toast(safeError(e),'error'));$('usersTableContainer').addEventListener('click',async e=>{const b=e.target.closest('[data-user-action]');if(!b)return;const id=b.dataset.userId;const a=b.dataset.userAction;try{if(a==='edit')await openUserModal(id);else if(a==='toggle')await toggleManagedUser(id);else if(a==='delete')await deleteManagedUser(id)}catch(err){toast(safeError(err),'error')}});
 $('classesTableContainer').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;const a=b.dataset.action;const fn=a==='edit-class'?editClass:a==='delete-class'?deleteClass:a==='toggle-class'?toggleClass:null;if(fn)fn(id).catch(err=>toast(safeError(err),'error'))});
 $('studentsTableContainer').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;const a=b.dataset.action;const fn=a==='edit-student'?editStudent:a==='disable-student'?disableStudent:a==='student-absences'?showStudentAbsences:null;if(fn)fn(id).catch(err=>toast(safeError(err),'error'))});
