@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>سامان | سامانه حضور و غیاب مدرسه</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -33,7 +33,7 @@
         <button class="menu-toggle" id="menuToggle"><i class="fa-solid fa-bars"></i></button>
         <div class="header-title">🏫 سامان | سامانه حضور و غیاب مدرسه</div>
       </div>
-      <div class="flex"><span id="userDisplay" class="muted"></span><button class="btn danger btn-sm" id="logoutBtn" title="خروج"><i class="fa-solid fa-right-from-bracket"></i></button></div>
+      <div class="flex" style="gap:8px;align-items:center"><span id="userDisplay" class="muted"></span><button class="btn primary btn-sm" id="sendAbsenceMessagesBtn" title="ارسال پیام برای غایبین"><i class="fa-solid fa-message"></i> ارسال پیام برای غایبین</button><button class="btn danger btn-sm" id="logoutBtn" title="خروج"><i class="fa-solid fa-right-from-bracket"></i></button></div>
     </div>
     <nav class="sidebar" id="sidebarMenu">
       <button class="btn primary btn-sm" data-tab="dashboard"><i class="fa-solid fa-chart-pie"></i> داشبورد</button>
@@ -43,6 +43,8 @@
       <button class="btn btn-sm" data-tab="reports"><i class="fa-solid fa-chart-column"></i> گزارش‌ها</button>
       <button class="btn btn-sm" data-tab="import"><i class="fa-solid fa-file-excel"></i> اکسل</button>
       <button class="btn btn-sm" data-tab="settings"><i class="fa-solid fa-gear"></i> تنظیمات</button>
+      <button class="btn btn-sm" data-tab="family"><i class="fa-solid fa-comments"></i><span class="family-nav-wrap">ارتباط با خانواده<span id="familyMenuBadge" class="family-alert-badge hidden">۰</span></span></button>
+
     </nav>
 
     <section id="pageContent">
@@ -117,6 +119,11 @@
         </div>
       </div>
 
+
+      <div id="tab-family" class="tab-content hidden">
+        <div id="familyAppRoot"></div>
+      </div>
+
       <div id="tab-settings" class="tab-content hidden">
         <h3 class="content-title" style="margin-bottom:12px">تنظیمات سیستم</h3>
         <div class="panel" style="max-width:720px">
@@ -142,7 +149,12 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 const accountClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+    storageKey: 'saman-account-creation-auth'
+  }
 });
 
 const PAGE_SIZE = 50;
@@ -165,6 +177,8 @@ let columnMap = {};
 let attendanceDirty = false;
 let attendanceContext = null;
 let attendanceTicketEditingId = null;
+let globalLiveChannel = null;
+let globalDispatchTimer = null;
 let rejectedTicketPromptInitialized = false;
 const rejectedTicketPrompted = new Set();
 
@@ -204,15 +218,34 @@ function gregToJalali(y,m,d){
 }
 function jKey(y,m,d){ return y*10000+m*100+d; }
 function jalaliToGregorian(jy,jm,jd){
-  jy=Number(jy);jm=Number(jm);jd=Number(jd); if(!Number.isInteger(jy)||!Number.isInteger(jm)||!Number.isInteger(jd)||jm<1||jm>12||jd<1||jd>31)return null;
-  let lo=Date.UTC(jy+621,0,1)/86400000, hi=Date.UTC(jy+622,11,31)/86400000; const target=jKey(jy,jm,jd);
-  while(lo<=hi){ const mid=Math.floor((lo+hi)/2); const dt=new Date(mid*86400000); const g=gregToJalali(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate()); const k=jKey(g.year,g.month,g.day); if(k===target)return {year:dt.getUTCFullYear(),month:dt.getUTCMonth()+1,day:dt.getUTCDate()}; if(k<target)lo=mid+1;else hi=mid-1; }
+  jy=Number(jy); jm=Number(jm); jd=Number(jd);
+  if(!Number.isInteger(jy)||!Number.isInteger(jm)||!Number.isInteger(jd)||jm<1||jm>12||jd<1||jd>31)return null;
+  const target=jKey(jy,jm,jd);
+  let lo=Math.floor(Date.UTC(jy+621,0,1)/86400000)-370;
+  let hi=Math.floor(Date.UTC(jy+622,11,31)/86400000)+370;
+  while(lo<=hi){
+    const mid=Math.floor((lo+hi)/2);
+    const dt=new Date(mid*86400000);
+    const g=gregToJalali(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate());
+    const k=jKey(g.year,g.month,g.day);
+    if(k===target)return {year:dt.getUTCFullYear(),month:dt.getUTCMonth()+1,day:dt.getUTCDate()};
+    if(k<target)lo=mid+1;else hi=mid-1;
+  }
   return null;
 }
 function daysInJalaliMonth(y,m){ const a=jalaliToGregorian(y,m,1); if(!a)return 0; const ny=m===12?y+1:y,nm=m===12?1:m+1; const b=jalaliToGregorian(ny,nm,1); if(!b)return 0; return Math.round((Date.UTC(b.year,b.month-1,b.day)-Date.UTC(a.year,a.month-1,a.day))/86400000); }
 function getTodayGregorian(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function getTodayJalali(){ const [y,m,d]=getTodayGregorian().split('-').map(Number); const j=gregToJalali(y,m,d); return `${j.year}/${String(j.month).padStart(2,'0')}/${String(j.day).padStart(2,'0')}`; }
 function toJalali(dateStr){ const p=String(dateStr||'').split('-').map(Number); if(p.length!==3||p.some(Number.isNaN))return ''; const j=gregToJalali(p[0],p[1],p[2]); return `${j.year}/${String(j.month).padStart(2,'0')}/${String(j.day).padStart(2,'0')}`; }
+function formatJalaliDateTime(value){
+  if(!value)return '-';
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return toJalali(String(value).slice(0,10)) || String(value);
+  const date=toJalali(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
+  const time=d.toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit',hour12:false});
+  return `${date} — ${time}`;
+}
+
 function toGregorian(jDate){ const p=normalizeDigits(jDate).split('/').map(Number); if(p.length!==3||p.some(Number.isNaN))return ''; const g=jalaliToGregorian(p[0],p[1],p[2]); return g?`${g.year}-${String(g.month).padStart(2,'0')}-${String(g.day).padStart(2,'0')}`:''; }
 
 class JalaliDatepicker{
@@ -263,7 +296,7 @@ function isAdmin(){return currentRole==='admin'}
 function isClassRepresentative(){return currentRole==='class_representative'}
 function isClassAssistant(){return currentRole==='class_assistant'}
 function roleLabel(){return isAdmin()?'مدیر':isClassRepresentative()?'نماینده کلاس':isClassAssistant()?'دستیار نماینده':'بدون دسترسی'}
-function allowedTabs(){return isAdmin()?['dashboard','classes','students','attendance','reports','import','settings']:isClassRepresentative()?['students','attendance']:isClassAssistant()?['attendance']:[]}
+function allowedTabs(){return isAdmin()?['dashboard','classes','students','attendance','reports','import','family','settings']:isClassRepresentative()?['students','attendance']:isClassAssistant()?['attendance']:[]}
 function isAttendanceRestrictedRole(){return isClassRepresentative()||isClassAssistant()}
 function allowedAttendanceStatuses(){return isAttendanceRestrictedRole()?['present','late_unexcused','absent']:['present','late_excused','late_unexcused','excused','absent']}
 function applyRoleUI(){
@@ -276,6 +309,7 @@ function applyRoleUI(){
   $('userManagementSection')?.classList.toggle('hidden',!isAdmin());
   $('backupJsonBtn')?.classList.toggle('hidden',!isAdmin());
   $('wipeDataBtn')?.classList.toggle('hidden',!isAdmin());
+  $('sendAbsenceMessagesBtn')?.classList.toggle('hidden',!isAdmin());
   $('saveAttendance').innerHTML=isClassAssistant()?'<i class="fa-solid fa-paper-plane"></i> ارسال برای تأیید':'<i class="fa-solid fa-floppy-disk"></i> ذخیره نهایی';
 }
 function resetToRoleTab(){const first=isAdmin()?'dashboard':(isClassRepresentative()||isClassAssistant())?'attendance':null;if(first)showTab(first)}
@@ -287,7 +321,39 @@ async function ensureAccess(){
   if(!['admin','class_representative','class_assistant'].includes(role)){await db.auth.signOut();currentUser=null;currentRole=null;$('mainPage').classList.add('hidden');$('loginPage').classList.remove('hidden');$('loginPassword').value='';$('loginError').textContent='این حساب مجوز ورود به سامانه را ندارد.';return false}
   currentRole=role;return true
 }
-async function finishSession(user){currentUser=user;if(!user)return false;const ok=await ensureAccess();if(!ok)return false;$('loginPage').classList.add('hidden');$('mainPage').classList.remove('hidden');$('userDisplay').innerHTML=`<span>${esc(user.email)}</span><span class="role-pill">${esc(roleLabel())}</span>`;applyRoleUI();activity();await resetToRoleTab();return true}
+function browserNotify(title,body){try{if('Notification' in window && Notification.permission==='granted')new Notification(title,{body})}catch(_){} }
+function setupGlobalLive(){
+  if(globalLiveChannel || !currentUser || !isAdmin())return;
+  const refreshFamily=(message,kind='info')=>{
+    if(message) toast(message,kind);
+    if(window.SamanFamily?.load){
+      const view=window.SamanFamily?.activeView?.()||'';
+      window.SamanFamily.load(true,{silent:view==='compose'}).catch(()=>{});
+    }
+  };
+  globalLiveChannel=db.channel('saman-live-'+String(currentUser.id))
+    .on('postgres_changes',{event:'*',schema:'public',table:'tickets'},payload=>{
+      const t=payload.new||payload.old||{};
+      if(payload.eventType==='INSERT') refreshFamily('🔔 درخواست جدید خانواده ثبت شد.','info');
+      else if(payload.eventType==='UPDATE') refreshFamily('🔔 یک درخواست خانواده بروزرسانی شد.','info');
+      else if(payload.eventType==='DELETE') refreshFamily('🗑️ یک درخواست خانواده حذف شد.','warning');
+      browserNotify('سامان | درخواست خانواده',t.ticket_no?`درخواست #${toFa(t.ticket_no)}`:'تغییر در درخواست خانواده');
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'bale_accounts'},payload=>{
+      const n=payload.new||payload.old||{};
+      refreshFamily(payload.eventType==='DELETE'?'🗑️ یک حساب بله حذف شد.':'👤 اطلاعات یک حساب بله تغییر کرد.',payload.eventType==='DELETE'?'warning':'success');
+      browserNotify('سامان | حساب خانواده',`${n.first_name||''} ${n.last_name||''}`.trim()||'تغییر در حساب بله');
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'family_student_links'},payload=>{
+      refreshFamily(payload.eventType==='DELETE'?'🗑️ یک اتصال خانواده حذف شد.':'🔗 اتصالات خانواده بروزرسانی شد.','info');
+    })
+    .on('postgres_changes',{event:'UPDATE',schema:'public',table:'app_users'},payload=>{
+      const id=String((payload.new||{}).user_id||'');
+      if(id===String(currentUser?.id||'')) refreshFamily('👤 اطلاعات کاربری شما تغییر کرد.','info');
+    })
+    .subscribe();
+}
+async function finishSession(user){currentUser=user;if(!user)return false;const ok=await ensureAccess();if(!ok)return false;$('loginPage').classList.add('hidden');$('mainPage').classList.remove('hidden');const displayUsername=String(user.user_metadata?.username||String(user.email||'').split('@')[0]||'کاربر').trim()||'کاربر';$('userDisplay').innerHTML=`<span>${esc(displayUsername)}</span><span class="role-pill">${esc(roleLabel())}</span>`;applyRoleUI();activity();setupGlobalLive();await resetToRoleTab();return true}
 async function login(){let username=$('loginUsername').value.trim();const password=$('loginPassword').value;if(!username){$('loginError').textContent='نام کاربری را وارد کنید.';return}if(!username.includes('@'))username+='@school.local';try{$('loginBtn').disabled=true;const {data,error}=await db.auth.signInWithPassword({email:username,password});if(error)throw error;if(!data.user)throw new Error('حساب کاربری دریافت نشد.');await finishSession(data.user);$('loginError').textContent=''}catch(e){$('loginError').textContent=safeError(e,'ورود انجام نشد.')}finally{$('loginBtn').disabled=false}}
 async function logout(timeout=false){
   if(!timeout&&currentTab==='attendance'&&attendanceDirty){
@@ -295,13 +361,15 @@ async function logout(timeout=false){
     if(!ok)return false;
   }
   try{await db.auth.signOut()}finally{
+    if(globalLiveChannel){try{db.removeChannel(globalLiveChannel)}catch(_){ } globalLiveChannel=null;}
+    if(window.SamanFamily?.destroy)try{window.SamanFamily.destroy()}catch(_){ }
     currentUser=null;currentRole=null;attendanceDirty=false;attendanceContext=null;attendanceTicketEditingId=null;
     $('mainPage').classList.add('hidden');$('loginPage').classList.remove('hidden');$('loginPassword').value='';$('loginError').textContent=timeout?'مدت زمان نشست به پایان رسید.':'';
   }
   return true;
 }
 
-db.auth.onAuthStateChange((event,session)=>{setTimeout(async()=>{try{if(session?.user){if(!currentUser||currentUser.id!==session.user.id)await finishSession(session.user)}else{currentUser=null;currentRole=null;$('mainPage').classList.add('hidden');$('loginPage').classList.remove('hidden')}}catch(e){console.error(e)}},0)});
+db.auth.onAuthStateChange((event,session)=>{setTimeout(async()=>{try{if(session?.user){if(!currentUser||currentUser.id!==session.user.id)await finishSession(session.user)}else{if(globalLiveChannel){try{db.removeChannel(globalLiveChannel)}catch(_){ } globalLiveChannel=null;}if(window.SamanFamily?.destroy)try{window.SamanFamily.destroy()}catch(_){ }currentUser=null;currentRole=null;$('mainPage').classList.add('hidden');$('loginPage').classList.remove('hidden')}}catch(e){console.error(e)}},0)});
 
 setInterval(()=>{if(currentUser&&currentTab==='attendance'&&isClassAssistant())loadAttendanceSubmissionTickets(true).catch(()=>{});},12000);
 
@@ -324,6 +392,7 @@ async function showTab(tab){
     else if(tab==='reports')await initReports();
     else if(tab==='settings')await loadSettings();
     else if(tab==='import')resetImport();
+    else if(tab==='family' && window.SamanFamily?.load)await window.SamanFamily.load();
     return true;
   }catch(e){toast(safeError(e),'error');return false}
 }
@@ -432,8 +501,8 @@ async function loadStudents(page=1){
 }
 function updateBulkButtons(){const n=selectedStudentIds.size;if(!isAdmin()){ $('selectedCount').textContent=''; $('bulkDeleteBtn').disabled=true; $('bulkEditBtn').disabled=true; return } $('selectedCount').textContent=`${toFa(n)} انتخاب شده`;$('bulkDeleteBtn').disabled=!n;$('bulkEditBtn').disabled=!n}
 function renderPagination(total,page,limit,id,onPage){const el=$(id);if(!el)return;const pages=Math.ceil(total/limit);if(pages<=1){el.innerHTML='';return}const nums=new Set([1,pages,page,page-1,page+1,page-2,page+2]);const list=[...nums].filter(n=>n>=1&&n<=pages).sort((a,b)=>a-b);let h=`<button data-p="${page-1}" ${page===1?'disabled':''}>‹</button>`;let prev=0;list.forEach(n=>{if(prev&&n-prev>1)h+='<span class="muted">…</span>';h+=`<button class="${n===page?'active':''}" data-p="${n}">${toFa(n)}</button>`;prev=n});h+=`<button data-p="${page+1}" ${page===pages?'disabled':''}>›</button>`;el.innerHTML=h;el.querySelectorAll('button[data-p]').forEach(b=>b.addEventListener('click',()=>{const p=Number(b.dataset.p);if(p>=1&&p<=pages)onPage(p)}))}
-async function addStudent(){const classes=await getActiveClasses();const r=await formModal('افزودن دانش‌آموز',[{name:'first_name',label:'نام',required:true},{name:'last_name',label:'نام خانوادگی',required:true},{name:'grade',label:'پایه',required:true},{name:'major',label:'رشته'},{name:'class_id',label:'کلاس',type:'select',options:[{value:'',label:'بدون کلاس'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'internal_code',label:'کد داخلی',type:'number'}]);if(!r)return;const internal=normalizeDigits(r.internal_code||'').trim();if(internal){const {data,error}=await db.from('students').select('id').eq('internal_code',internal).maybeSingle();if(error)throw error;if(data){toast('کد داخلی قبلاً ثبت شده است.','warning');return}}const {error}=await db.from('students').insert({first_name:normalizeFa(r.first_name),last_name:normalizeFa(r.last_name),grade:normalizeFa(r.grade),major:normalizeFa(r.major)||null,class_id:r.class_id||null,internal_code:internal||null,active:true});if(error)throw error;toast('دانش‌آموز اضافه شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
-async function editStudent(id){const {data:s,error}=await db.from('students').select('*').eq('id',id).single();if(error)throw error;const classes=await getActiveClasses();const r=await formModal('ویرایش دانش‌آموز',[{name:'first_name',label:'نام',value:s.first_name,required:true},{name:'last_name',label:'نام خانوادگی',value:s.last_name,required:true},{name:'grade',label:'پایه',value:s.grade,required:true},{name:'major',label:'رشته',value:s.major||''},{name:'class_id',label:'کلاس',type:'select',value:s.class_id||'',options:[{value:'',label:'بدون کلاس'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'internal_code',label:'کد داخلی',type:'number',value:s.internal_code||''},{name:'active',label:'وضعیت',type:'select',value:String(s.active),options:[{value:'true',label:'فعال'},{value:'false',label:'غیرفعال'}]}]);if(!r)return;const internal=normalizeDigits(r.internal_code||'').trim();if(internal&&internal!==String(s.internal_code||'')){const {data,error:e}=await db.from('students').select('id').eq('internal_code',internal).neq('id',id).maybeSingle();if(e)throw e;if(data){toast('کد داخلی قبلاً ثبت شده است.','warning');return}}const {error:e}=await db.from('students').update({first_name:normalizeFa(r.first_name),last_name:normalizeFa(r.last_name),grade:normalizeFa(r.grade),major:normalizeFa(r.major)||null,class_id:r.class_id||null,internal_code:internal||null,active:r.active==='true'}).eq('id',id);if(e)throw e;toast('اطلاعات بروزرسانی شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
+async function addStudent(){const classes=await getActiveClasses();const r=await formModal('افزودن دانش‌آموز',[{name:'first_name',label:'نام',required:true},{name:'last_name',label:'نام خانوادگی',required:true},{name:'grade',label:'پایه',required:true},{name:'major',label:'رشته'},{name:'class_id',label:'کلاس',type:'select',options:[{value:'',label:'بدون کلاس'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'internal_code',label:'کد داخلی',type:'number'},{name:'national_code',label:'کد ملی',type:'text',value:''}]);if(!r)return;const internal=normalizeDigits(r.internal_code||'').trim();if(internal){const {data,error}=await db.from('students').select('id').eq('internal_code',internal).maybeSingle();if(error)throw error;if(data){toast('کد داخلی قبلاً ثبت شده است.','warning');return}}const {error}=await db.from('students').insert({first_name:normalizeFa(r.first_name),last_name:normalizeFa(r.last_name),grade:normalizeFa(r.grade),major:normalizeFa(r.major)||null,class_id:r.class_id||null,internal_code:internal||null,national_code:normalizeDigits(r.national_code||'').replace(/\D/g,'' )||null,active:true});if(error)throw error;toast('دانش‌آموز اضافه شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
+async function editStudent(id){const {data:s,error}=await db.from('students').select('*').eq('id',id).single();if(error)throw error;const classes=await getActiveClasses();const r=await formModal('ویرایش دانش‌آموز',[{name:'first_name',label:'نام',value:s.first_name,required:true},{name:'last_name',label:'نام خانوادگی',value:s.last_name,required:true},{name:'grade',label:'پایه',value:s.grade,required:true},{name:'major',label:'رشته',value:s.major||''},{name:'class_id',label:'کلاس',type:'select',value:s.class_id||'',options:[{value:'',label:'بدون کلاس'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'internal_code',label:'کد داخلی',type:'number',value:s.internal_code||''},{name:'national_code',label:'کد ملی',type:'text',value:s.national_code||''},{name:'active',label:'وضعیت',type:'select',value:String(s.active),options:[{value:'true',label:'فعال'},{value:'false',label:'غیرفعال'}]}]);if(!r)return;const internal=normalizeDigits(r.internal_code||'').trim();if(internal&&internal!==String(s.internal_code||'')){const {data,error:e}=await db.from('students').select('id').eq('internal_code',internal).neq('id',id).maybeSingle();if(e)throw e;if(data){toast('کد داخلی قبلاً ثبت شده است.','warning');return}}const {error:e}=await db.from('students').update({first_name:normalizeFa(r.first_name),last_name:normalizeFa(r.last_name),grade:normalizeFa(r.grade),major:normalizeFa(r.major)||null,class_id:r.class_id||null,internal_code:internal||null,national_code:normalizeDigits(r.national_code||'').replace(/\D/g,'' )||null,active:r.active==='true'}).eq('id',id);if(e)throw e;toast('اطلاعات بروزرسانی شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
 async function disableStudent(id){if(!(await confirmDialog('غیرفعال‌سازی دانش‌آموز','دانش‌آموز حذف فیزیکی نمی‌شود و فقط غیرفعال خواهد شد. ادامه می‌دهید؟','غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).eq('id',id);if(error)throw error;toast('دانش‌آموز غیرفعال شد');selectedStudentIds.delete(id);await loadStudents(currentStudentPage)}
 async function bulkEdit(){const ids=[...selectedStudentIds];if(!ids.length)return;const classes=await getActiveClasses();const r=await formModal(`اصلاح گروهی (${toFa(ids.length)} نفر)`,[{name:'grade',label:'پایه جدید'},{name:'major',label:'رشته جدید'},{name:'class_id',label:'کلاس جدید',type:'select',options:[{value:'',label:'بدون تغییر'},...classes.map(c=>({value:c.id,label:c.name}))]},{name:'active',label:'وضعیت',type:'select',options:[{value:'',label:'بدون تغییر'},{value:'true',label:'فعال'},{value:'false',label:'غیرفعال'}]}]);if(!r)return;const update={};if(normalizeFa(r.grade))update.grade=normalizeFa(r.grade);if(r.major!==undefined&&String(r.major).trim())update.major=normalizeFa(r.major);if(r.class_id)update.class_id=r.class_id;if(r.active!=='')update.active=r.active==='true';if(!Object.keys(update).length){toast('هیچ تغییری انتخاب نشده است.','warning');return}const {error}=await db.from('students').update(update).in('id',ids);if(error)throw error;selectedStudentIds.clear();toast('اصلاح گروهی انجام شد');await loadStudents(currentStudentPage);await populateStudentFilters()}
 async function editAbsenceRecord(recordId){
@@ -714,7 +783,7 @@ async function restoreBackupJson(){
   }catch(e){Swal.close();toast(safeError(e,'بازگردانی پشتیبان انجام نشد.'),'error')}
 }
 
-async function wipeData(){const r=await Swal.fire({title:'⚠️ حذف کامل اطلاعات',html:'<p style="text-align:right;line-height:2">برای تأیید عبارت <b dir="ltr">DELETE</b> را دقیقاً وارد کنید.</p><input id="wipeConfirm" class="swal2-input" dir="ltr" autocomplete="off">',showCancelButton:true,confirmButtonText:'حذف کامل',cancelButtonText:'لغو',focusConfirm:false,preConfirm:()=>{const v=document.getElementById('wipeConfirm').value.trim();if(v!=='DELETE'){Swal.showValidationMessage('عبارت باید دقیقاً DELETE باشد.');return false}return true}});if(!r.isConfirmed)return;Swal.fire({title:'در حال حذف...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});try{const {data,error}=await db.rpc('wipe_all_data');if(error)throw error;Swal.close();selectedStudentIds.clear();await loadSettings();await loadAllSelects();await loadDashboard();toast('تمام اطلاعات سامانه پاک و تنظیمات پیش‌فرض شد')}catch(e){Swal.close();toast(safeError(e,'حذف کامل انجام نشد.'),'error')}}
+async function wipeData(){const r=await Swal.fire({title:'⚠️ حذف کامل اطلاعات',html:'<p style="text-align:right;line-height:2">برای تأیید عبارت <b dir="ltr">DELETE</b> را دقیقاً وارد کنید.</p><input id="wipeConfirm" class="swal2-input" dir="ltr" autocomplete="off">',showCancelButton:true,confirmButtonText:'حذف کامل',cancelButtonText:'لغو',focusConfirm:false,preConfirm:()=>{const v=document.getElementById('wipeConfirm').value.trim();if(v!=='DELETE'){Swal.showValidationMessage('عبارت باید دقیقاً DELETE باشد.');return false}return true}});if(!r.isConfirmed)return;Swal.fire({title:'در حال حذف...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});try{const {error:familyWipeError}=await db.rpc('admin_wipe_family_communication_data');if(familyWipeError)throw familyWipeError;const {data,error}=await db.rpc('wipe_all_data');if(error)throw error;Swal.close();selectedStudentIds.clear();await loadSettings();await loadAllSelects();await loadDashboard();toast('تمام اطلاعات سامانه پاک و تنظیمات پیش‌فرض شد')}catch(e){Swal.close();toast(safeError(e,'حذف کامل انجام نشد.'),'error')}}
 async function changePassword(){const current=$('currentPassword').value,newPwd=$('newPassword').value,confirm=$('confirmPassword').value;if(!current||!newPwd||!confirm){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">همه فیلدها را کامل کنید.</span>';return}if(newPwd.length<6){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">رمز جدید باید حداقل ۶ کاراکتر باشد.</span>';return}if(newPwd!==confirm){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">تکرار رمز جدید مطابقت ندارد.</span>';return}try{const {error:loginError}=await db.auth.signInWithPassword({email:currentUser.email,password:current});if(loginError){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">رمز فعلی اشتباه است.</span>';return}const {error}=await db.auth.updateUser({password:newPwd});if(error)throw error;$('passwordChangeResult').innerHTML='<span style="color:var(--success)">✅ رمز عبور تغییر کرد.</span>';['currentPassword','newPassword','confirmPassword'].forEach(x=>$(x).value='');toast('رمز عبور تغییر کرد')}catch(e){$('passwordChangeResult').textContent=safeError(e)}}
 
 /* ===== User Management (Admin only / بدون Edge Function) ===== */
@@ -941,7 +1010,7 @@ async function loadAssistantRequests(){
       const [cls,label]=statusMap[r.status]||['secondary',r.status];
       let actions='-';
       if(isClassRepresentative()&&r.status==='pending')actions=`<div class="small-actions"><button class="btn success btn-sm assistant-review-btn" data-id="${esc(r.request_id)}" data-action="approve">تایید</button><button class="btn danger btn-sm assistant-review-btn" data-id="${esc(r.request_id)}" data-action="reject">رد</button></div>`;
-      h+=`<tr><td>${esc(r.assistant_username||'-')}</td><td>${esc(r.class_name||'-')}</td><td><span class="badge ${cls}">${label}</span></td><td>${esc(r.created_at?new Date(r.created_at).toLocaleDateString('fa-IR'): '-')}</td><td>${actions}</td></tr>`;
+      h+=`<tr><td>${esc(r.assistant_username||'-')}</td><td>${esc(r.class_name||'-')}</td><td><span class="badge ${cls}">${label}</span></td><td>${esc(r.created_at?formatJalaliDateTime(r.created_at): '-')}</td><td>${actions}</td></tr>`;
     });
     h+='</tbody></table></div>';
     box.innerHTML=h;
@@ -958,12 +1027,12 @@ async function reviewAssistantRequest(requestId,action){
 
 /* ===== Import ===== */
 function resetImport(){excelData=[];excelHeaders=[];columnMap={};$('excelFile').value='';$('excelPreview').innerHTML='';$('importResult').innerHTML='';$('importExcelBtn').disabled=true}
-function showExcelPreview(){if(!excelHeaders.length)return;let h='<div style="margin:12px 0 8px;font-weight:800">پیش‌نمایش ۱۰ ردیف اول</div><div class="table-wrap"><table><thead><tr>'+excelHeaders.map(x=>`<th>${esc(x)}</th>`).join('')+'</tr></thead><tbody>'+excelData.slice(0,10).map(r=>`<tr>${excelHeaders.map((_,i)=>`<td>${esc(r[i]??'')}</td>`).join('')}</tr>`).join('')+'</tbody></table></div><div style="margin:12px 0 8px;font-weight:800">نگاشت ستون‌ها</div><div class="form-row">';const fields=[['first_name','نام'],['last_name','نام خانوادگی'],['grade','پایه'],['major','رشته'],['class_name','نام کلاس'],['internal_code','کد داخلی']];fields.forEach(([f,l])=>{h+=`<div class="form-group"><label>${l}</label><select class="col-map" data-field="${f}"><option value="">انتخاب نشود</option>${excelHeaders.map((x,i)=>`<option value="${i}">${esc(x)}</option>`).join('')}</select></div>`});h+='</div>';$('excelPreview').innerHTML=h;document.querySelectorAll('.col-map').forEach(s=>s.onchange=()=>{if(s.value==='')delete columnMap[s.dataset.field];else columnMap[s.dataset.field]=Number(s.value)})}
-async function importExcelCore(){if(!excelData.length)return;if(!Object.prototype.hasOwnProperty.call(columnMap,'first_name')||!Object.prototype.hasOwnProperty.call(columnMap,'last_name'))return toast('نگاشت نام و نام خانوادگی الزامی است.','error');const errors=[],raw=[],seen=new Set();for(let i=0;i<excelData.length;i++){const row=excelData[i];const st={};Object.entries(columnMap).forEach(([f,idx])=>st[f]=normalizeFa(row[idx]??''));st.internal_code=normalizeDigits(st.internal_code||'').replace(/\D/g,'');if(!st.first_name||!st.last_name){errors.push(`ردیف ${i+2}: نام یا نام خانوادگی خالی است.`);continue}if(st.internal_code){if(seen.has(st.internal_code)){errors.push(`ردیف ${i+2}: کد داخلی در فایل تکراری است.`);continue}seen.add(st.internal_code)}raw.push({...st,rowIndex:i});}
+function showExcelPreview(){if(!excelHeaders.length)return;let h='<div style="margin:12px 0 8px;font-weight:800">پیش‌نمایش ۱۰ ردیف اول</div><div class="table-wrap"><table><thead><tr>'+excelHeaders.map(x=>`<th>${esc(x)}</th>`).join('')+'</tr></thead><tbody>'+excelData.slice(0,10).map(r=>`<tr>${excelHeaders.map((_,i)=>`<td>${esc(r[i]??'')}</td>`).join('')}</tr>`).join('')+'</tbody></table></div><div style="margin:12px 0 8px;font-weight:800">نگاشت ستون‌ها</div><div class="form-row">';const fields=[['first_name','نام'],['last_name','نام خانوادگی'],['grade','پایه'],['major','رشته'],['class_name','نام کلاس'],['internal_code','کد داخلی'],['national_code','کد ملی']];fields.forEach(([f,l])=>{h+=`<div class="form-group"><label>${l}</label><select class="col-map" data-field="${f}"><option value="">انتخاب نشود</option>${excelHeaders.map((x,i)=>`<option value="${i}">${esc(x)}</option>`).join('')}</select></div>`});h+='</div>';$('excelPreview').innerHTML=h;document.querySelectorAll('.col-map').forEach(s=>s.onchange=()=>{if(s.value==='')delete columnMap[s.dataset.field];else columnMap[s.dataset.field]=Number(s.value)})}
+async function importExcelCore(){if(!excelData.length)return;if(!Object.prototype.hasOwnProperty.call(columnMap,'first_name')||!Object.prototype.hasOwnProperty.call(columnMap,'last_name'))return toast('نگاشت نام و نام خانوادگی الزامی است.','error');const errors=[],raw=[],seen=new Set();for(let i=0;i<excelData.length;i++){const row=excelData[i];const st={};Object.entries(columnMap).forEach(([f,idx])=>st[f]=normalizeFa(row[idx]??''));st.internal_code=normalizeDigits(st.internal_code||'').replace(/\D/g,'');st.national_code=normalizeDigits(st.national_code||'').replace(/\D/g,'');if(st.national_code && st.national_code.length!==10){errors.push(`ردیف ${i+2}: کد ملی باید ۱۰ رقم باشد.`);continue}if(!st.first_name||!st.last_name){errors.push(`ردیف ${i+2}: نام یا نام خانوادگی خالی است.`);continue}if(st.internal_code){if(seen.has(st.internal_code)){errors.push(`ردیف ${i+2}: کد داخلی در فایل تکراری است.`);continue}seen.add(st.internal_code)}raw.push({...st,rowIndex:i});}
   const codes=raw.map(x=>x.internal_code).filter(Boolean);const existingSet=new Set();if(codes.length){for(let i=0;i<codes.length;i+=500){const {data,error}=await db.from('students').select('internal_code').in('internal_code',codes.slice(i,i+500));if(error)throw error;(data||[]).forEach(x=>existingSet.add(x.internal_code))}}
   const valid=raw.filter(x=>{if(x.internal_code&&existingSet.has(x.internal_code)){errors.push(`ردیف ${x.rowIndex+2}: کد داخلی قبلاً ثبت شده است.`);return false}return true});if(!valid.length)return toast('دانش‌آموز جدیدی برای ثبت وجود ندارد.','warning');
   const classMap=new Map();for(const s of valid){if(!s.class_name)continue;const key=classKey(s.class_name,s.grade,s.major);if(classMap.has(key))continue;let q=db.from('classes').select('id').eq('name',s.class_name).eq('grade',s.grade);if(s.major)q=q.eq('major',s.major);else q=q.is('major',null);let {data,error}=await q.maybeSingle();if(error)throw error;if(!data){const ins=await db.from('classes').insert({name:s.class_name,grade:s.grade||'نامشخص',major:s.major||null,active:true}).select('id').single();if(ins.error){if(ins.error.code==='23505'){let rq=db.from('classes').select('id').eq('name',s.class_name).eq('grade',s.grade||'نامشخص');rq=s.major?rq.eq('major',s.major):rq.is('major',null);const again=await rq.single();if(again.error)throw again.error;data=again.data}else{errors.push(`ردیف ${s.rowIndex+2}: خطا در ایجاد کلاس`);continue}}else data=ins.data}classMap.set(key,data.id)}
-  const rows=valid.map(s=>{const key=classKey(s.class_name,s.grade,s.major);return{first_name:s.first_name,last_name:s.last_name,grade:s.grade||'نامشخص',major:s.major||null,class_id:s.class_name?classMap.get(key)||null:null,internal_code:s.internal_code||null,active:true}}).filter((x,i)=>{if(x.class_id===null&&valid[i].class_name){errors.push(`ردیف ${valid[i].rowIndex+2}: کلاس پیدا یا ایجاد نشد.`);return false}return true});
+  const rows=valid.map(s=>{const key=classKey(s.class_name,s.grade,s.major);return{first_name:s.first_name,last_name:s.last_name,grade:s.grade||'نامشخص',major:s.major||null,class_id:s.class_name?classMap.get(key)||null:null,internal_code:s.internal_code||null,national_code:s.national_code||null,active:true}}).filter((x,i)=>{if(x.class_id===null&&valid[i].class_name){errors.push(`ردیف ${valid[i].rowIndex+2}: کلاس پیدا یا ایجاد نشد.`);return false}return true});
   let inserted=0;for(let i=0;i<rows.length;i+=100){const batch=rows.slice(i,i+100);const {data,error}=await db.from('students').upsert(batch,{onConflict:'internal_code',ignoreDuplicates:true}).select('id');if(error)throw error;inserted+=data?.length||0}
   await db.from('import_logs').insert({file_name:$('excelFile').files[0]?.name||null,total_rows:excelData.length,imported_rows:inserted,duplicate_rows:Math.max(0,excelData.length-inserted-errors.length),failed_rows:errors.length,details:{errors}});
   $('importResult').innerHTML=`<div class="panel"><div>کل ردیف‌ها: <b>${toFa(excelData.length)}</b></div><div>ثبت شده: <b>${toFa(inserted)}</b></div><div>خطا: <b>${toFa(errors.length)}</b></div>${errors.length?`<pre style="margin-top:8px;background:#f8f9fa;padding:8px;border-radius:8px;max-height:240px;overflow:auto;white-space:pre-wrap">${esc(errors.join('\n'))}</pre>`:''}</div>`;toast(`${toFa(inserted)} دانش‌آموز ثبت شد`,errors.length?'warning':'success');await loadAllSelects();await loadStudents(1)}
@@ -997,17 +1066,515 @@ function classKey(name,grade,major){return [normalizeFa(name),normalizeFa(grade)
 
 /* ===== Events ===== */
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',async e=>{e.preventDefault();await showTab(b.dataset.tab)}));
-$('menuToggle').onclick=()=>$('sidebarMenu').classList.toggle('open');$('loginBtn').onclick=login;$('loginPassword').onkeydown=e=>{if(e.key==='Enter')login()};$('logoutBtn').onclick=()=>logout(false);$('addClassBtn').onclick=()=>addClass().catch(e=>toast(safeError(e),'error'));$('addStudentBtn').onclick=()=>addStudent().catch(e=>toast(safeError(e),'error'));$('applyStudentFilters').onclick=async()=>{studentFilters={search:normalizeFa($('studentSearch').value),grade:$('filterGrade').value,major:$('filterMajor').value,classId:$('filterClass').value,active:$('filterStatus').value};selectedStudentIds.clear();await loadStudents(1)};$('bulkDeleteBtn').onclick=async()=>{const ids=[...selectedStudentIds];if(!ids.length)return;if(!(await confirmDialog('غیرفعال‌سازی گروهی',`تعداد ${toFa(ids.length)} دانش‌آموز غیرفعال می‌شوند. ادامه می‌دهید؟`,'غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).in('id',ids);if(error)return toast(safeError(error),'error');selectedStudentIds.clear();toast('دانش‌آموزان غیرفعال شدند');await loadStudents(currentStudentPage)};$('bulkEditBtn').onclick=()=>bulkEdit().catch(e=>toast(safeError(e),'error'));$('loadAttendance').onclick=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('saveAttendance').onclick=()=>saveAttendance().catch(()=>{});$('attendanceDate').onchange=()=>handleAttendanceContextChange();$('attendanceClass').onchange=()=>handleAttendanceContextChange();$('attendanceScope').onchange=()=>handleAttendanceContextChange();$('attendanceBell').onchange=()=>handleAttendanceContextChange();$('reportType').onchange=()=>{const t=$('reportType').value;$('reportDateGroup').classList.toggle('hidden',t!=='today');$('reportRangeGroup').classList.toggle('hidden',t!=='range');$('reportStudentGroup').classList.toggle('hidden',t!=='student');if(t==='today'&&!$('reportDate').value)$('reportDate')._picker?.setDate(getTodayJalali())};$('generateReport').onclick=()=>generateReport().catch(e=>toast(safeError(e),'error'));$('exportExcel').onclick=exportReport;$('bellCount').oninput=()=>renderBellInputs(Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||1)),{});$('saveSettings').onclick=()=>saveSettings().catch(e=>toast(safeError(e),'error'));$('changePasswordBtn').onclick=()=>changePassword();$('backupJsonBtn').onclick=()=>backupJson();$('wipeDataBtn').onclick=()=>wipeData();$('restoreBackupFile').onchange=()=>{$('restoreBackupBtn').disabled=!$('restoreBackupFile').files.length};$('restoreBackupBtn').onclick=()=>restoreBackupJson();$('refreshAttendanceTickets').onclick=()=>loadAttendanceSubmissionTickets(true);$('excelFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const ab=await file.arrayBuffer();const wb=XLSX.read(new Uint8Array(ab),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!json.length)throw new Error('فایل خالی است.');excelHeaders=json[0].map(x=>String(x));excelData=json.slice(1);columnMap={};showExcelPreview();$('importExcelBtn').disabled=!excelData.length}catch(err){toast(safeError(err),'error')}}
+$('menuToggle').onclick=()=>$('sidebarMenu').classList.toggle('open');$('loginBtn').onclick=login;$('loginPassword').onkeydown=e=>{if(e.key==='Enter')login()};$('logoutBtn').onclick=()=>logout(false);
+$('sendAbsenceMessagesBtn').onclick=()=>openAbsenceMessagesModal().catch(e=>toast(safeError(e),'error'));$('addClassBtn').onclick=()=>addClass().catch(e=>toast(safeError(e),'error'));$('addStudentBtn').onclick=()=>addStudent().catch(e=>toast(safeError(e),'error'));$('applyStudentFilters').onclick=async()=>{studentFilters={search:normalizeFa($('studentSearch').value),grade:$('filterGrade').value,major:$('filterMajor').value,classId:$('filterClass').value,active:$('filterStatus').value};selectedStudentIds.clear();await loadStudents(1)};$('bulkDeleteBtn').onclick=async()=>{const ids=[...selectedStudentIds];if(!ids.length)return;if(!(await confirmDialog('غیرفعال‌سازی گروهی',`تعداد ${toFa(ids.length)} دانش‌آموز غیرفعال می‌شوند. ادامه می‌دهید؟`,'غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).in('id',ids);if(error)return toast(safeError(error),'error');selectedStudentIds.clear();toast('دانش‌آموزان غیرفعال شدند');await loadStudents(currentStudentPage)};$('bulkEditBtn').onclick=()=>bulkEdit().catch(e=>toast(safeError(e),'error'));$('loadAttendance').onclick=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('saveAttendance').onclick=()=>saveAttendance().catch(()=>{});$('attendanceDate').onchange=()=>handleAttendanceContextChange();$('attendanceClass').onchange=()=>handleAttendanceContextChange();$('attendanceScope').onchange=()=>handleAttendanceContextChange();$('attendanceBell').onchange=()=>handleAttendanceContextChange();$('reportType').onchange=()=>{const t=$('reportType').value;$('reportDateGroup').classList.toggle('hidden',t!=='today');$('reportRangeGroup').classList.toggle('hidden',t!=='range');$('reportStudentGroup').classList.toggle('hidden',t!=='student');if(t==='today'&&!$('reportDate').value)$('reportDate')._picker?.setDate(getTodayJalali())};$('generateReport').onclick=()=>generateReport().catch(e=>toast(safeError(e),'error'));$('exportExcel').onclick=exportReport;$('bellCount').oninput=()=>renderBellInputs(Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||1)),{});$('saveSettings').onclick=()=>saveSettings().catch(e=>toast(safeError(e),'error'));$('changePasswordBtn').onclick=()=>changePassword();$('backupJsonBtn').onclick=()=>backupJson();$('wipeDataBtn').onclick=()=>wipeData();$('restoreBackupFile').onchange=()=>{$('restoreBackupBtn').disabled=!$('restoreBackupFile').files.length};$('restoreBackupBtn').onclick=()=>restoreBackupJson();$('refreshAttendanceTickets').onclick=()=>loadAttendanceSubmissionTickets(true);$('excelFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const ab=await file.arrayBuffer();const wb=XLSX.read(new Uint8Array(ab),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!json.length)throw new Error('فایل خالی است.');excelHeaders=json[0].map(x=>String(x));excelData=json.slice(1);columnMap={};showExcelPreview();$('importExcelBtn').disabled=!excelData.length}catch(err){toast(safeError(err),'error')}}
 $('importExcelBtn').onclick=()=>importExcel().catch(e=>toast(safeError(e),'error'));$('addUserBtn').onclick=()=>openUserModal().catch(e=>toast(safeError(e),'error'));$('attendanceSubmissionTicketsContainer').addEventListener('click',async e=>{const b=e.target.closest('[data-id]');if(!b)return;const id=b.dataset.id;try{if(b.classList.contains('attendance-ticket-action')){const a=b.dataset.action;if(a==='approve'||a==='reject')await reviewAttendanceSubmissionTicket(id,a);else if(a==='edit')await editAttendanceSubmissionTicket(id);else if(a==='discard')await discardAttendanceSubmissionTicket(id)}else if(b.classList.contains('attendance-ticket-details'))await showAttendanceTicketDetails(id)}catch(err){toast(safeError(err),'error')}});
 $('usersTableContainer').addEventListener('click',async e=>{const b=e.target.closest('[data-user-action]');if(!b)return;const id=b.dataset.userId;const a=b.dataset.userAction;try{if(a==='edit')await openUserModal(id);else if(a==='toggle')await toggleManagedUser(id);else if(a==='delete')await deleteManagedUser(id)}catch(err){toast(safeError(err),'error')}});
 $('classesTableContainer').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;const a=b.dataset.action;const fn=a==='edit-class'?editClass:a==='delete-class'?deleteClass:a==='toggle-class'?toggleClass:null;if(fn)fn(id).catch(err=>toast(safeError(err),'error'))});
 $('studentsTableContainer').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;const a=b.dataset.action;const fn=a==='edit-student'?editStudent:a==='disable-student'?disableStudent:a==='student-absences'?showStudentAbsences:null;if(fn)fn(id).catch(err=>toast(safeError(err),'error'))});
-$('assistantRequestsContainer').addEventListener('click',e=>{const b=e.target.closest('.assistant-review-btn');if(!b)return;reviewAssistantRequest(b.dataset.id,b.dataset.action);});
+const assistantRequestsContainer=$('assistantRequestsContainer');if(assistantRequestsContainer)assistantRequestsContainer.addEventListener('click',e=>{const b=e.target.closest('.assistant-review-btn');if(!b)return;reviewAssistantRequest(b.dataset.id,b.dataset.action);});
 
 window.addEventListener('beforeunload',e=>{if(currentUser&&currentTab==='attendance'&&attendanceDirty){e.preventDefault();e.returnValue='';}});
 
 async function init(){initDatepickers();try{const {data:{session}}=await db.auth.getSession();if(session?.user)await finishSession(session.user)}catch(e){$('loginError').textContent=safeError(e)}}
 init();
+
+window.SamanApp={db,currentUser:()=>currentUser,currentRole:()=>currentRole,isAdmin,toast,esc,normalizeFa,toFa,safeError,showTab,toJalali,getTodayGregorian,getTodayJalali,formatJalaliDateTime,toGregorian,STATUS_LABELS,editAbsenceRecord};
+window.STATUS_LABELS=STATUS_LABELS;
+window.NON_PRESENT_STATUSES=NON_PRESENT_STATUSES;
+window.esc=esc;
+window.toFa=toFa;
+window.toast=toast;
+window.safeError=safeError;
+window.toJalali=toJalali;
+window.getTodayGregorian=getTodayGregorian;
+window.getTodayJalali=getTodayJalali;
+window.formatJalaliDateTime=formatJalaliDateTime;
+window.toGregorian=toGregorian;
+window.JalaliDatepicker=JalaliDatepicker;
+window.editAbsenceRecord=editAbsenceRecord;
+})();
+</script>
+
+
+
+<script>
+/* ===== ارسال پیام برای غایبین ===== */
+const S = () => window.SamanApp;
+async function invokeFamilyBaleAction(action, extra={}){
+  let {data:{session}}=await S().db.auth.getSession();
+  if(!session?.access_token){
+    const refreshed=await S().db.auth.refreshSession();
+    session=refreshed?.data?.session||null;
+  }
+  if(!session?.access_token)throw new Error('نشست سامانه منقضی شده است. دوباره وارد شوید.');
+  const {data,error}=await S().db.functions.invoke('family-bale',{body:{action,...extra},headers:{Authorization:`Bearer ${session.access_token}`}});
+  if(error){
+    let detail='';
+    try{const st=error.context?.status; const payload=typeof error.context?.json==='function'?await error.context.clone().json().catch(()=>null):null; detail=[st&&`HTTP ${st}`,payload?.message||payload?.error].filter(Boolean).join(' — ');}catch(_){ }
+    throw new Error(detail||error.message||'خطا در ارتباط با سرویس ارتباط با خانواده.');
+  }
+  if(!data?.ok)throw new Error(data?.message||'عملیات انجام نشد.');
+  return data;
+}
+
+function getYesterdayJalali(){
+  const base=S().getTodayGregorian().split('-').map(Number);
+  const d=new Date(Date.UTC(base[0],base[1]-1,base[2]));
+  d.setUTCDate(d.getUTCDate()-1);
+  const y=d.getUTCFullYear(),m=String(d.getUTCMonth()+1).padStart(2,'0'),day=String(d.getUTCDate()).padStart(2,'0');
+  return S().toJalali(`${y}-${m}-${day}`);
+}
+
+async function openAbsenceMessagesModal(){
+  if(!window.SamanApp?.isAdmin?.())return;
+  let selected=new Set();
+  const initialDate=getYesterdayJalali();
+  const html=`<div dir="rtl" style="text-align:right">
+    <div class="form-group"><label>تاریخ ثبت حضور و غیاب</label><div style="display:flex;gap:8px;align-items:stretch"><div class="datepicker" style="flex:1"><input id="absenceMessageDate" class="datepicker-input" readonly value="${S().esc(initialDate)}" placeholder="انتخاب تاریخ"></div><button type="button" class="btn primary" id="absenceSearchBtn" style="min-width:110px">🔎 جستجو</button></div></div>
+    <div class="flex between" style="margin:8px 0"><strong>ثبت‌های حضور و غیاب این تاریخ (به‌جز حاضرین)</strong><div class="flex" style="gap:6px"><button type="button" class="btn btn-sm" id="absenceSelectAllBtn">☑️ انتخاب همه</button><button type="button" class="btn btn-sm" id="absenceClearAllBtn">پاک کردن انتخاب</button><span id="absenceSelectedCount" class="badge info">۰ انتخاب</span></div></div>
+    <div id="absenceStudentsList" class="family-picker-list" style="max-height:340px;overflow:auto;display:grid;grid-template-columns:1fr;gap:8px"><div class="family-quiet">تاریخ را انتخاب کنید و روی «جستجو» بزنید.</div></div>
+  </div>`;
+  const result=await Swal.fire({title:'📨 ارسال پیام برای غایبین و تأخیرها',html,width:Math.min(760,window.innerWidth-20),showCancelButton:true,confirmButtonText:'📤 ارسال پیام‌های انتخاب‌شده',cancelButtonText:'بستن',focusConfirm:false,allowOutsideClick:false,didOpen:async()=>{
+    const input=document.getElementById('absenceMessageDate');
+    if(window.JalaliDatepicker){input._picker=new window.JalaliDatepicker(input);input._picker.setDate(initialDate);}
+    input.addEventListener('change',()=>{
+      selected.clear();
+      window.__absenceCandidates=[];
+      const list=document.getElementById('absenceStudentsList');
+      const count=document.getElementById('absenceSelectedCount');
+      if(list)list.innerHTML='<div class="family-quiet">تاریخ تغییر کرد؛ برای دریافت لیست روی «جستجو» بزنید.</div>';
+      if(count)count.textContent='۰ انتخاب';
+    });
+    document.getElementById('absenceSearchBtn').addEventListener('click',async()=>{
+      const value=input.value.trim();
+      if(!value)return S().toast('ابتدا تاریخ را انتخاب کنید.','warning');
+      const btn=document.getElementById('absenceSearchBtn');
+      btn.disabled=true;btn.textContent='⏳ جستجو...';
+      try{await loadAbsenceCandidates(value);}finally{btn.disabled=false;btn.textContent='🔎 جستجو';}
+    });
+    document.getElementById('absenceSelectAllBtn').addEventListener('click',()=>{
+      const rows=window.__absenceCandidates||[];
+      selected=new Set(rows.filter(x=>!x.already_sent).map(x=>String(x.student_id)));
+      renderAbsenceSelection();
+      const sentCount=rows.filter(x=>x.already_sent).length;
+      if(sentCount) S().toast(`${S().toFa(sentCount)} دانش‌آموز قبلاً برای این تاریخ پیام دریافت کرده‌اند و در «انتخاب همه» انتخاب نشدند.`,'info');
+    });
+    document.getElementById('absenceClearAllBtn').addEventListener('click',()=>{selected.clear();renderAbsenceSelection();});
+    document.getElementById('absenceStudentsList').addEventListener('click',e=>{const row=e.target.closest('[data-student-id]');if(!row)return;const id=String(row.dataset.studentId);if(selected.has(id))selected.delete(id);else selected.add(id);renderAbsenceSelection();});
+  },preConfirm:()=>{
+    if(!selected.size){Swal.showValidationMessage('حداقل یک دانش‌آموز را انتخاب کنید.');return false;}
+    return {date:document.getElementById('absenceMessageDate').value,student_ids:[...selected]};
+  }});
+  if(!result.isConfirmed)return;
+  Swal.fire({title:'در حال ارسال...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
+  try{
+    const data=await invokeFamilyBaleAction('send_absence_notifications',result.value);
+    Swal.close();
+    const sent=Number(data.sent||0),failed=Number(data.failed||0),students=Number(data.students||0);
+    if(failed)S().toast(`ارسال تمام شد؛ ${S().toFa(sent)} پیام موفق و ${S().toFa(failed)} ناموفق برای ${S().toFa(students)} دانش‌آموز.`,'warning');
+    else S().toast(`پیام برای ${S().toFa(sent)} خانواده ارسال شد.`,'success');
+    if(window.SamanFamily?.load)await window.SamanFamily.load(true);
+  }catch(e){Swal.close();S().toast(S().safeError(e,'ارسال پیام حضور و غیاب انجام نشد.'),'error')}
+
+  async function loadAbsenceCandidates(jDate){
+    try{
+      const data=await invokeFamilyBaleAction('get_absence_candidates',{date:jDate});
+      window.__absenceCandidates=data.students||[];
+      selected=new Set([...selected].filter(id=>window.__absenceCandidates.some(x=>String(x.student_id)===id)));
+      renderAbsenceSelection();
+    }catch(e){
+      document.getElementById('absenceStudentsList').innerHTML=`<div class="family-quiet" style="color:var(--danger)">${S().esc(e.message||'خطا در دریافت ثبت‌های حضور و غیاب')}</div>`;
+    }
+  }
+  function renderAbsenceSelection(){
+    const list=document.getElementById('absenceStudentsList');
+    const rows=window.__absenceCandidates||[];
+    const selectAllButton=document.getElementById('absenceSelectAllBtn');
+    const clearAllButton=document.getElementById('absenceClearAllBtn');
+    const selectableRows=rows.filter(x=>!x.already_sent);
+    if(selectAllButton)selectAllButton.disabled=!selectableRows.length || selectableRows.every(x=>selected.has(String(x.student_id)));
+    if(clearAllButton)clearAllButton.disabled=!selected.size;
+    if(!rows.length){
+      list.innerHTML='<div class="family-quiet">برای این تاریخ، به‌جز حاضرین، ثبت حضور و غیابی پیدا نشد.</div>';
+      document.getElementById('absenceSelectedCount').textContent='۰ انتخاب';
+      return;
+    }
+    const alreadySentCount=rows.filter(x=>x.already_sent).length;
+    const infoBanner=alreadySentCount
+      ? `<div class="absence-sent-banner">⚠️ ${S().toFa(alreadySentCount)} دانش‌آموز برای این تاریخ قبلاً پیام موفق دریافت کرده‌اند. «انتخاب همه» این افراد را انتخاب نمی‌کند؛ اما انتخاب دستی آن‌ها همچنان ممکن است.</div>`
+      : '';
+    list.innerHTML=infoBanner+rows.map(x=>{
+      const id=String(x.student_id),checked=selected.has(id),alreadySent=Boolean(x.already_sent);
+      const sentInfo=alreadySent
+        ? `<span class="absence-sent-badge">✓ قبلاً ارسال شده${Number(x.sent_count||0)>1?` · ${S().toFa(Number(x.sent_count||0))} بار`:''}</span>`
+        : '';
+      return `<div class="family-picker-item absence-candidate-item ${checked?'selected':''} ${alreadySent?'absence-already-sent':''}" data-student-id="${S().esc(id)}" style="cursor:pointer">
+        <div class="family-picker-check">${checked?'✓':''}</div>
+        <div class="family-picker-main"><div class="family-picker-guardian"><span><b>${S().esc(x.student_name||[x.first_name,x.last_name].filter(Boolean).join(' ').trim()||x.full_name||'دانش‌آموز')}</b></span>${sentInfo}</div><div class="family-picker-students">${S().esc(x.class_name||'کلاس نامشخص')} · ${S().esc(x.scope||'غیبت')}</div><div class="family-picker-meta">${S().toFa(Number(x.family_count||0))} خانواده متصل${alreadySent&&x.last_sent_at?` · آخرین ارسال: ${S().esc(S().formatJalaliDateTime?.(x.last_sent_at)||x.last_sent_at)}`:''}</div></div>
+      </div>`;
+    }).join('');
+    document.getElementById('absenceSelectedCount').textContent=`${S().toFa(selected.size)} انتخاب`;
+    if(selectAllButton)selectAllButton.disabled=!rows.some(x=>!x.already_sent && !selected.has(String(x.student_id)));
+    if(clearAllButton)clearAllButton.disabled=!selected.size;
+  }
+}
+</script>
+
+<style id="saman-family-inline">
+.family-shell{display:grid;gap:14px}.family-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.family-stat{padding:16px}.family-stat .num{font-size:1.55rem;font-weight:900;color:var(--primary)}.family-stat .lbl{font-size:.78rem;color:var(--muted);margin-top:4px}.family-grid{display:grid;grid-template-columns:1fr 1.35fr;gap:14px}.family-toolbar{display:flex;gap:7px;align-items:center;justify-content:space-between;flex-wrap:wrap}.family-tabs{display:flex;gap:6px;flex-wrap:wrap}.family-tab-btn{border:1px solid var(--border);background:#fff;border-radius:10px;padding:9px 12px;cursor:pointer;font-weight:700;color:var(--text)}.family-tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}.family-editor{border:1px solid var(--border);border-radius:12px;overflow:hidden}.family-editor-toolbar{display:flex;gap:5px;padding:8px;background:#f8faff;border-bottom:1px solid var(--border);flex-wrap:wrap}.family-editor-toolbar button{min-width:36px;height:34px;border:1px solid var(--border);background:#fff;border-radius:8px;cursor:pointer;font-weight:800}.family-editor-toolbar button:hover{background:var(--primary-light)}.family-editor textarea{border:0!important;border-radius:0!important;min-height:220px;box-shadow:none!important;resize:vertical}.family-editor-preview{padding:14px;background:#fafcff;border-top:1px dashed var(--border);min-height:100px;line-height:2}.family-var-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px;background:#fff;border:1px solid var(--border);border-radius:10px}.family-var-menu button{text-align:right;border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px;cursor:pointer}.family-spoiler-preview{background:#334155;color:#334155;border-radius:5px;padding:1px 5px;cursor:help}.family-spoiler-preview:hover{color:#fff}.family-chip{display:inline-flex;align-items:center;padding:3px 8px;background:var(--primary-light);color:var(--primary-dark);border-radius:999px;font-size:.72rem;font-weight:800}.family-message-card{padding:12px;border:1px solid var(--border);border-radius:12px;background:#fff}.family-message-card + .family-message-card{margin-top:8px}.family-status{font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:999px;background:#eef2f7;color:#475569}.family-status.new{background:#e7f0ff;color:#245b91}.family-status.approved{background:#dff6e7;color:#17653a}.family-status.rejected{background:#fde3e1;color:#8c241e}.family-status.need_more_info{background:#fff0ce;color:#8c5c05}.family-status.under_review{background:#f4e8ff;color:#6f3188}.family-nav-wrap{position:relative;display:inline-flex;align-items:center}.family-alert-badge{display:inline-flex;min-width:18px;height:18px;padding:0 5px;align-items:center;justify-content:center;border-radius:999px;background:#ef4444;color:#fff;font-size:.65rem;font-weight:900;line-height:18px;margin-right:6px;box-shadow:0 0 0 2px #fff}.family-alert-badge.hidden{display:none!important}.family-picker-overlay{position:fixed;inset:0;background:rgba(15,23,42,.48);z-index:30000;display:flex;align-items:center;justify-content:center;padding:18px}.family-picker-modal{width:min(860px,96vw);max-height:90vh;display:flex;flex-direction:column;background:#fff;border-radius:20px;box-shadow:0 25px 80px rgba(0,0,0,.24);overflow:hidden}.family-picker-head{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:10px;align-items:center}.family-picker-list{padding:12px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.family-picker-item{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--border);border-radius:13px;padding:11px;cursor:pointer;background:#fff}.family-picker-item.selected{border-color:var(--primary);background:#f5f7ff}.family-picker-check{width:24px;height:24px;border-radius:7px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex:none;font-weight:900;color:#fff}.family-picker-item.selected .family-picker-check{background:var(--primary);border-color:var(--primary)}.family-picker-main{min-width:0}.family-picker-guardian{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-weight:800}.family-picker-chat{font-size:.7rem;color:var(--muted);direction:ltr;text-align:right;margin-top:3px}.family-picker-students{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}.family-picker-student{font-size:.72rem;background:#f8fafc;border-radius:999px;padding:4px 7px}.family-picker-foot{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.family-picker-tools{display:flex;gap:6px;flex-wrap:wrap}.family-picker-empty{grid-column:1/-1;text-align:center;padding:35px;color:var(--muted)}.family-account-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px;border-bottom:1px solid #edf2f7}.family-account-row:last-child{border-bottom:0}.family-account-links{display:flex;gap:5px;flex-wrap:wrap}.family-quiet{background:#f8fafc;border:1px dashed var(--border);border-radius:10px;padding:12px;color:var(--muted)}.absence-sent-banner{grid-column:1/-1;padding:10px 12px;border-radius:10px;background:#fff8e8;border:1px solid #f1c45b;color:#8a5a00;font-size:.78rem;font-weight:800;line-height:1.8}.absence-already-sent{background:#fff8e8!important;border-color:#f1c45b!important}.absence-already-sent .family-picker-check{border-color:#f1c45b;background:#fffdf6;color:#9a6700}.absence-sent-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:999px;background:#fff0bd;color:#8a5a00;font-size:.68rem;font-weight:900}.absence-candidate-item{transition:.15s}.absence-candidate-item:hover{transform:translateY(-1px)}@media(max-width:950px){.family-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.family-grid{grid-template-columns:1fr}}@media(max-width:600px){.family-stats{grid-template-columns:1fr 1fr}.family-editor-preview{font-size:.85rem}}
+</style>
+<script id="saman-family-inline-js">
+(() => {
+  'use strict';
+  const API = 'family-bale';
+  const A = () => window.SamanApp;
+  const STATUS_LABELS = A().STATUS_LABELS || window.STATUS_LABELS || {};
+  let state = { loaded:false, stats:{}, templates:[], tickets:[], classes:[], students:[], accounts:[], links:[] };
+  let activeView = 'compose';
+  let editorMode = 'announcement';
+  // نگهداری انتخاب خانواده‌ها در طول تغییر نوع مخاطب/باز و بسته شدن modal
+  let selectedFamilyAccountIds = new Set();
+
+  const vars = [
+    ['student_name','نام دانش‌آموز','نام_دانش‌آموز'],['first_name','نام','نام'],['last_name','نام خانوادگی','نام_خانوادگی'],['guardian_name','نام ولی','نام_ولی'],
+    ['national_code','کد ملی','کد_ملی'],['grade','پایه','پایه'],['major','رشته','رشته'],['class_name','کلاس','کلاس'],['date','تاریخ','تاریخ'],['day','روز هفته','روز_هفته'],
+    ['scope','زنگ/نوع ثبت','زنگ_نوع_ثبت'],['status','وضعیت','وضعیت'],['ticket_no','کد درخواست','کد_درخواست'],['admin_response','پاسخ مدیر','پاسخ_مدیر']
+  ];
+  const variableMap = Object.fromEntries(vars.map(([key,label,token])=>[token,key]));
+  function variableToken(key){const row=vars.find(x=>x[0]===key);return row?`[${row[2]}]`:`[${key}]`;}
+
+  function esc(v){ return A().esc(v); }
+  function el(id){ return document.getElementById(id); }
+  async function call(action, extra={}){
+    // همیشه یک access token تازه و معتبر را صریحاً به Edge Function می‌فرستیم.
+    // این کار جلوی AUTH_INVALID ناشی از Session قدیمی/ناقص را می‌گیرد.
+    let { data: sessionData } = await A().db.auth.getSession();
+    let session = sessionData?.session || null;
+
+    if (!session?.access_token) {
+      const refreshed = await A().db.auth.refreshSession();
+      session = refreshed?.data?.session || null;
+    }
+
+    if (!session?.access_token) {
+      throw new Error('AUTH_REQUIRED — نشست سامانه وجود ندارد. دوباره وارد شوید.');
+    }
+
+    const { data, error } = await A().db.functions.invoke(API, {
+      body: { action, ...extra },
+      headers: {
+        Authorization: `Bearer ${session.access_token}`
+      }
+    });
+
+    if(error){
+      let detail='';
+      let status='';
+      try {
+        status=String(error?.context?.status || '');
+        const response = typeof error?.context?.clone === 'function' ? error.context.clone() : error.context;
+        if(response){
+          const payload=await response.json().catch(()=>null);
+          detail=String(payload?.message || payload?.error || payload?.code || '');
+        }
+      } catch(_) {}
+      const suffix=[status && `HTTP ${status}`,detail].filter(Boolean).join(' — ');
+      throw new Error(suffix ? `Edge Function: ${suffix}` : (error?.message || 'خطا در فراخوانی Edge Function'));
+    }
+    if(!data?.ok) throw new Error(data?.message || 'عملیات ارتباط با خانواده انجام نشد.');
+    return data;
+  }
+  function statusLabel(s){return ({new:'جدید',under_review:'در حال بررسی',need_more_info:'نیازمند اطلاعات',approved:'تأیید شد',rejected:'رد شد',closed:'بسته شد'}[s]||s)}
+  function typeLabel(t){return ({excuse_absence:'موجهی غیبت',excuse_late:'موجهی تأخیر',general:'عمومی'}[t]||t)}
+  function studentName(id){const s=state.students.find(x=>String(x.id)===String(id));return s?`${s.first_name||''} ${s.last_name||''}`.trim():'—'}
+  function className(id){return state.classes.find(x=>String(x.id)===String(id))?.name||'—'}
+  function accountName(id){const a=state.accounts.find(x=>String(x.id)===String(id));return a?`${a.first_name||''} ${a.last_name||''}`.trim()||a.username||a.chat_id:'—'}
+
+  function root(){return el('familyAppRoot')}
+  function shell(){
+    root().innerHTML=`<div class="family-shell">
+      <div class="family-stats" id="familyStats"></div>
+      <div class="panel family-toolbar">
+        <div class="family-tabs">
+          <button class="family-tab-btn active" data-family-view="compose">📢 ارسال اطلاعیه</button>
+          <button class="family-tab-btn" data-family-view="tickets">🎫 درخواست‌های خانواده <span id="familyTicketsBadge" class="family-alert-badge hidden">۰</span></button>
+          <button class="family-tab-btn" data-family-view="templates">🧩 قالب‌ها</button>
+          <button class="family-tab-btn" data-family-view="accounts">👨‍👩‍👧 اتصال خانواده‌ها</button>
+        </div>
+        
+      </div>
+      <div id="familyView"></div>
+    </div>`;
+    root().addEventListener('click',onRootClick);
+    renderStats();
+  }
+  function renderStats(){
+    const s=state.stats||{};
+    el('familyStats').innerHTML=[
+      ['connected_accounts','حساب بله متصل'],['active_links','اتصال فعال'],['sent_messages','پیام‌های ارسال‌شده'],['open_tickets','درخواست باز']
+    ].map(([k,l])=>`<div class="panel family-stat"><div class="num">${A().toFa(Number(s[k]||0))}</div><div class="lbl">${l}</div></div>`).join('');
+    updateFamilyBadges(Number(s.open_tickets||0));
+  }
+  function updateFamilyBadges(count){
+    const n=Math.max(0,Number(count||0));
+    const label=n>99?'۹۹+':A().toFa(n);
+    ['familyMenuBadge','familyTicketsBadge'].forEach(id=>{const b=el(id);if(!b)return;b.textContent=label;b.classList.toggle('hidden',n===0)});
+  }
+  function switchView(v){
+    activeView=v;
+    root().querySelectorAll('[data-family-view]').forEach(b=>b.classList.toggle('active',b.dataset.familyView===v));
+    if(v==='compose')renderCompose();
+    else if(v==='tickets'){
+      renderTicketsLoading();
+      loadTicketsDirect().then(()=>renderTickets()).catch(e=>{
+        el('familyView').innerHTML=`<div class="panel"><div class="family-quiet" style="color:var(--danger)">خطا در دریافت درخواست‌ها: ${esc(e?.message||'خطای نامشخص')}</div></div>`;
+      });
+    }
+    else if(v==='templates')renderTemplates();
+    else renderAccounts();
+  }
+  async function onRootClick(e){
+    const view=e.target.closest('[data-family-view]'); if(view){switchView(view.dataset.familyView);return}
+    if(e.target.closest('#familyRefresh')){await load(true);return}
+    const btn=e.target.closest('[data-family-action]'); if(!btn)return;
+    try{
+      const action=btn.dataset.familyAction;
+      if(action==='send') await sendAnnouncement();
+      if(action==='preview') previewComposer();
+      if(action==='save-template') await saveTemplate();
+      if(action==='template-edit') editTemplate(btn.dataset.id);
+      if(action==='ticket-response') await respondTicket(btn.dataset.id,btn.dataset.decision);
+      if(action==='edit-attendance'){const fn=window.SamanApp?.editAbsenceRecord||window.editAbsenceRecord;if(!fn)throw new Error('تابع ویرایش سابقه حضور و غیاب در دسترس نیست.');await fn(btn.dataset.id);await load(true);switchView('tickets');}
+      if(action==='account-unlink') await unlink(btn.dataset.account,btn.dataset.student);
+    }catch(err){A().toast(err.message||A().safeError(err),'error')}
+  }
+  function renderCompose(){
+    const defaultT='خانواده گرامی 🌷\n\n[نام_دانش‌آموز]\nپایه: [پایه]\nکلاس: [کلاس]\n\nمتن اطلاعیه را اینجا بنویسید.';
+    el('familyView').innerHTML=`<div class="family-grid">
+      <div class="panel">
+        <h3 class="content-title">ساخت اطلاعیه</h3><p class="muted" style="margin:6px 0 14px">برای هر خانواده/دانش‌آموز، متغیرها جداگانه جایگزین می‌شوند.</p>
+        <div class="form-group"><label>عنوان</label><input id="familyAnnouncementTitle" value="اطلاعیه مدرسه"></div>
+        <div class="form-group"><label>مخاطب</label><select id="familyAudienceType"><option value="all">همه خانواده‌ها</option><option value="grade">یک پایه</option><option value="major">یک رشته</option><option value="class">یک کلاس</option><option value="account">خانواده‌های انتخابی</option></select></div>
+        <div id="familyAudienceFields"></div>
+        <div class="family-editor"><div class="family-editor-toolbar"><button type="button" title="پررنگ" data-fmt="bold"><b>B</b></button><button type="button" title="کج" data-fmt="italic"><i>I</i></button><button type="button" title="خط‌خورده" data-fmt="strike">S</button><button type="button" title="کد" data-fmt="code">&lt;/&gt;</button><button type="button" title="پیوند" data-fmt="link">🔗</button><button type="button" id="familyVarBtn">＋ متغیر</button></div><textarea id="familyMessageBody">${esc(defaultT)}</textarea><div id="familyVarBox" class="family-var-menu hidden"></div><div class="family-editor-preview" id="familyPreview"></div></div>
+        <div class="flex" style="margin-top:12px"><button class="btn" data-family-action="preview">👁 پیش‌نمایش</button><button class="btn primary" data-family-action="send">📤 ارسال مستقیم</button></div>
+      </div>
+      <div class="panel"><h3 class="content-title">راهنمای قالب</h3><div class="family-quiet" style="margin-top:10px;line-height:2">اطلاعیه‌ها مستقیم ارسال می‌شوند. قالب‌بندی Bold، Italic و Link در بله به‌صورت واقعی نمایش داده می‌شود و HTML خام دیده نخواهد شد.</div><h4 style="margin:14px 0 8px">نمونه</h4><div class="family-message-card" id="familyLiveSample"></div></div>
+    </div>`;
+    setupComposer(); updatePreview();
+  }
+  function setupComposer(){
+    const type=el('familyAudienceType'); type.onchange=renderAudienceFields;
+    renderAudienceFields();
+    root().querySelectorAll('[data-fmt]').forEach(b=>b.addEventListener('click',()=>formatSelection(b.dataset.fmt)));
+    el('familyVarBtn').onclick=()=>el('familyVarBox').classList.toggle('hidden');
+    el('familyVarBox').innerHTML=vars.map(([k,l,t])=>`<button type="button" data-variable="${esc(k)}"><b>[${esc(t)}]</b> — ${esc(l)}</button>`).join('');
+    el('familyVarBox').querySelectorAll('[data-variable]').forEach(b=>b.onclick=()=>{insertAtCursor(variableToken(b.dataset.variable));el('familyVarBox').classList.add('hidden');updatePreview()});
+    el('familyMessageBody').addEventListener('input',updatePreview);
+  }
+  function familyGroups(){
+    const map=new Map();
+    (state.accounts||[]).forEach(a=>map.set(String(a.id),{...a,students:[]}));
+    (state.links||[]).filter(l=>l.active!==false).forEach(l=>{
+      const a=map.get(String(l.bale_account_id));
+      const st=state.students.find(s=>String(s.id)===String(l.student_id));
+      if(a&&st)a.students.push(st);
+    });
+    return [...map.values()].filter(a=>a.active!==false);
+  }
+  function filteredFamilyGroups(){
+    const q=String(window.__familyPickerQuery||'').trim().toLocaleLowerCase();
+    const groups=familyGroups();
+    if(!q)return groups;
+    return groups.filter(g=>{
+      const guardian=`${g.first_name||''} ${g.last_name||''} ${g.username||''} ${g.chat_id||''}`.toLocaleLowerCase();
+      const students=g.students.map(s=>`${s.first_name||''} ${s.last_name||''} ${s.grade||''} ${s.major||''} ${className(s.class_id)}`).join(' ').toLocaleLowerCase();
+      return `${guardian} ${students}`.includes(q);
+    });
+  }
+  function renderFamilyPicker(){
+    const list=el('familyPickerList'); if(!list)return;
+    const groups=filteredFamilyGroups();
+    if(!groups.length){list.innerHTML='<div class="family-picker-empty">خانواده‌ای پیدا نشد.</div>';return;}
+    list.innerHTML=groups.map(g=>{
+      const id=String(g.id),selected=selectedFamilyAccountIds.has(id);
+      const guardian=(`${g.first_name||''} ${g.last_name||''}`.trim()||g.username||'بدون نام');
+      return `<div class="family-picker-item ${selected?'selected':''}" data-family-account="${esc(id)}">
+        <div class="family-picker-check">${selected?'✓':''}</div>
+        <div class="family-picker-main">
+          <div class="family-picker-guardian">${esc(guardian)} ${g.username?`<span class="family-chip">@${esc(g.username)}</span>`:''}</div>
+          <div class="family-picker-chat">${esc(g.chat_id||'—')}</div>
+          <div class="family-picker-students">${g.students.map(st=>`<span class="family-picker-student">👨‍🎓 ${esc(`${st.first_name||''} ${st.last_name||''}`.trim())} · ${esc(className(st.class_id))}</span>`).join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  function openFamilyPicker(){
+    window.__familyPickerQuery='';
+    if(el('familyPickerSearch'))el('familyPickerSearch').value='';
+    renderFamilyPicker();
+    el('familyPickerOverlay')?.classList.remove('hidden');
+  }
+  function closeFamilyPicker(){el('familyPickerOverlay')?.classList.add('hidden')}
+  function renderAudienceFields(){
+    const type=el('familyAudienceType').value, box=el('familyAudienceFields');
+    if(type==='all'){box.innerHTML='';return}
+    if(type==='grade') box.innerHTML=`<div class="form-group"><label>پایه</label><select id="familyAudienceGrade">${[...new Set(state.students.map(s=>s.grade).filter(Boolean))].map(v=>`<option>${esc(v)}</option>`).join('')}</select></div>`;
+    else if(type==='major') box.innerHTML=`<div class="form-group"><label>رشته</label><select id="familyAudienceMajor">${[...new Set(state.students.map(s=>s.major).filter(Boolean))].map(v=>`<option>${esc(v)}</option>`).join('')}</select></div>`;
+    else if(type==='class') box.innerHTML=`<div class="form-group"><label>کلاس</label><select id="familyAudienceClass">${state.classes.map(c=>`<option value="${esc(c.id)}">${esc(c.name)} — ${esc(c.grade||'')}</option>`).join('')}</select></div>`;
+
+    else {
+      const count=selectedFamilyAccountIds.size;
+      box.innerHTML=`<div class="form-group"><label>خانواده‌ها</label><div class="family-select-box" id="familyPickerTrigger" style="border:1px solid var(--border);border-radius:12px;padding:10px;cursor:pointer;background:#fff"><div style="display:flex;align-items:center;justify-content:space-between;gap:10px"><div><b>${count?`${A().toFa(count)} خانواده انتخاب شده`:'انتخاب خانواده‌ها'}</b><div class="muted">انتخاب خانواده‌ها در یک پنجره جداگانه</div></div><i class="fa-solid fa-users"></i></div></div></div>
+      <div id="familyPickerOverlay" class="family-picker-overlay hidden">
+        <div class="family-picker-modal">
+          <div class="family-picker-head"><div><h3 class="content-title">انتخاب خانواده‌ها</h3><div class="muted">خانواده‌های موردنظر برای اطلاعیه را انتخاب کنید.</div></div><button type="button" class="btn btn-sm" id="familyPickerClose">✕</button></div>
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border)"><input id="familyPickerSearch" placeholder="جستجوی ولی، نام دانش‌آموز یا شناسه بله"></div>
+          <div class="family-picker-list" id="familyPickerList"></div>
+          <div class="family-picker-foot"><div class="muted">انتخاب‌شده: <b id="familyPickerCount">${A().toFa(count)}</b></div><div class="family-picker-tools"><button type="button" class="btn btn-sm" id="familyPickerSelectAll">انتخاب همه</button><button type="button" class="btn btn-sm" id="familyPickerClear">پاک کردن</button><button type="button" class="btn primary btn-sm" id="familyPickerConfirm">تأیید انتخاب</button></div></div>
+        </div>
+      </div>`;
+      setTimeout(()=>{
+        el('familyPickerTrigger')?.addEventListener('click',openFamilyPicker);
+        el('familyPickerClose')?.addEventListener('click',closeFamilyPicker);
+        el('familyPickerConfirm')?.addEventListener('click',()=>{if(!selectedFamilyAccountIds.size)return A().toast('حداقل یک خانواده را انتخاب کنید.','warning');closeFamilyPicker();renderAudienceFields()});
+        el('familyPickerSelectAll')?.addEventListener('click',()=>{filteredFamilyGroups().forEach(g=>selectedFamilyAccountIds.add(String(g.id)));renderFamilyPicker();if(el('familyPickerCount'))el('familyPickerCount').textContent=A().toFa(selectedFamilyAccountIds.size)});
+        el('familyPickerClear')?.addEventListener('click',()=>{selectedFamilyAccountIds.clear();renderFamilyPicker();if(el('familyPickerCount'))el('familyPickerCount').textContent='۰'});
+        el('familyPickerSearch')?.addEventListener('input',e=>{window.__familyPickerQuery=e.target.value;renderFamilyPicker();});
+        el('familyPickerList')?.addEventListener('click',e=>{const item=e.target.closest('[data-family-account]');if(!item)return;const id=String(item.dataset.familyAccount);if(selectedFamilyAccountIds.has(id))selectedFamilyAccountIds.delete(id);else selectedFamilyAccountIds.add(id);renderFamilyPicker();if(el('familyPickerCount'))el('familyPickerCount').textContent=A().toFa(selectedFamilyAccountIds.size)});
+      },0);
+    }
+  }
+  function formatSelection(fmt){
+    const t=el('familyMessageBody'); const start=t.selectionStart,end=t.selectionEnd,selected=t.value.slice(start,end)||'متن'; let repl=selected;
+    if(fmt==='bold')repl=`*${selected}*`;
+    if(fmt==='italic')repl=`_${selected}_`;
+    if(fmt==='strike')repl=`~${selected}~`;
+    if(fmt==='code')repl=`\`${selected}\``;
+    if(fmt==='link'){
+      const url=prompt('آدرس لینک را وارد کنید','https://');
+      if(!url)return;
+      repl=`[${selected}](${url.trim()})`;
+    }
+    t.setRangeText(repl,start,end,'end');t.focus();updatePreview();
+  }
+  function insertAtCursor(text){const t=el('familyMessageBody');const start=t.selectionStart,end=t.selectionEnd;t.setRangeText(text,start,end,'end');t.focus()}
+  function renderBalePreview(text){
+    let h=esc(text).replace(/\n/g,'<br>');
+    h=h.replace(/\*([^*\n]+)\*/g,'<strong>$1</strong>').replace(/_([^_\n]+)_/g,'<em>$1</em>').replace(/~([^~\n]+)~/g,'<s>$1</s>').replace(/`([^`\n]+)`/g,'<code style="background:#eef2f7;padding:1px 5px;border-radius:5px">$1</code>').replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    h=h.replace(/\{\{([^}]+)\}\}/g,'<span class="family-chip">{{$1}}</span>');
+    return h;
+  }
+  function updatePreview(){const body=el('familyMessageBody');if(!body)return;let sample=body.value||'';const demo={student_name:'علی رضایی',first_name:'علی',last_name:'رضایی',guardian_name:'آقای رضایی',national_code:'۱۲۳۴۵۶۷۸۹۰',grade:'دهم',major:'تجربی',class_name:'۱۰/۱',date:'۱۴۰۵/۰۶/۲۹',day:'شنبه',scope:'زنگ اول',status:'غیبت غیرموجه',ticket_no:'۱۰۰۱',admin_response:'درخواست شما بررسی شد'};vars.forEach(([key,,token])=>{const value=demo[key]||'';sample=sample.replaceAll(`[${token}]`,value).replaceAll(`{{${key}}}`,value)});const html=renderBalePreview(sample);el('familyPreview').innerHTML=html;el('familyLiveSample').innerHTML=html;}
+  function previewComposer(){
+    let sample=el('familyMessageBody').value||'';
+    const demo={student_name:'علی رضایی',first_name:'علی',last_name:'رضایی',guardian_name:'خانواده رضایی',national_code:'۱۲۳۴۵۶۷۸۹۰',grade:'دهم',major:'تجربی',class_name:'۱۰/۱',date:'۱۴۰۵/۰۶/۲۹',day:'شنبه',scope:'زنگ اول',status:'غیبت غیرموجه',ticket_no:'۱۰۰۱',admin_response:'درخواست شما بررسی شد'};
+    vars.forEach(([key,,token])=>{const value=demo[key]||'';sample=sample.replaceAll(`[${token}]`,value).replaceAll(`{{${key}}}`,value)});
+    Swal.fire({title:'پیش‌نمایش پیام بله',html:`<div dir="rtl" style="text-align:right;line-height:2;background:#f5f7fb;border-radius:12px;padding:16px">${renderBalePreview(sample)}</div>`,confirmButtonText:'بستن'});
+  }
+  async function sendAnnouncement(){
+    const type=el('familyAudienceType').value;
+    const body=el('familyMessageBody').value.trim();
+    const audience={type};
+    if(type==='grade')audience.grade=el('familyAudienceGrade').value;
+    if(type==='major')audience.major=el('familyAudienceMajor').value;
+    if(type==='class')audience.class_id=el('familyAudienceClass').value;
+    if(type==='account'||type==='accounts'||type==='family'||type==='families'){
+      audience.account_ids=[...selectedFamilyAccountIds];
+      if(!audience.account_ids.length){A().toast('حداقل یک خانواده را انتخاب کنید.','warning');return}
+    }
+    if(!body)return A().toast('متن پیام خالی است.','warning');
+    const ok=await Swal.fire({
+      title:'ارسال مستقیم اطلاعیه',
+      html:`<div style="line-height:2">پیام <b>مستقیماً</b> برای گیرندگان ارسال می‌شود و در صف انتظار نمی‌ماند.<br><span class="muted">قالب‌بندی متن در بله با Markdown نمایش داده می‌شود.</span></div>`,
+      showCancelButton:true,confirmButtonText:'ارسال مستقیم',cancelButtonText:'لغو',icon:'question'
+    });
+    if(!ok.isConfirmed)return;
+    Swal.fire({title:'در حال ارسال مستقیم...',html:'لطفاً این صفحه را نبندید.',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
+    try{
+      const result=await call('send_announcement',{title:el('familyAnnouncementTitle').value.trim(),body,audience});
+      Swal.close();
+      const sent=Number(result.sent||0), failed=Number(result.failed||0);
+      if(failed===0) A().toast(`اطلاعیه با موفقیت برای ${A().toFa(sent)} گیرنده ارسال شد.`,'success');
+      else A().toast(`ارسال تمام شد؛ ${A().toFa(sent)} موفق و ${A().toFa(failed)} ناموفق.`,'warning');
+      el('familyMessageBody').value='';
+      updatePreview();
+      await load(true);
+    }catch(e){
+      Swal.close();
+      A().toast(e?.message||'ارسال اطلاعیه انجام نشد.','error');
+    }
+  }
+  async function loadTicketsDirect(){
+    const data=await call('list_family_tickets');
+    state.tickets=data.tickets||[];
+    state.attendance_records=data.attendance_records||[];
+    if(typeof data.open_tickets==='number'){
+      state.stats.open_tickets=data.open_tickets;
+      updateFamilyBadges(data.open_tickets);
+    }
+    return data;
+  }
+  function renderTicketsLoading(){
+    el('familyView').innerHTML='<div class="panel"><div class="family-quiet">در حال دریافت درخواست‌های خانواده...</div></div>';
+  }
+  function renderTickets(){
+    const list=state.tickets||[];
+    const attendanceMap=new Map((state.attendance_records||[]).map(r=>[String(r.id),r]));
+    const html=list.length?list.map(t=>{
+      const rec=t.attendance_record_id?attendanceMap.get(String(t.attendance_record_id)):null;
+      const attendanceBlock=rec&&['excuse_absence','excuse_late'].includes(t.type)?`<div style="margin-top:10px;padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#fbfcff"><div><b>مورد حضور و غیاب</b></div><div class="muted" style="margin-top:5px">تاریخ: ${esc(toJalali(rec.date))} | ${esc(rec.scope_type==='full_day'?'کل روز':`زنگ ${toFa(rec.bell_number)}`)} | وضعیت فعلی: ${esc(STATUS_LABELS[rec.status]||rec.status)}</div><div style="margin-top:8px"><button class="btn primary btn-sm" data-family-action="edit-attendance" data-id="${esc(rec.id)}">✏️ ویرایش همین غیبت</button></div></div>`:'';
+      return `<div class="family-message-card"><div class="flex between"><div><b>#${A().toFa(t.ticket_no)}</b> — ${esc(typeLabel(t.type))}</div><span class="family-status ${esc(t.status)}">${esc(statusLabel(t.status))}</span></div><div class="muted" style="margin-top:6px">دانش‌آموز: ${esc(studentName(t.student_id))} | ثبت درخواست: ${esc(formatJalaliDateTime(t.created_at))}</div>${attendanceBlock}<div style="white-space:pre-wrap;line-height:2;margin-top:9px">${esc(t.family_message)}</div>${t.admin_response?`<div style="margin-top:9px;padding:9px;background:#f8fafc;border-radius:8px"><b>پاسخ مدیر:</b><br>${esc(t.admin_response)}</div>`:''}<div class="flex" style="margin-top:10px">${['new','under_review','need_more_info'].includes(t.status)?`<button class="btn success btn-sm" data-family-action="ticket-response" data-id="${esc(t.id)}" data-decision="approved">✅ تأیید</button><button class="btn danger btn-sm" data-family-action="ticket-response" data-id="${esc(t.id)}" data-decision="rejected">❌ رد</button><button class="btn warning btn-sm" data-family-action="ticket-response" data-id="${esc(t.id)}" data-decision="need_more_info">📝 اطلاعات بیشتر</button>`:''}</div></div>`;
+    }).join(''):`<div class="family-quiet">درخواستی برای نمایش وجود ندارد.</div>`;
+    el('familyView').innerHTML=`<div class="panel"><h3 class="content-title">درخواست‌های خانواده</h3><p class="muted" style="margin:5px 0 12px">درخواست‌های موجهی غیبت، موجهی تأخیر و درخواست‌های عمومی در همین بخش بررسی می‌شوند.</p>${html}</div>`;
+  }
+  async function respondTicket(id,decision){
+    const title=decision==='approved'?'تأیید درخواست':decision==='rejected'?'رد درخواست':'درخواست اطلاعات بیشتر';
+    const r=await Swal.fire({title,html:`<div class="form-group" style="text-align:right"><label>پاسخ مدیر</label><textarea id="familyTicketResponse" style="min-height:150px" placeholder="متن پاسخ برای خانواده..."></textarea></div>`,showCancelButton:true,confirmButtonText:decision==='approved'?'تأیید و پاسخ':decision==='rejected'?'رد و پاسخ':'ارسال درخواست اطلاعات',cancelButtonText:'لغو',preConfirm:()=>document.getElementById('familyTicketResponse').value.trim()});
+    if(!r.isConfirmed)return; Swal.fire({title:'در حال ثبت...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()}); await call('respond_ticket',{ticket_id:id,decision,response:r.value||''}); Swal.close();A().toast('درخواست با موفقیت بروزرسانی شد.');await load(true);
+  }
+  function renderTemplates(){
+    const rows=state.templates.map(t=>`<div class="family-message-card"><div class="flex between"><div><b>${esc(t.title)}</b><div class="muted">${esc(t.template_key)} | ${esc(t.context)} | ${String(t.template_key)==='attendance.default'?'پیش‌فرض':''} | ${t.active?'فعال':'غیرفعال'}</div></div><button class="btn btn-sm" data-family-action="template-edit" data-id="${esc(t.id)}">ویرایش</button></div><div style="white-space:pre-wrap;margin-top:9px;line-height:2;max-height:160px;overflow:auto">${esc(t.body)}</div></div>`).join('');
+    el('familyView').innerHTML=`<div class="family-grid"><div class="panel"><h3 class="content-title">قالب پیام</h3><div class="form-group"><label>کلید قالب</label><input id="templateKey" placeholder="announcement.school"></div><div class="form-group"><label>عنوان</label><input id="templateTitle"></div><div class="form-group"><label>زمینه</label><select id="templateContext"><option value="announcement">اطلاعیه</option><option value="attendance">حضور و غیاب</option><option value="ticket">تیکت</option><option value="general">عمومی</option></select><label style="display:flex;align-items:center;gap:7px;margin-top:9px"><input id="templateActive" type="checkbox" checked style="width:auto"> فعال</label></div><div class="family-editor"><div class="family-editor-toolbar"><button type="button" title="پررنگ" data-tfmt="bold"><b>B</b></button><button type="button" title="کج" data-tfmt="italic"><i>I</i></button><button type="button" title="خط‌خورده" data-tfmt="strike">S</button><button type="button" title="کد" data-tfmt="code">&lt;/&gt;</button><button type="button" title="پیوند" data-tfmt="link">🔗</button><button type="button" id="templateVarBtn">＋ متغیر</button></div><textarea id="templateBody"></textarea><div id="templateVarBox" class="family-var-menu hidden"></div></div><button class="btn primary" style="margin-top:10px" data-family-action="save-template">💾 ذخیره قالب</button><input type="hidden" id="templateId"></div><div class="panel"><h3 class="content-title">قالب‌های موجود</h3>${rows}</div></div>`;
+    el('templateVarBox').innerHTML=vars.map(([k,l,t])=>`<button type="button" data-tvar="${esc(k)}"><b>[${esc(t)}]</b> — ${esc(l)}</button>`).join(''); el('templateVarBtn').onclick=()=>el('templateVarBox').classList.toggle('hidden'); el('templateVarBox').querySelectorAll('[data-tvar]').forEach(b=>b.onclick=()=>{insertTemplate(variableToken(b.dataset.tvar));el('templateVarBox').classList.add('hidden')}); root().querySelectorAll('[data-tfmt]').forEach(b=>b.addEventListener('click',()=>formatTemplate(b.dataset.tfmt)));
+  }
+  function insertTemplate(text){const t=el('templateBody');const s=t.selectionStart,e=t.selectionEnd;t.setRangeText(text,s,e,'end');t.focus()}
+  function formatTemplate(fmt){const t=el('templateBody');const s=t.selectionStart,e=t.selectionEnd,sel=t.value.slice(s,e)||'متن';let r=sel;if(fmt==='bold')r=`*${sel}*`;if(fmt==='italic')r=`_${sel}_`;if(fmt==='strike')r=`~${sel}~`;if(fmt==='code')r=`\`${sel}\``;if(fmt==='link'){const url=prompt('آدرس لینک را وارد کنید','https://');if(!url)return;r=`[${sel}](${url.trim()})`;}t.setRangeText(r,s,e,'end');t.focus()}
+  function toEditorVariables(text){let out=String(text||'');vars.forEach(([key,,token])=>{out=out.split(`{{${key}}}`).join(`[${token}]`);});return out;}
+  function editTemplate(id){const t=state.templates.find(x=>String(x.id)===String(id));if(!t)return;el('templateId').value=t.id;el('templateKey').value=t.template_key;el('templateTitle').value=t.title;el('templateContext').value=t.context;el('templateActive').checked=t.active!==false;el('templateBody').value=toEditorVariables(t.body);}
+
+  async function saveTemplate(){const data={id:el('templateId').value||null,template_key:el('templateKey').value.trim(),title:el('templateTitle').value.trim(),context:el('templateContext').value,body:el('templateBody').value.trim(),active:el('templateActive')?.checked!==false};await call('save_template',data);A().toast('قالب ذخیره شد.');await load(true);switchView('templates');}
+  function renderAccounts(){
+    const byAccount=new Map(); state.accounts.forEach(a=>byAccount.set(String(a.id),{...a,students:[]})); state.links.forEach(l=>{const a=byAccount.get(String(l.bale_account_id));if(a)a.students.push(l)});
+    const html=[...byAccount.values()].map(a=>`<div class="family-account-row"><div><b>${esc(`${a.first_name||''} ${a.last_name||''}`.trim()||a.username||a.chat_id)}</b><div class="muted" dir="ltr">${esc(a.chat_id)}</div><div class="family-account-links">${a.students.map(l=>`<span class="family-chip">${esc(studentName(l.student_id))}<button style="margin-right:5px;border:0;background:none;color:#b42318;cursor:pointer" data-family-action="account-unlink" data-account="${esc(a.id)}" data-student="${esc(l.student_id)}">×</button></span>`).join('')}</div></div><span class="family-status ${a.active?'approved':'rejected'}">${a.active?'متصل':'غیرفعال'}</span></div>`).join('') || '<div class="family-quiet">حساب متصلی ثبت نشده است.</div>';
+    el('familyView').innerHTML=`<div class="panel"><h3 class="content-title">اتصال خانواده‌ها به دانش‌آموزان</h3><p class="muted" style="margin:5px 0 12px">هر حساب بله حداکثر ۳ دانش‌آموز و هر دانش‌آموز حداکثر ۳ حساب بله می‌تواند داشته باشد.</p>${html}</div>`;
+  }
+  async function unlink(account,student){const ok=await Swal.fire({title:'حذف اتصال',text:`اتصال «${studentName(student)}» از این حساب بله حذف شود؟`,showCancelButton:true,confirmButtonText:'حذف اتصال',cancelButtonText:'لغو'});if(!ok.isConfirmed)return;await call('unlink_student',{bale_account_id:account,student_id:student});A().toast('اتصال حذف شد.');await load(true);switchView('accounts')}
+  async function load(force=false,options={}){
+    if(!A()?.isAdmin?.())return;
+    if(!state.loaded||force){
+      const data=await call('init');
+      Object.assign(state,{...data,loaded:true});
+      const acc=await call('list_accounts');
+      state.accounts=acc.accounts||[];
+      state.links=acc.links||[];
+      state.students=(data.students||[]).map(s=>s);
+      state.classes=data.classes||[];
+    }
+    if(!root().hasChildNodes())shell();
+    renderStats();
+    if(options?.silent)return;
+    if(activeView==='tickets'){
+      renderTicketsLoading();
+      try{await loadTicketsDirect();renderTickets()}catch(e){
+        el('familyView').innerHTML=`<div class="panel"><div class="family-quiet" style="color:var(--danger)">خطا در دریافت درخواست‌ها: ${esc(e?.message||'خطای نامشخص')}</div></div>`;
+      }
+    }else{
+      switchView(activeView);
+    }
+  }
+  window.SamanFamily={load,destroy:()=>{},activeView:()=>activeView};
 })();
 </script>
 </body>
