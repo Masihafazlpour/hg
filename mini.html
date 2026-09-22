@@ -27,6 +27,8 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
 .btn{border:0;border-radius:16px;min-height:48px;padding:0 15px;font-weight:800;cursor:pointer}.btn.primary{background:linear-gradient(135deg,#2b6ef3,#6558f5);color:white}.btn.ghost{background:#eef3fb;color:#32435d}.btn.block{width:100%}.row{display:flex;gap:8px}.row>*{flex:1}.notice{padding:13px 14px;background:linear-gradient(135deg,#fff8e7,#fff4d6);border:1px solid #ffe2a4;border-radius:18px;font-size:.72rem;color:#76520e;line-height:1.8}.empty{padding:28px 18px;text-align:center;color:var(--muted);background:rgba(255,255,255,.65);border-radius:22px;border:1px dashed #dbe2ec}.empty .big{font-size:28px;margin-bottom:8px}.back{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--primary);font-weight:900;padding:2px 0 12px}.list-gap{display:grid;gap:9px}.attendance-item{display:flex;align-items:center;gap:10px}.status{padding:5px 9px;border-radius:999px;font-size:.62rem;font-weight:900}.status.absent{background:#ffe8ed;color:#b51e48}.status.late{background:#fff2d7;color:#9b6100}.status.excused{background:#e9f8ef;color:#197347}.status.present{background:#edf7f2;color:#2b7d59}
 @media (max-width:390px){.hero h2{font-size:1.28rem}.contact-grid{grid-template-columns:1fr}.stats{gap:6px}}
 </style>
+<script src="https://telegram.org/js/telegram-web-app.js?63"></script>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -39,9 +41,6 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
   <button class="nav" data-page="notifications"><span class="ico">♢</span>اعلان‌ها</button>
   <button class="nav" data-page="contacts"><span class="ico">◎</span>ارتباط</button>
 </div>
-<div class="sheet hidden" id="staffCodeSheet"><div class="sheet-card"><div class="handle"></div><h3>ورود پرسنل</h3><p>کد چهاررقمی یکبارمصرف را از بخش «تنظیمات → احراز هویت Mini App» در سامان دریافت کنید.</p><div class="otp" id="staffCodeInputs"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"><input maxlength="1" inputmode="numeric"></div><div class="row"><button class="btn ghost" id="staffCodeClose">انصراف</button><button class="btn primary" id="staffCodeVerify">اتصال حساب</button></div><div id="staffCodeMsg" class="notice hidden" style="margin-top:10px"></div></div></div>
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script>
 (() => {
 'use strict';
@@ -52,7 +51,7 @@ const bale=window.Bale?.WebApp || null;
 try{bale?.ready();bale?.expand();}catch{}
 const params=new URLSearchParams(location.search);
 let route=params.get('route')||'home', routeId=params.get('id')||'';
-let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],loading:true,error:'',staffSession:localStorage.getItem('saman_staff_session')||''};
+let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],loading:true,error:'',platform:'',initReady:false};
 const root=document.getElementById('root');
 const $=id=>document.getElementById(id);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -61,14 +60,13 @@ function time(v){try{return new Intl.DateTimeFormat('fa-IR',{hour:'2-digit',minu
 function date(v){try{return new Intl.DateTimeFormat('fa-IR',{weekday:'short',day:'numeric',month:'long'}).format(new Date(v))}catch{return ''}}
 function initials(name){const a=String(name||'س').trim().split(/\s+/);return (a[0]?.[0]||'س')+(a[1]?.[0]||'')}
 function channelInit(){ if(tg?.initData) return ['telegram',tg.initData]; const bi=bale?.initData||bale?.init_data||''; if(bi) return ['bale',bi]; const ci=params.get('initData'); const cc=params.get('channel'); if(ci&&cc)return [cc,ci]; return ['', '']; }
-async function api(action,payload={}){const [channel,initData]=channelInit();const headers={'content-type':'application/json'};if(channel){headers['x-channel']=channel;headers['x-mini-init-data']=initData;}if(state.staffSession)headers['x-saman-session']=state.staffSession;const r=await fetch(API,{method:'POST',headers,body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const e=new Error(p.message||'خطای سامانه');e.code=p.message;e.payload=p;throw e;}return p;}
+async function api(action,payload={}){const [channel,initData]=channelInit();const headers={'content-type':'application/json'};if(channel){headers['x-channel']=channel;headers['x-mini-init-data']=initData;}const r=await fetch(API,{method:'POST',headers,body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const e=new Error(p.message||'خطای سامانه');e.code=p.message;e.payload=p;throw e;}return p;}
 function setNav(page){document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
 function shell(content){return `<div>${content}</div>`}
 function home(){setNav('home');const m=state.me||{};const isStaff=m.type==='staff';const unread=state.unread||0;return shell(`<section class="hero"><div class="hero-row"><div><div class="eyebrow">${isStaff?'پنل ارتباطی پرسنل':'درگاه خانواده'}</div><h2>${escapeHtml(m.name||'خوش آمدید')} 👋</h2><p>${isStaff?'مکالمات و اعلان‌های مربوط به محدوده دسترسی شما در یکجا قرار دارد.':'همه ارتباط‌های شما با مدرسه، یکجا و همیشه در دسترس.'}</p></div><div class="role-chip"><span class="online"></span>${escapeHtml(m.role_label||'خانواده')}</div></div></section>
 <div class="stats"><div class="stat"><div class="n">${faNum(state.conversations.length)}</div><div class="l">گفتگو</div></div><div class="stat"><div class="n">${faNum(unread)}</div><div class="l">اعلان جدید</div></div><div class="stat"><div class="n">${faNum((state.students||[]).length)}</div><div class="l">دانش‌آموز</div></div></div>
 ${isStaff?staffHome():familyHome()}`)}
 function familyHome(){return `${state.notifications.filter(x=>!x.read_at).slice(0,1).map(n=>`<div class="notice">${escapeHtml(n.rendered_body)}<br><button class="link" onclick="openNotification('${n.id}')">مشاهده اعلان ←</button></div>`).join('')}
-<div class="card" style="margin-bottom:12px"><div class="conversation"><div class="avatar staff">◈</div><div class="grow"><strong>ورود پرسنل</strong><div class="preview">مدیر، معاون، نماینده کلاس یا مشاور</div></div><button class="btn primary" style="min-height:38px" onclick="openStaffCode()">ورود</button></div></div>
 <div class="section-head"><h3>گفتگوهای اخیر</h3><button class="link" onclick="openPage('chats')">همه گفتگوها</button></div><div class="list-gap">${state.conversations.slice(0,4).map(conversationCard).join('')||`<div class="empty"><div class="big">💬</div>هنوز گفتگویی ندارید.</div>`}</div>
 <div class="section-head"><h3>ارتباط با مدرسه</h3><button class="link" onclick="openPage('contacts')">همه</button></div><div class="contact-grid">${contactTiles().join('')}</div>`}
 function staffHome(){const counselor=state.me?.role==='counselor';return `${counselor?'<div class="notice">این حساب فقط برای تبادل پیام با خانواده‌هاست. امکانات مدیریتی و حضور و غیاب برای مشاور فعال نیست.</div>':''}<div class="section-head"><h3>${counselor?'گفتگوهای مشاوره':'کارهای مهم'}</h3><button class="link" onclick="openPage('notifications')">اعلان‌ها</button></div><div class="list-gap">${state.conversations.slice(0,8).map(conversationCard).join('')||`<div class="empty"><div class="big">💬</div>${counselor?'هنوز گفتگویی برای شما ثبت نشده است.':'گفتگوی فعالی در محدوده شما نیست.'}</div>`}</div>`}
@@ -86,20 +84,52 @@ async function openChat(id){try{const p=await api('get_messages',{conversation_i
 window.openChat=openChat;
 function renderChat(){const c=state.chat.conversation;const msgs=state.chat.messages||[];let lastDay='';const body=msgs.map(m=>{const d=date(m.created_at);const sep=d!==lastDay?`<div class="day-sep"><span>${escapeHtml(d)}</span></div>`:'';lastDay=d;return sep+`<div class="bubble ${m.sender_type==='family'?'family':'staff'}">${escapeHtml(m.body)}<div class="meta">${time(m.created_at)}</div></div>`}).join('');root.innerHTML=`<button class="back" onclick="openPage('chats')">← گفتگوها</button><div class="card" style="margin-bottom:10px"><div class="conversation"><div class="avatar staff">${escapeHtml(initials(c.subject||'گفتگو'))}</div><div class="grow"><strong>${escapeHtml(c.subject||'گفتگو با مدرسه')}</strong><div class="preview">${c.status==='waiting_admin'?'در انتظار پاسخ':'گفتگوی فعال'}</div></div></div></div><div class="chat" id="chatList">${body}</div><div class="composer"><textarea id="messageBox" placeholder="پیام خود را بنویسید..."></textarea><button class="send" id="sendBtn">➤</button></div>`;document.getElementById('sendBtn').onclick=sendMessage;const box=document.getElementById('messageBox');box.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}})}
 async function sendMessage(){const box=document.getElementById('messageBox');const body=box.value.trim();if(!body)return;const btn=document.getElementById('sendBtn');btn.disabled=true;try{await api('send_message',{conversation_id:state.chat.conversation.id,body});box.value='';await openChat(state.chat.conversation.id)}catch(e){alert(e.message)}finally{btn.disabled=false}}
-async function openNotification(id){const n=state.notifications.find(x=>String(x.id)===String(id));if(!n)return;try{await api('mark_notification_read',{id});state.notifications=state.notifications.map(x=>String(x.id)===String(id)?{...x,read_at:new Date().toISOString(),status:'read'}:x);state.unread=state.notifications.filter(x=>!x.read_at).length; if(n.event_id){const ev=await fetch(`${API}`,{method:'POST',headers:headersForApi(),body:JSON.stringify({action:'notifications'})}).catch(()=>null)} if(n.rendered_body.includes('ثبت غیبت')||n.rendered_body.includes('حضور')){openPage('home');return} if(n.event_id){const target=routeFor(n);if(target){openPage('chats')}}}catch{} renderPage()}
-function routeFor(n){return n.event_id?'chats':''}
+async function openNotification(id){
+  const n=state.notifications.find(x=>String(x.id)===String(id));
+  if(!n)return;
+  try{
+    await api('mark_notification_read',{id});
+    state.notifications=state.notifications.map(x=>String(x.id)===String(id)?{...x,read_at:new Date().toISOString(),status:'read'}:x);
+    state.unread=state.notifications.filter(x=>!x.read_at).length;
+    if(n.route==='conversation' && n.route_id){ await openChat(String(n.route_id)); return; }
+    if(n.route==='attendance' && n.student_id && state.me?.type==='family'){ await loadAttendance(String(n.student_id)); return; }
+    renderPage();
+  }catch(e){alert(e.message||'باز کردن اعلان انجام نشد.')}
+}
 window.openNotification=openNotification;
 async function openPage(page){state.chat=null;route=page;if(page==='home')root.innerHTML=home();else if(page==='chats')root.innerHTML=chats();else if(page==='notifications')root.innerHTML=notifications();else if(page==='contacts' && state.me?.type==='family')root.innerHTML=contacts();else if(page==='attendance')root.innerHTML=attendancePage();}
 window.openPage=openPage;
-function headersForApi(){const [c,i]=channelInit();const h={'content-type':'application/json'};if(c){h['x-channel']=c;h['x-mini-init-data']=i}if(state.staffSession)h['x-saman-session']=state.staffSession;return h}
-async function loadAll(){state.loading=true;try{const p=await api('bootstrap');if(p.session_token){state.staffSession=p.session_token;localStorage.setItem('saman_staff_session',p.session_token)}state.me=p.me;state.conversations=p.conversations||[];state.notifications=p.notifications||[];state.unread=p.unread||0;state.students=p.me?.students||[];if(p.me?.type==='family'){try{const d=await api('directory');state.directory=d.items||[]}catch{state.directory=[]}}applyCapabilities();renderPage();}catch(e){state.error=e.code||e.message;renderError(e)}finally{state.loading=false}}
-function renderPage(){if(state.chat){renderChat();return}if(route==='home')root.innerHTML=home();else if(route==='chats')root.innerHTML=chats();else if(route==='notifications')root.innerHTML=notifications();else if(route==='contacts')root.innerHTML=contacts();else if(route==='attendance')root.innerHTML=attendancePage();else root.innerHTML=home()}
-function applyCapabilities(){const staff=state.me?.type==='staff';const counselor=state.me?.role==='counselor';const contactsBtn=document.querySelector('.nav[data-page="contacts"]');if(contactsBtn)contactsBtn.style.display=(staff||counselor)?'none':'';const b=document.getElementById('bottomNav');if(b)b.style.gridTemplateColumns=(staff?'repeat(3,1fr)':'repeat(4,1fr)')}
-function renderError(e){root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>اتصال به سامان برقرار نشد</strong><p style="font-size:.72rem;line-height:1.8">${escapeHtml(e.message||'خطای ناشناخته')}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
-function openStaffCode(){const sheet=$('staffCodeSheet');sheet.classList.remove('hidden');const inputs=[...document.querySelectorAll('#staffCodeInputs input')];inputs.forEach((i,idx)=>{i.value='';i.oninput=()=>{i.value=i.value.replace(/\D/g,'').slice(0,1);if(i.value&&idx<inputs.length-1)inputs[idx+1].focus()};i.onkeydown=e=>{if(e.key==='Backspace'&&!i.value&&idx>0)inputs[idx-1].focus()}});$('staffCodeMsg').classList.add('hidden');setTimeout(()=>inputs[0].focus(),50)}
-window.openStaffCode=openStaffCode;
-$('staffCodeClose').onclick=()=>$('staffCodeSheet').classList.add('hidden');
-$('staffCodeVerify').onclick=async()=>{const code=[...document.querySelectorAll('#staffCodeInputs input')].map(i=>i.value).join('');if(!/^\d{4}$/.test(code))return;$('staffCodeVerify').disabled=true;try{const p=await api('claim_staff_code',{code});state.staffSession=p.session_token;localStorage.setItem('saman_staff_session',p.session_token);$('staffCodeSheet').classList.add('hidden');await loadAll()}catch(e){$('staffCodeMsg').textContent=e.code==='STAFF_CODE_INVALID'?'کد اشتباه است یا منقضی شده است.':e.code==='STAFF_CODE_LOCKED'?'این کد دیگر قابل استفاده نیست.':e.code==='STAFF_CODE_RATE_LIMITED'?'تلاش‌های ورود زیاد بوده است؛ ۱۰ دقیقه بعد دوباره تلاش کنید.':e.message;$('staffCodeMsg').classList.remove('hidden')}finally{$('staffCodeVerify').disabled=false}};
+function headersForApi(){const [c,i]=channelInit();const h={'content-type':'application/json'};if(c){h['x-channel']=c;h['x-mini-init-data']=i}return h}
+async function loadAll(){
+  state.loading=true;
+  try{
+    const [channel,initData]=channelInit();
+    state.platform=channel;
+    state.initReady=!!channel && !!initData;
+    if(!state.initReady) throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
+    const p=await api('bootstrap');
+    state.me=p.me;
+    state.conversations=p.conversations||[];
+    state.notifications=p.notifications||[];
+    state.unread=p.unread||0;
+    state.students=p.me?.students||[];
+    if(p.me?.type==='family'){
+      try{const d=await api('directory');state.directory=d.items||[]}catch{state.directory=[]}
+    }else{state.directory=[]}
+    applyCapabilities();
+    renderPage();
+    if(routeId){
+      const rid=routeId; routeId='';
+      if(route==='conversation') openChat(rid).catch(()=>{});
+      else if(route==='attendance' && state.me?.type==='family') loadAttendance(rid).catch(()=>{});
+      else if(route==='notifications') openPage('notifications');
+    }
+  }catch(e){
+    state.error=e.code||e.message;
+    renderError(e);
+  }finally{state.loading=false}
+}
+function renderError(e){root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${e.code==='MINI_APP_CONTEXT_MISSING'?'سامان باید از داخل ربات باز شود':'اتصال به سامان برقرار نشد'}</strong><p style="font-size:.72rem;line-height:1.9">${e.code==='MINI_APP_CONTEXT_MISSING'?'این صفحه را مستقیماً در مرورگر باز نکنید. از دکمه «ورود به سامان» داخل Telegram یا Bale وارد شوید.':'خطا: '+escapeHtml(e.message||'خطای ناشناخته')}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
 $('refreshBtn').onclick=loadAll;document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>openPage(b.dataset.page));
 window.renderAttendanceList=renderAttendanceList;window.loadAttendance=loadAttendance;
 loadAll();setInterval(()=>{if(!document.hidden)loadAll().catch(()=>{})},12000);
