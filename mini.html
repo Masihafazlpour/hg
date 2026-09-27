@@ -65,7 +65,8 @@ function initials(name){const a=String(name||'س').trim().split(/\s+/);return (a
 function channelInit(){ if(tg?.initData) return ['telegram',tg.initData]; const bi=bale?.initData||bale?.init_data||bale?.initDataRaw||''; if(bi) return ['bale',bi]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
 async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=msg.split(':')[0];e.payload=p;throw e;}return p;}
 // Family-only Mini App: all operations use the family gateway; no staff API/login exists.
-const activeApi=api;
+async function activeApi(action,payload={}){return api(action,payload);}
+window.activeApi=activeApi;
 function setNav(page){document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
 function shell(content){return `<div>${content}</div>`}
 async function loadAll(){
