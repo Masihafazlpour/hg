@@ -35,7 +35,7 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
   <div class="top"><div class="brand"><div class="brand-logo">س</div><div><h1>سامان</h1><p>ارتباط یکپارچه با مدرسه</p></div></div><button class="mini-btn" id="refreshBtn">↻</button></div>
   <div id="root"></div>
 </div>
-<div class="bottom" id="bottomNav">
+<div class="bottom hidden" id="bottomNav">
   <button class="nav active" data-page="home"><span class="ico">⌂</span>خانه</button>
   <button class="nav" data-page="chats"><span class="ico">◫</span>گفتگوها</button>
   <button class="nav" data-page="discipline"><span class="ico">✦</span>انضباط</button><button class="nav" data-page="notifications"><span class="ico">♢</span>اعلان‌ها</button>
@@ -52,7 +52,7 @@ try{bale?.ready();bale?.expand();}catch{}
 const params=new URLSearchParams(location.search);
 let route=params.get('route')||'home', routeId=params.get('id')||'';
 const staffMode=params.get('staff')==='1';
-let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],discipline:[],disciplineSummary:{positive:0,negative:0,balance:0},loading:true,error:'',platform:'',initReady:false};
+let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],discipline:[],disciplineSummary:{positive:0,negative:0,balance:0},loading:true,error:'',platform:'',initReady:false,entryMode:null};
 const root=document.getElementById('root');
 const $=id=>document.getElementById(id);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -63,9 +63,40 @@ function gregToJalali(v){try{const s=String(v||'').slice(0,10).split('-').map(Nu
 function getTodayJalali(){return gregToJalali(new Date().toISOString().slice(0,10))}
 function initials(name){const a=String(name||'س').trim().split(/\s+/);return (a[0]?.[0]||'س')+(a[1]?.[0]||'')}
 function channelInit(){ if(tg?.initData) return ['telegram',tg.initData]; const bi=bale?.initData||bale?.init_data||bale?.initDataRaw||''; if(bi) return ['bale',bi]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
-async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=msg.split(':')[0];e.payload=p;throw e;}return p;}
+async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify({action,entry_mode:state.entryMode,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=msg.split(':')[0];e.payload=p;throw e;}return p;}
 function setNav(page){document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('active',x.dataset.page===page))}
 function shell(content){return `<div>${content}</div>`}
+function showEntryChoice(){
+  state.entryMode=null;
+  state.me=null;
+  state.chat=null;
+  document.getElementById('bottomNav')?.classList.add('hidden');
+  root.innerHTML=`<section class="hero" style="margin-bottom:14px"><div class="eyebrow">سامان</div><h2>نوع ورود را انتخاب کنید</h2><p>برای اینکه پنل خانواده و پنل پرسنل کاملاً از هم جدا باشند، ابتدا مسیر ورود را مشخص کنید.</p></section>
+  <div class="list-gap">
+    <button class="card" style="width:100%;border:1px solid var(--line);text-align:right;cursor:pointer;padding:18px" onclick="chooseEntryMode('family')">
+      <div class="conversation"><div class="avatar">👨‍👩‍👧</div><div class="grow"><strong style="font-size:.95rem">ورود اولیا</strong><div class="preview">مشاهده دانش‌آموزان، حضور و غیاب، انضباط، اعلان‌ها و گفتگو با مدرسه</div></div><span style="font-size:1.5rem">‹</span></div>
+    </button>
+    <button class="card" style="width:100%;border:1px solid var(--line);text-align:right;cursor:pointer;padding:18px" onclick="chooseEntryMode('staff')">
+      <div class="conversation"><div class="avatar staff">🛡️</div><div class="grow"><strong style="font-size:.95rem">ورود پرسنل</strong><div class="preview">پنل اختصاصی مدیر، معاون، مشاور و نماینده کلاس بر اساس سطح دسترسی</div></div><span style="font-size:1.5rem">‹</span></div>
+    </button>
+  </div>
+  <div class="notice" style="margin-top:12px">حسابی که هم‌زمان ولی و پرسنل مدرسه باشد، در هر ورود فقط پنلی را که انتخاب می‌کنید نمایش می‌دهد.</div>`;
+}
+window.showEntryChoice=showEntryChoice;
+async function chooseEntryMode(mode){
+  if(!['family','staff'].includes(mode))return;
+  state.entryMode=mode;
+  document.getElementById('bottomNav')?.classList.remove('hidden');
+  root.innerHTML='<div class="empty"><div class="big">⏳</div>در حال ورود به پنل...</div>';
+  try{await loadAll()}catch(e){renderError(e)}
+}
+window.chooseEntryMode=chooseEntryMode;
+function switchEntryMode(){
+  state.me=null;state.conversations=[];state.notifications=[];state.students=[];state.directory=[];state.chat=null;state.entryMode=null;
+  showEntryChoice();
+}
+window.switchEntryMode=switchEntryMode;
+
 function home(){setNav('home');const m=state.me||{};const isStaff=m.type==='staff';const unread=state.unread||0;return shell(`<section class="hero"><div class="hero-row"><div><div class="eyebrow">${isStaff?'پنل ارتباطی پرسنل':'درگاه خانواده'}</div><h2>${escapeHtml(m.name||'خوش آمدید')} 👋</h2><p>${isStaff?'مکالمات و اعلان‌های مربوط به محدوده دسترسی شما در یکجا قرار دارد.':'همه ارتباط‌های شما با مدرسه، یکجا و همیشه در دسترس.'}</p></div><div class="role-chip"><span class="online"></span>${escapeHtml(m.role_label||'خانواده')}</div></div></section>
 <div class="stats"><div class="stat"><div class="n">${faNum(state.conversations.length)}</div><div class="l">گفتگو</div></div><div class="stat"><div class="n">${faNum(unread)}</div><div class="l">اعلان جدید</div></div><div class="stat"><div class="n">${faNum((state.students||[]).length)}</div><div class="l">دانش‌آموز</div></div></div>
 ${isStaff?staffHome():familyHome()}`)}
@@ -171,7 +202,7 @@ function headersForApi(){const [c,i]=channelInit();const h={'content-type':'appl
 
 function pairingPage(){
   setNav('home');
-  return `<button class="back" onclick="openPage('home')">← بازگشت</button><section class="hero"><div class="eyebrow">اتصال پرسنلی</div><h2>حساب خود را به سامان متصل کنید</h2><p>کد ۵ رقمی فعلی را از مدیر و پنل سامان دریافت کنید. این کد هر ۵ دقیقه تغییر می‌کند.</p></section><div class="card" style="margin-top:14px"><div class="notice" style="margin-bottom:12px"><b>نکته:</b> بعد از ثبت کد، درخواست شما برای مدیر ارسال می‌شود. مدیر آن را به پرونده پرسنلی مناسب متصل می‌کند.</div><div class="form-group"><label>کد ۵ رقمی</label><input id="pairCode" inputmode="numeric" maxlength="5" autocomplete="one-time-code" placeholder="مثلاً ۱۲۳۴۵" style="font-size:1.45rem;letter-spacing:8px;text-align:center;direction:ltr"></div><button class="btn primary block" onclick="claimPairing()">🔐 ثبت درخواست اتصال</button><div id="pairStatus" class="muted" style="margin-top:10px;text-align:center"></div></div>`;
+  return `<button class="back" onclick="openPage('home')">← بازگشت</button><section class="hero"><div class="eyebrow">اتصال پرسنلی</div><h2>حساب خود را به سامان متصل کنید</h2><p>کد ۵ رقمی فعلی را از مدیر و پنل سامان دریافت کنید. این کد هر ۵ دقیقه تغییر می‌کند.</p></section><div class="card" style="margin-top:14px"><div class="notice" style="margin-bottom:12px"><b>نکته:</b> بعد از ثبت کد، درخواست شما برای مدیر ارسال می‌شود. مدیر آن را به پرونده پرسنلی مناسب متصل می‌کند.</div><div class="form-group"><label>کد ۵ رقمی</label><input id="pairCode" inputmode="numeric" maxlength="5" autocomplete="one-time-code" placeholder="مثلاً ۱۲۳۴۵" style="font-size:1.45rem;letter-spacing:8px;text-align:center;direction:ltr"></div><button class="btn primary block" onclick="claimPairing()">🔐 ثبت درخواست اتصال</button><button class="btn ghost block" style="margin-top:8px" onclick="switchEntryMode()">↔ تغییر مسیر ورود</button><div id="pairStatus" class="muted" style="margin-top:10px;text-align:center"></div></div>`;
 }
 async function claimPairing(){const code=String($('pairCode')?.value||'').replace(/[^0-9۰-۹٠-٩]/g,'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));if(code.length!==5){alert('کد باید دقیقاً ۵ رقم باشد.');return}try{const p=await api('claim_staff_pairing',{code});$('pairStatus').textContent='✅ درخواست اتصال ثبت شد. مدیر باید حساب شما را به یکی از پرسنل اختصاص دهد.';$('pairCode').disabled=true;window.__pairPending=p.pending;}catch(e){$('pairStatus').textContent='❌ '+(e.message||'کد نامعتبر است.')}}
 window.claimPairing=claimPairing;
@@ -180,6 +211,13 @@ function applyCapabilities(){
   document.querySelectorAll('[data-page="discipline"]').forEach(b=>b.classList.toggle('hidden',!canDisc));
   document.querySelectorAll('[data-page="contacts"]').forEach(b=>b.classList.toggle('hidden',state.me?.type!=='family'));
 }
+function renderModeMismatch(actual){
+  const wanted=state.entryMode==='staff'?'پرسنل':'اولیا';
+  const actualLabel=actual==='staff'?'پرسنل':'اولیا';
+  document.getElementById('bottomNav')?.classList.add('hidden');
+  root.innerHTML=`<div class="empty"><div class="big">🔐</div><strong>این حساب برای مسیر «${wanted}» نیست.</strong><p style="font-size:.72rem;line-height:1.9">هویت فعلی شما در سامان به عنوان «${actualLabel}» شناسایی شده است. برای جلوگیری از مخلوط شدن دو پنل، این حساب در مسیر انتخاب‌شده وارد نمی‌شود.</p><button class="btn primary" style="margin-top:12px" onclick="switchEntryMode()">انتخاب مسیر ورود</button></div>`;
+}
+
 async function loadAll(){
   state.loading=true;
   try{
@@ -188,6 +226,10 @@ async function loadAll(){
     state.initReady=!!channel && !!initData;
     if(!state.initReady) throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
     const p=await api('bootstrap');
+    const actualType=p.me?.type||'';
+    if(state.entryMode==='family' && actualType && actualType!=='family') { renderModeMismatch(actualType); return; }
+    if(state.entryMode==='staff' && actualType==='staff') { /* continue */ }
+    if(state.entryMode==='staff' && actualType==='family') { root.innerHTML=pairingPage(); return; }
     state.me=p.me;
     state.conversations=p.conversations||[];
     state.notifications=p.notifications||[];
@@ -214,7 +256,7 @@ async function loadAll(){
 function renderError(e){const auth=e.code==='AUTH_REQUIRED'||String(e.message||'').startsWith('AUTH_REQUIRED');root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${auth?'هویت Mini App دریافت نشد':(e.code==='MINI_APP_CONTEXT_MISSING'?'سامان باید از داخل ربات باز شود':'اتصال به سامان برقرار نشد')}</strong><p style="font-size:.72rem;line-height:1.9">${auth?'این صفحه باید از دکمه Mini App داخل ربات Telegram یا Bale باز شود. اگر داخل پیام‌رسان هستید، Mini App را یک‌بار ببندید و دوباره باز کنید.':(e.code==='MINI_APP_CONTEXT_MISSING'?'این صفحه را مستقیماً در مرورگر باز نکنید. از دکمه «ورود به سامان» داخل Telegram یا Bale وارد شوید.':'خطا: '+escapeHtml(e.message||'خطای ناشناخته'))}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
 $('refreshBtn').onclick=loadAll;document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>openPage(b.dataset.page));
 window.renderAttendanceList=renderAttendanceList;window.loadAttendance=loadAttendance;
-loadAll();setInterval(()=>{if(!document.hidden)loadAll().catch(()=>{})},12000);
+showEntryChoice();setInterval(()=>{if(!document.hidden && state.entryMode)loadAll().catch(()=>{})},12000);
 })();
 </script>
 </body>
