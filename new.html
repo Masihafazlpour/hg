@@ -19,7 +19,7 @@
   <section id="loginPage" class="login-wrap">
     <div class="panel">
       <h2 style="text-align:center;color:var(--primary);margin-bottom:8px">🚪 ورود به سامانه</h2>
-      <p class="muted" style="text-align:center;margin-bottom:16px">نام کاربری و رمز عبور حساب خود را وارد کنید.</p>
+      <p class="muted" style="text-align:center;margin-bottom:16px">نام کاربری <bdi dir="ltr">admin</bdi> به‌صورت خودکار با <bdi dir="ltr">@staff.saman.local</bdi> تکمیل می‌شود.</p>
       <div class="form-group"><label>نام کاربری</label><input id="loginUsername" value="admin" autocomplete="username"></div>
       <div class="form-group"><label>رمز عبور</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
       <button class="btn primary btn-block" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> ورود</button>
@@ -384,8 +384,8 @@ function setupGlobalLive(){
     .subscribe();
 }
 async function finishSession(user){currentUser=user;if(!user)return false;const ok=await ensureAccess();if(!ok)return false;$('loginPage').classList.add('hidden');$('mainPage').classList.remove('hidden');$('userDisplay').innerHTML=`<span>${esc(user.email)}</span><span class="role-pill">${esc(roleLabel())}</span>`;applyRoleUI();activity();setupGlobalLive();await resetToRoleTab();return true}
-function normalizeLoginEmail(value){let v=String(value||'').trim().toLowerCase();if(!v)return '';return v.includes('@')?v:`${v}@staff.saman.local`}
-async function login(){const input=$('loginUsername').value;const username=normalizeLoginEmail(input);const password=$('loginPassword').value;if(!username){$('loginError').textContent='نام کاربری را وارد کنید.';return}try{$('loginBtn').disabled=true;$('loginError').textContent='';const {data,error}=await db.auth.signInWithPassword({email:username,password});if(error)throw error;if(!data.user)throw new Error('حساب کاربری دریافت نشد.');await finishSession(data.user)}catch(e){$('loginError').textContent=safeError(e,'ورود انجام نشد.')}finally{$('loginBtn').disabled=false}}
+function normalizeLoginEmails(value){let v=String(value||'').trim().toLowerCase();if(!v)return [];if(v.includes('@'))return [v];return [`${v}@staff.saman.local`,`${v}@school.local`]}
+async function login(){const input=$('loginUsername').value;const emails=normalizeLoginEmails(input);const password=$('loginPassword').value;if(!emails.length){$('loginError').textContent='نام کاربری را وارد کنید.';return}try{$('loginBtn').disabled=true;$('loginError').textContent='';let lastError=null;let signedUser=null;for(const email of emails){const {data,error}=await db.auth.signInWithPassword({email,password});if(!error&&data?.user){signedUser=data.user;break}lastError=error;if(String(error?.message||'').toLowerCase().includes('invalid login credentials'))continue;throw error}if(!signedUser){throw lastError||new Error('LOGIN_FAILED')}await finishSession(signedUser)}catch(e){const msg=safeError(e,'ورود انجام نشد.');$('loginError').textContent=msg.includes('حساب')||msg.includes('صحیح')?msg:`${msg} | شناسه ورود: ${normalizeLoginEmails(input)[0]||''}`}finally{$('loginBtn').disabled=false}}
 async function logout(timeout=false){
   if(!timeout&&currentTab==='attendance'&&attendanceDirty){
     const ok=await confirmUnsavedAttendance();
