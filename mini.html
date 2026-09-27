@@ -148,6 +148,25 @@ async function openNotification(id){
 window.openNotification=openNotification;
 async function openPage(page){state.chat=null;route=page;if(page==='home')root.innerHTML=home();else if(page==='chats')root.innerHTML=chats();else if(page==='discipline'){if(state.me?.type==='family'){state.studentId='';root.innerHTML=disciplinePage();}else{await loadDiscipline('');}}else if(page==='notifications')root.innerHTML=notifications();else if(page==='contacts' && state.me?.type==='family')root.innerHTML=contacts();else if(page==='attendance')root.innerHTML=attendancePage();}
 window.openPage=openPage;
+
+function renderPage(){
+  if(state.chat){renderChat();return;}
+  if(route==='home'){root.innerHTML=home();return;}
+  if(route==='chats'){root.innerHTML=chats();return;}
+  if(route==='discipline'){
+    if(state.me?.type==='family'){state.studentId='';root.innerHTML=disciplinePage();}
+    else loadDiscipline(state.studentId||'').catch(()=>{});
+    return;
+  }
+  if(route==='notifications'){root.innerHTML=notifications();return;}
+  if(route==='contacts' && state.me?.type==='family'){root.innerHTML=contacts();return;}
+  if(route==='attendance'){root.innerHTML=attendancePage();return;}
+  root.innerHTML=home();
+}
+window.renderPage=renderPage;
+window.RenderPage=renderPage;
+window.Renderpage=renderPage;
+
 function headersForApi(){const [c,i]=channelInit();const h={'content-type':'application/json'};if(c){h['x-channel']=c;h['x-mini-init-data']=i}return h}
 
 function pairingPage(){
