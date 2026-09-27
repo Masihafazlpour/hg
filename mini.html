@@ -29,6 +29,7 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js?63"></script>
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -45,6 +46,10 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
 (() => {
 'use strict';
 const API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-gateway';
+const STAFF_PORTAL_API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-staff-portal';
+const SUPABASE_URL='https://njinbgaatbnpuulnmoui.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_G6aA1-On0kXDe_ZV4Wv79w_KLvAU1qK';
+const staffAuth=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'saman-staff-password-auth'}});
 const tg=window.Telegram?.WebApp || null;
 try{tg?.ready();tg?.expand();}catch{}
 const bale=window.Bale?.WebApp || null;
@@ -52,7 +57,7 @@ try{bale?.ready();bale?.expand();}catch{}
 const params=new URLSearchParams(location.search);
 let route=params.get('route')||'home', routeId=params.get('id')||'';
 const staffMode=params.get('staff')==='1';
-let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],discipline:[],disciplineSummary:{positive:0,negative:0,balance:0},loading:true,error:'',platform:'',initReady:false,entryMode:null};
+let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],discipline:[],disciplineSummary:{positive:0,negative:0,balance:0},loading:true,error:'',platform:'',initReady:false,entryMode:null,staffSession:null};
 const root=document.getElementById('root');
 const $=id=>document.getElementById(id);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -86,11 +91,56 @@ window.showEntryChoice=showEntryChoice;
 async function chooseEntryMode(mode){
   if(!['family','staff'].includes(mode))return;
   state.entryMode=mode;
+  if(mode==='staff'){
+    try{
+      const {data:{session}}=await staffAuth.auth.getSession();
+      if(session?.access_token){await loadStaffAll();return;}
+    }catch{}
+    renderStaffLogin();return;
+  }
   document.getElementById('bottomNav')?.classList.remove('hidden');
-  root.innerHTML='<div class="empty"><div class="big">⏳</div>در حال ورود به پنل...</div>';
+  root.innerHTML='<div class="empty"><div class="big">⏳</div>در حال ورود به پنل خانواده...</div>';
   try{await loadAll()}catch(e){renderError(e)}
 }
 window.chooseEntryMode=chooseEntryMode;
+function staffPortalApi(action,payload={}){
+  return staffAuth.auth.getSession().then(({data:{session}})=>{
+    if(!session?.access_token){const e=new Error('AUTH_REQUIRED');e.code='AUTH_REQUIRED';throw e;}
+    state.staffSession=session;
+    return fetch(STAFF_PORTAL_API,{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${session.access_token}`},body:JSON.stringify({action,...payload})})
+      .then(async r=>{const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const e=new Error(p.message||'خطای پنل پرسنل');e.code=String(p.message||'ERROR').split(':')[0];throw e;}return p;});
+  });
+}
+function activeApi(action,payload={}){return state.entryMode==='staff'?staffPortalApi(action,payload):api(action,payload)}
+function renderStaffLogin(message=''){
+  document.getElementById('bottomNav')?.classList.add('hidden');
+  root.innerHTML=`<button class="back" onclick="switchEntryMode()">← بازگشت</button><section class="hero"><div class="eyebrow">ورود پرسنل</div><h2>ورود با نام کاربری و رمز عبور</h2><p>مدیر، معاون، مشاور و نماینده کلاس با حساب پرسنلی خود وارد می‌شوند.</p></section><div class="card" style="margin-top:14px"><form id="staffLoginForm"><div class="form-group"><label>نام کاربری</label><input id="staffLoginUsername" dir="ltr" autocomplete="username" placeholder="مثلاً manager1" required></div><div class="form-group"><label>رمز عبور</label><input id="staffLoginPassword" type="password" autocomplete="current-password" required></div><div id="staffLoginMessage" class="notice ${message?'':'hidden'}" style="margin-bottom:10px">${escapeHtml(message)}</div><button class="btn primary block" id="staffLoginBtn" type="submit">🔐 ورود به پنل پرسنل</button></form></div><div class="notice" style="margin-top:10px">اگر این فرد هم‌زمان ولی یک یا چند دانش‌آموز باشد، حساب خانواده او جداگانه باقی می‌ماند و از گزینه «ورود اولیا» استفاده می‌شود.</div>`;
+  $('staffLoginForm').onsubmit=submitStaffLogin;
+  $('staffLoginUsername')?.focus();
+}
+async function submitStaffLogin(e){
+  e.preventDefault();
+  const username=String($('staffLoginUsername')?.value||'').trim().toLowerCase();
+  const password=String($('staffLoginPassword')?.value||'');
+  if(!username||!password)return;
+  const btn=$('staffLoginBtn');if(btn)btn.disabled=true;
+  try{
+    const {data,error}=await staffAuth.auth.signInWithPassword({email:`${username}@staff.saman.local`,password});
+    if(error)throw error;
+    if(!data?.user)throw new Error('AUTH_INVALID');
+    await loadStaffAll();
+  }catch(err){renderStaffLogin('نام کاربری یا رمز عبور صحیح نیست.');console.error('staff login:',err);}
+  finally{if($('staffLoginBtn'))$('staffLoginBtn').disabled=false}
+}
+async function loadStaffAll(){
+  const p=await staffPortalApi('bootstrap');
+  document.getElementById('bottomNav')?.classList.remove('hidden');
+  state.me=p.me;state.conversations=p.conversations||[];state.notifications=p.notifications||[];state.unread=p.unread||0;state.students=p.me?.students||[];state.directory=[];
+  applyCapabilities();renderPage();
+}
+async function staffLogout(){try{await staffAuth.auth.signOut()}catch{}state.me=null;state.conversations=[];state.notifications=[];state.students=[];state.chat=null;state.staffSession=null;showEntryChoice()}
+window.staffLogout=staffLogout;
+
 function switchEntryMode(){
   state.me=null;state.conversations=[];state.notifications=[];state.students=[];state.directory=[];state.chat=null;state.entryMode=null;
   showEntryChoice();
@@ -103,7 +153,7 @@ ${isStaff?staffHome():familyHome()}`)}
 function familyHome(){return `${state.notifications.filter(x=>!x.read_at).slice(0,1).map(n=>`<div class="notice">${escapeHtml(n.rendered_body)}<br><button class="link" onclick="openNotification('${n.id}')">مشاهده اعلان ←</button></div>`).join('')}<div class="section-head"><h3>انضباط</h3><button class="link" onclick="openPage('discipline')">مشاهده</button></div><div class="card" style="cursor:pointer" onclick="openPage('discipline')"><div class="conversation"><div class="avatar" style="background:#ecfdf3;color:#087443">✦</div><div class="grow"><strong>سوابق انضباطی</strong><div class="preview">نمره‌های مثبت و منفی دانش‌آموزان را ببینید.</div></div><span>›</span></div></div>
 <div class="section-head"><h3>گفتگوهای اخیر</h3><button class="link" onclick="openPage('chats')">همه گفتگوها</button></div><div class="list-gap">${state.conversations.slice(0,4).map(conversationCard).join('')||`<div class="empty"><div class="big">💬</div>هنوز گفتگویی ندارید.</div>`}</div>
 <div class="section-head"><h3>ارتباط با مدرسه</h3><button class="link" onclick="openPage('contacts')">همه</button></div><div class="contact-grid">${contactTiles().join('')}</div>`}
-function staffHome(){const counselor=state.me?.role==='counselor';const discipline=state.me?.capabilities?.discipline_view;return `${counselor?'<div class="notice">این حساب برای تبادل پیام و مدیریت سوابق انضباطی در محدوده دسترسی شماست. حضور و غیاب و تنظیمات مدیریتی برای مشاور فعال نیست.</div>':''}<div class="section-head"><h3>${counselor?'گفتگوهای مشاوره':'کارهای مهم'}</h3><button class="link" onclick="openPage('notifications')">اعلان‌ها</button></div><div class="list-gap">${state.conversations.slice(0,8).map(conversationCard).join('')||`<div class="empty"><div class="big">💬</div>${counselor?'هنوز گفتگویی برای شما ثبت نشده است.':'گفتگوی فعالی در محدوده شما نیست.'}</div>`}</div>${discipline?`<div class="section-head"><h3>انضباط</h3><button class="link" onclick="openPage('discipline')">مشاهده</button></div>`:''}`}
+function staffHome(){const counselor=state.me?.role==='counselor';const discipline=state.me?.capabilities?.discipline_view;return `${counselor?'<div class="notice">این حساب برای مشاوره و ارتباط با خانواده‌هاست. امکانات مدیریتی و حضور و غیاب برای مشاور فعال نیست.</div>':''}<div class="section-head"><h3>${counselor?'گفتگوهای مشاوره':'کارهای مهم'}</h3><button class="link" onclick="openPage('notifications')">اعلان‌ها</button></div><div class="list-gap">${state.conversations.slice(0,8).map(conversationCard).join('')||`<div class="empty"><div class="big">💬</div>${counselor?'هنوز گفتگویی برای شما ثبت نشده است.':'گفتگوی فعالی در محدوده شما نیست.'}</div>`}</div>${discipline?`<div class="section-head"><h3>انضباط</h3><button class="link" onclick="openPage('discipline')">مشاهده</button></div>`:''}<div class="card" style="margin-top:12px"><button class="btn ghost block" onclick="staffLogout()">خروج از حساب پرسنل</button></div>`}
 function conversationCard(c){const lm=c.last_message;const name=c.student?`${c.student.first_name||''} ${c.student.last_name||''}`.trim():'گفتگو';const who=state.me?.type==='staff'?(c.target_role==='class_rep'?'نماینده کلاس':c.target_role==='counselor'?'مشاور':c.target_role==='deputy'?'معاون':'مدیر'):name;return `<button class="card" style="width:100%;border:none;text-align:right;cursor:pointer" onclick="openChat('${c.id}')"><div class="conversation"><div class="avatar ${state.me?.type==='staff'?'staff':''}">${escapeHtml(initials(who))}</div><div class="grow"><div class="title-line"><strong>${escapeHtml(who)}</strong><span class="time">${time(lm?.created_at||c.last_message_at)}</span></div><div class="preview">${escapeHtml(lm?.body||c.subject||'بدون پیام')}</div></div>${c.status==='waiting_admin'&&state.me?.type!=='staff'?'<span class="unread">۱</span>':''}</div></button>`}
 function contactTiles(){const roles=[['manager','مدیر','ارتباط مستقیم با مدیر مدرسه','◈'],['deputy','معاون','سطح دسترسی برابر با مدیر','◇'],['class_rep','نماینده کلاس','ارتباط با نماینده کلاس','⌁'],['counselor','مشاور','تبادل پیام با مشاور','✦']];return roles.map(r=>`<button class="contact" onclick="startContact('${r[0]}')"><div class="ci">${r[3]}</div><strong>${r[1]}</strong><span>${r[2]}</span></button>`)}
 function chats(){setNav('chats');return `<button class="back" onclick="openPage('home')">← خانه</button><div class="section-head" style="margin-top:0"><h3>گفتگوهای شما</h3><button class="link" onclick="loadAll()">↻ تازه‌سازی</button></div><div class="list-gap">${state.conversations.map(conversationCard).join('')||`<div class="empty"><div class="big">💬</div>گفتگویی وجود ندارد.</div>`}</div>`}
@@ -131,9 +181,9 @@ function renderDisciplineCards(){
   return rows.map(r=>{const positive=r.record_type==='positive';const student=r.students?`${r.students.first_name||''} ${r.students.last_name||''}`.trim():'';return `<div class="card"><div class="conversation"><div class="avatar" style="background:${positive?'#ecfdf3':'#fff1f2'};color:${positive?'#087443':'#b42318'}">${positive?'＋':'−'}</div><div class="grow"><div class="title-line"><strong>${escapeHtml(positive?'نمره مثبت':'نمره منفی')} ${faNum(r.points)}</strong><span class="time">${escapeHtml(gregToJalali(r.record_date)||r.record_date||'')}</span></div><div class="preview">${student?escapeHtml(student)+' · ':''}${escapeHtml(r.reason||'')}</div>${r.note?`<div class="preview">${escapeHtml(r.note)}</div>`:''}</div>${state.me?.capabilities?.discipline_manage?`<button class="mini-btn" title="غیرفعال کردن" onclick="deactivateDiscipline('${r.id}')">×</button>`:''}</div></div>`}).join('');
 }
 async function loadDiscipline(studentId=''){
-  try{const p=await api('discipline_list',{student_id:studentId});state.discipline=p.items||[];state.disciplineSummary=p.summary||{positive:0,negative:0,balance:0};state.studentId=studentId;root.innerHTML=disciplinePage();}catch(e){alert(e.message)}}
+  try{const p=await activeApi('discipline_list',{student_id:studentId});state.discipline=p.items||[];state.disciplineSummary=p.summary||{positive:0,negative:0,balance:0};state.studentId=studentId;root.innerHTML=disciplinePage();}catch(e){alert(e.message)}}
 window.loadDiscipline=loadDiscipline;
-async function deactivateDiscipline(id){if(!confirm('این رکورد غیرفعال شود؟'))return;try{await api('discipline_deactivate',{id});await loadDiscipline(state.studentId||'')}catch(e){alert(e.message)}}
+async function deactivateDiscipline(id){if(!confirm('این رکورد غیرفعال شود؟'))return;try{await activeApi('discipline_deactivate',{id});await loadDiscipline(state.studentId||'')}catch(e){alert(e.message)}}
 window.deactivateDiscipline=deactivateDiscipline;
 function openDisciplineEditor(){
   if(!state.me?.capabilities?.discipline_manage)return;
@@ -151,23 +201,23 @@ async function submitDiscipline(){
   const studentId=$('discStudent')?.value||'',record_type=$('discType')?.value||'',points=Number($('discPoints')?.value||0),record_date_jalali=$('discDate')?.value?.trim()||'',reason=$('discReason')?.value.trim()||'',note=$('discNote')?.value.trim()||'';
   const jd=record_date_jalali.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
   if(!studentId||!['positive','negative'].includes(record_type)||!Number.isInteger(points)||points<1||points>100||!reason||!/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(jd)){alert('اطلاعات ثبت نمره کامل نیست؛ تاریخ باید شمسی و به صورت ۱۴۰۵/۰۷/۰۴ باشد.');return}
-  try{await api('discipline_add',{student_id:studentId,record_type,points,record_date_jalali,reason,note});await loadDiscipline('');}catch(e){alert(e.message)}
+  try{await activeApi('discipline_add',{student_id:studentId,record_type,points,record_date_jalali,reason,note});await loadDiscipline('');}catch(e){alert(e.message)}
 }
 window.submitDiscipline=submitDiscipline;
 function attendancePage(){setNav('home');if(!state.students.length)return `<div class="empty"><div class="big">📋</div>هنوز دانش‌آموزی به حساب شما متصل نیست.</div>`;return `<button class="back" onclick="openPage('home')">← خانه</button><div class="section-head" style="margin-top:0"><h3>حضور و غیاب</h3></div>${state.students.map(s=>`<div class="card"><div class="conversation"><div class="avatar">${escapeHtml(initials(`${s.first_name||''} ${s.last_name||''}`))}</div><div class="grow"><strong style="font-size:.8rem">${escapeHtml(`${s.first_name||''} ${s.last_name||''}`)}</strong><div class="preview">${escapeHtml(s.grade||'')} · ${escapeHtml(s.major||'')}</div></div><button class="btn ghost" style="min-height:38px" onclick="loadAttendance('${s.id}')">مشاهده</button></div></div>`).join('')}`}
-async function loadAttendance(id){try{const p=await api('attendance',{student_id:id});state.attendance=p.items||[];state.studentId=id;renderAttendanceList();}catch(e){alert(e.message)}}
+async function loadAttendance(id){try{const p=await activeApi('attendance',{student_id:id});state.attendance=p.items||[];state.studentId=id;renderAttendanceList();}catch(e){alert(e.message)}}
 function renderAttendanceList(){const s=state.students.find(x=>String(x.id)===String(state.studentId));const html=`<button class="back" onclick="openPage('home')">← برگشت</button><div class="section-head" style="margin-top:0"><h3>سوابق ${escapeHtml(`${s?.first_name||''} ${s?.last_name||''}`)}</h3></div><div class="list-gap">${state.attendance.map(r=>`<div class="card attendance-item"><div class="avatar warn">•</div><div class="grow"><strong style="font-size:.78rem">${escapeHtml(r.date||'')}</strong><div class="preview">${escapeHtml(r.note||'')}</div></div><span class="status ${r.status==='absent'?'absent':r.status?.includes('late')?'late':r.status==='present'?'present':'excused'}">${escapeHtml(r.status||'')}</span></div>`).join('')||'<div class="empty">سابقه‌ای ثبت نشده است.</div>'}</div>`;root.innerHTML=html}
-async function startContact(role,staffId='',studentId=''){const sid=studentId||state.students[0]?.id;if(!sid){alert('ابتدا یک دانش‌آموز متصل کنید.');return}try{const p=await api('start_conversation',{student_id:sid,target_role:role,target_staff_id:staffId||null});await loadAll();openChat(p.id);}catch(e){alert(e.message)}}
+async function startContact(role,staffId='',studentId=''){const sid=studentId||state.students[0]?.id;if(!sid){alert('ابتدا یک دانش‌آموز متصل کنید.');return}try{const p=await activeApi('start_conversation',{student_id:sid,target_role:role,target_staff_id:staffId||null});await loadAll();openChat(p.id);}catch(e){alert(e.message)}}
 window.startContact=startContact;
-async function openChat(id){try{const p=await api('get_messages',{conversation_id:id});state.chat=p;renderChat();}catch(e){alert(e.message)}}
+async function openChat(id){try{const p=await activeApi('get_messages',{conversation_id:id});state.chat=p;renderChat();}catch(e){alert(e.message)}}
 window.openChat=openChat;
 function renderChat(){const c=state.chat.conversation;const msgs=state.chat.messages||[];let lastDay='';const body=msgs.map(m=>{const d=date(m.created_at);const sep=d!==lastDay?`<div class="day-sep"><span>${escapeHtml(d)}</span></div>`:'';lastDay=d;return sep+`<div class="bubble ${m.sender_type==='family'?'family':'staff'}">${escapeHtml(m.body)}<div class="meta">${time(m.created_at)}</div></div>`}).join('');root.innerHTML=`<button class="back" onclick="openPage('chats')">← گفتگوها</button><div class="card" style="margin-bottom:10px"><div class="conversation"><div class="avatar staff">${escapeHtml(initials(c.subject||'گفتگو'))}</div><div class="grow"><strong>${escapeHtml(c.subject||'گفتگو با مدرسه')}</strong><div class="preview">${c.status==='waiting_admin'?'در انتظار پاسخ':'گفتگوی فعال'}</div></div></div></div><div class="chat" id="chatList">${body}</div><div class="composer"><textarea id="messageBox" placeholder="پیام خود را بنویسید..."></textarea><button class="send" id="sendBtn">➤</button></div>`;document.getElementById('sendBtn').onclick=sendMessage;const box=document.getElementById('messageBox');box.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}})}
-async function sendMessage(){const box=document.getElementById('messageBox');const body=box.value.trim();if(!body)return;const btn=document.getElementById('sendBtn');btn.disabled=true;try{await api('send_message',{conversation_id:state.chat.conversation.id,body});box.value='';await openChat(state.chat.conversation.id)}catch(e){alert(e.message)}finally{btn.disabled=false}}
+async function sendMessage(){const box=document.getElementById('messageBox');const body=box.value.trim();if(!body)return;const btn=document.getElementById('sendBtn');btn.disabled=true;try{await activeApi('send_message',{conversation_id:state.chat.conversation.id,body});box.value='';await openChat(state.chat.conversation.id)}catch(e){alert(e.message)}finally{btn.disabled=false}}
 async function openNotification(id){
   const n=state.notifications.find(x=>String(x.id)===String(id));
   if(!n)return;
   try{
-    await api('mark_notification_read',{id});
+    await activeApi('mark_notification_read',{id});
     state.notifications=state.notifications.map(x=>String(x.id)===String(id)?{...x,read_at:new Date().toISOString(),status:'read'}:x);
     state.unread=state.notifications.filter(x=>!x.read_at).length;
     if(n.route==='conversation' && n.route_id){ await openChat(String(n.route_id)); return; }
@@ -200,63 +250,29 @@ window.Renderpage=renderPage;
 
 function headersForApi(){const [c,i]=channelInit();const h={'content-type':'application/json'};if(c){h['x-channel']=c;h['x-mini-init-data']=i}return h}
 
-function pairingPage(){
-  setNav('home');
-  return `<button class="back" onclick="openPage('home')">← بازگشت</button><section class="hero"><div class="eyebrow">اتصال پرسنلی</div><h2>حساب خود را به سامان متصل کنید</h2><p>کد ۵ رقمی فعلی را از مدیر و پنل سامان دریافت کنید. این کد هر ۵ دقیقه تغییر می‌کند.</p></section><div class="card" style="margin-top:14px"><div class="notice" style="margin-bottom:12px"><b>نکته:</b> بعد از ثبت کد، درخواست شما برای مدیر ارسال می‌شود. مدیر آن را به پرونده پرسنلی مناسب متصل می‌کند.</div><div class="form-group"><label>کد ۵ رقمی</label><input id="pairCode" inputmode="numeric" maxlength="5" autocomplete="one-time-code" placeholder="مثلاً ۱۲۳۴۵" style="font-size:1.45rem;letter-spacing:8px;text-align:center;direction:ltr"></div><button class="btn primary block" onclick="claimPairing()">🔐 ثبت درخواست اتصال</button><button class="btn ghost block" style="margin-top:8px" onclick="switchEntryMode()">↔ تغییر مسیر ورود</button><div id="pairStatus" class="muted" style="margin-top:10px;text-align:center"></div></div>`;
-}
-async function claimPairing(){const code=String($('pairCode')?.value||'').replace(/[^0-9۰-۹٠-٩]/g,'').replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));if(code.length!==5){alert('کد باید دقیقاً ۵ رقم باشد.');return}try{const p=await api('claim_staff_pairing',{code});$('pairStatus').textContent='✅ درخواست اتصال ثبت شد. مدیر باید حساب شما را به یکی از پرسنل اختصاص دهد.';$('pairCode').disabled=true;window.__pairPending=p.pending;}catch(e){$('pairStatus').textContent='❌ '+(e.message||'کد نامعتبر است.')}}
-window.claimPairing=claimPairing;
 function applyCapabilities(){
   const canDisc=state.me?.type==='family' || !!state.me?.capabilities?.discipline_view;
   document.querySelectorAll('[data-page="discipline"]').forEach(b=>b.classList.toggle('hidden',!canDisc));
   document.querySelectorAll('[data-page="contacts"]').forEach(b=>b.classList.toggle('hidden',state.me?.type!=='family'));
 }
-function renderModeMismatch(actual){
-  const wanted=state.entryMode==='staff'?'پرسنل':'اولیا';
-  const actualLabel=actual==='staff'?'پرسنل':'اولیا';
-  document.getElementById('bottomNav')?.classList.add('hidden');
-  root.innerHTML=`<div class="empty"><div class="big">🔐</div><strong>این حساب برای مسیر «${wanted}» نیست.</strong><p style="font-size:.72rem;line-height:1.9">هویت فعلی شما در سامان به عنوان «${actualLabel}» شناسایی شده است. برای جلوگیری از مخلوط شدن دو پنل، این حساب در مسیر انتخاب‌شده وارد نمی‌شود.</p><button class="btn primary" style="margin-top:12px" onclick="switchEntryMode()">انتخاب مسیر ورود</button></div>`;
-}
-
 async function loadAll(){
+  if(state.entryMode==='staff'){await loadStaffAll();return;}
   state.loading=true;
   try{
     const [channel,initData]=channelInit();
-    state.platform=channel;
-    state.initReady=!!channel && !!initData;
-    if(!state.initReady) throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
-    const p=await api('bootstrap');
-    const actualType=p.me?.type||'';
-    if(state.entryMode==='family' && actualType && actualType!=='family') { renderModeMismatch(actualType); return; }
-    if(state.entryMode==='staff' && actualType==='staff') { /* continue */ }
-    if(state.entryMode==='staff' && actualType==='family') { root.innerHTML=pairingPage(); return; }
-    state.me=p.me;
-    state.conversations=p.conversations||[];
-    state.notifications=p.notifications||[];
-    state.unread=p.unread||0;
-    state.students=p.me?.students||[];
-    if(p.me?.type==='family'){
-      try{const d=await api('directory');state.directory=d.items||[]}catch{state.directory=[]}
-    }else{state.directory=[]}
-    applyCapabilities();
-    if(staffMode && p.me?.type==='family'){root.innerHTML=pairingPage();return;}
-    renderPage();
-    if(routeId){
-      const rid=routeId; routeId='';
-      if(route==='conversation') openChat(rid).catch(()=>{});
-      else if(route==='attendance' && state.me?.type==='family') loadAttendance(rid).catch(()=>{});
-      else if(route==='discipline') loadDiscipline(rid||'').catch(()=>{});
-      else if(route==='notifications') openPage('notifications');
-    }
-  }catch(e){
-    state.error=e.code||e.message;
-    renderError(e);
-  }finally{state.loading=false}
+    state.platform=channel;state.initReady=!!channel&&!!initData;
+    if(!state.initReady)throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
+    const p=await activeApi('bootstrap');
+    state.me=p.me;state.conversations=p.conversations||[];state.notifications=p.notifications||[];state.unread=p.unread||0;state.students=p.me?.students||[];
+    if(p.me?.type==='family'){try{const d=await activeApi('directory');state.directory=d.items||[]}catch{state.directory=[]}}else state.directory=[];
+    applyCapabilities();renderPage();
+    if(routeId){const rid=routeId;routeId='';if(route==='conversation')openChat(rid).catch(()=>{});else if(route==='attendance'&&state.me?.type==='family')loadAttendance(rid).catch(()=>{});else if(route==='discipline')loadDiscipline(rid||'').catch(()=>{});else if(route==='notifications')openPage('notifications');}
+  }catch(e){state.error=e.code||e.message;renderError(e)}finally{state.loading=false}
 }
 function renderError(e){const auth=e.code==='AUTH_REQUIRED'||String(e.message||'').startsWith('AUTH_REQUIRED');root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${auth?'هویت Mini App دریافت نشد':(e.code==='MINI_APP_CONTEXT_MISSING'?'سامان باید از داخل ربات باز شود':'اتصال به سامان برقرار نشد')}</strong><p style="font-size:.72rem;line-height:1.9">${auth?'این صفحه باید از دکمه Mini App داخل ربات Telegram یا Bale باز شود. اگر داخل پیام‌رسان هستید، Mini App را یک‌بار ببندید و دوباره باز کنید.':(e.code==='MINI_APP_CONTEXT_MISSING'?'این صفحه را مستقیماً در مرورگر باز نکنید. از دکمه «ورود به سامان» داخل Telegram یا Bale وارد شوید.':'خطا: '+escapeHtml(e.message||'خطای ناشناخته'))}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
 $('refreshBtn').onclick=loadAll;document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>openPage(b.dataset.page));
 window.renderAttendanceList=renderAttendanceList;window.loadAttendance=loadAttendance;
-showEntryChoice();setInterval(()=>{if(!document.hidden && state.entryMode)loadAll().catch(()=>{})},12000);
+if(staffMode)chooseEntryMode('staff');else showEntryChoice();setInterval(()=>{if(!document.hidden&&state.entryMode)loadAll().catch(()=>{})},12000);
 })();
 </script>
 </body>
