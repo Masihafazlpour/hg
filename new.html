@@ -194,7 +194,24 @@ const accountClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 async function gatewayCall(action,payload={}){const {data:{session}}=await db.auth.getSession();if(!session?.access_token){throw new Error('AUTH_REQUIRED: نشست مدیریتی پیدا نشد؛ یک‌بار از حساب سامان خارج و دوباره وارد شوید.');}const r=await fetch(`${SUPABASE_URL}/functions/v1/saman-gateway`,{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${session.access_token}`},body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false)throw new Error(p.message||'خطای درگاه سامان');return p;}
 const STAFF_ADMIN_FUNCTION = 'saman-staff-admin';
-async function staffAdminCall(action,payload={}){const {data:{session}}=await db.auth.getSession();if(!session?.access_token)throw new Error('AUTH_REQUIRED: نشست مدیریتی پیدا نشد.');const r=await fetch(`${SUPABASE_URL}/functions/v1/${STAFF_ADMIN_FUNCTION}`,{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${session.access_token}`},body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرویس پرسنل'}));if(!r.ok||p.ok===false){const e=new Error(p.message||'خطای سرویس مدیریت پرسنل');e.code=p.message;throw e;}return p;}
+async function getStaffAdminAccessToken(){
+  let {data:{session}}=await db.auth.getSession();
+  const now=Math.floor(Date.now()/1000);
+  if(!session?.access_token || (session.expires_at && session.expires_at <= now+60)){
+    const refreshed=await db.auth.refreshSession();
+    session=refreshed.data.session||session;
+    if(refreshed.error)throw new Error('AUTH_REQUIRED: نشست مدیریتی منقضی شده است؛ دوباره وارد شوید.');
+  }
+  if(!session?.access_token)throw new Error('AUTH_REQUIRED: نشست مدیریتی پیدا نشد.');
+  return session.access_token;
+}
+async function staffAdminCall(action,payload={}){
+  const token=await getStaffAdminAccessToken();
+  const r=await fetch(`${SUPABASE_URL}/functions/v1/${STAFF_ADMIN_FUNCTION}`,{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({action,...payload})});
+  const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرویس پرسنل'}));
+  if(!r.ok||p.ok===false){const e=new Error(p.message||'خطای سرویس مدیریت پرسنل');e.code=p.message;throw e;}
+  return p;
+}
 const PAGE_SIZE = 50;
 const SESSION_TIMEOUT_MS = 60 * 60 * 1000;
 const STATUS_LABELS = { present: 'حاضر', late_excused: 'تأخیر موجه', late_unexcused: 'تأخیر غیرموجه', excused: 'غیبت موجه', absent: 'غیبت غیرموجه' };
