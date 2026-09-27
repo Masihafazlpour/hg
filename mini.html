@@ -42,6 +42,14 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
   <button class="nav" data-page="contacts"><span class="ico">◎</span>ارتباط</button>
 </div>
 <script>
+window.activeApi = async function(action, payload = {}) {
+  if (typeof window.__SAMAN_ACTIVE_API__ !== 'function') {
+    throw new Error('ACTIVE_API_NOT_READY');
+  }
+  return window.__SAMAN_ACTIVE_API__(action, payload);
+};
+</script>
+<script>
 (() => {
 'use strict';
 const API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-gateway';
