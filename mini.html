@@ -47,6 +47,7 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
 'use strict';
 const API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-gateway';
 const STAFF_PORTAL_API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-staff-portal';
+const BUILD_VERSION='mini-app-separate-entry-v2-2026-09-28';
 const SUPABASE_URL='https://njinbgaatbnpuulnmoui.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_G6aA1-On0kXDe_ZV4Wv79w_KLvAU1qK';
 const staffAuth=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'saman-staff-password-auth'}});
@@ -181,6 +182,7 @@ function renderDisciplineCards(){
   return rows.map(r=>{const positive=r.record_type==='positive';const student=r.students?`${r.students.first_name||''} ${r.students.last_name||''}`.trim():'';return `<div class="card"><div class="conversation"><div class="avatar" style="background:${positive?'#ecfdf3':'#fff1f2'};color:${positive?'#087443':'#b42318'}">${positive?'＋':'−'}</div><div class="grow"><div class="title-line"><strong>${escapeHtml(positive?'نمره مثبت':'نمره منفی')} ${faNum(r.points)}</strong><span class="time">${escapeHtml(gregToJalali(r.record_date)||r.record_date||'')}</span></div><div class="preview">${student?escapeHtml(student)+' · ':''}${escapeHtml(r.reason||'')}</div>${r.note?`<div class="preview">${escapeHtml(r.note)}</div>`:''}</div>${state.me?.capabilities?.discipline_manage?`<button class="mini-btn" title="غیرفعال کردن" onclick="deactivateDiscipline('${r.id}')">×</button>`:''}</div></div>`}).join('');
 }
 async function loadDiscipline(studentId=''){
+  if(state.entryMode==='staff' && state.me?.type!=='staff') throw new Error('STAFF_CONTEXT_REQUIRED');
   try{const p=await activeApi('discipline_list',{student_id:studentId});state.discipline=p.items||[];state.disciplineSummary=p.summary||{positive:0,negative:0,balance:0};state.studentId=studentId;root.innerHTML=disciplinePage();}catch(e){alert(e.message)}}
 window.loadDiscipline=loadDiscipline;
 async function deactivateDiscipline(id){if(!confirm('این رکورد غیرفعال شود؟'))return;try{await activeApi('discipline_deactivate',{id});await loadDiscipline(state.studentId||'')}catch(e){alert(e.message)}}
