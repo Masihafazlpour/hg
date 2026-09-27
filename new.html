@@ -159,7 +159,7 @@
           <section style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><h4 style="margin-bottom:11px">⏰ تنظیمات زنگ‌ها</h4><div class="form-group"><label>تعداد زنگ‌ها (۱ تا ۱۰)</label><input type="number" id="bellCount" min="1" max="10" value="4"></div><div id="bellNamesContainer"></div><div class="form-group"><label><input type="checkbox" id="fullDayEnabled" style="width:auto;height:auto;margin-left:6px"> فعال بودن «کل روز»</label></div><button id="saveSettings" class="btn primary">ذخیره تنظیمات</button></section>
           <section id="userManagementSection" style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><div class="flex between" style="margin-bottom:10px"><h4>👤 مدیریت کاربران عمومی</h4><button id="addUserBtn" class="btn success btn-sm"><i class="fa-solid fa-user-plus"></i> کاربر جدید</button></div><p class="muted" style="line-height:1.8;margin-bottom:10px">این بخش برای حساب‌های عمومی سامانه است. حساب پرسنلی در بخش مستقل زیر ساخته می‌شود و نام کاربری/رمز عبور مخصوص پنل پرسنل دارد.</p><div id="usersTableContainer" class="table-wrap"></div></section>
           <section id="samanStaffAuthSection" style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7">
-  <div class="flex between" style="margin-bottom:10px"><div><h4 style="margin-bottom:4px">👨‍💼 مدیریت پرسنل</h4><div class="muted">ورود پرسنل فقط با نام کاربری و رمز عبور انجام می‌شود؛ کد پنج‌رقمی حذف شده است.</div></div><div class="flex"><button id="addSamanStaffBtn" class="btn success btn-sm"><i class="fa-solid fa-user-plus"></i> تعریف پرسنل</button><button id="refreshSamanStaffAuthBtn" class="btn btn-sm"><i class="fa-solid fa-rotate"></i> تازه‌سازی</button></div></div>
+  <div class="flex between" style="margin-bottom:10px"><div><h4 style="margin-bottom:4px">👨‍💼 مدیریت پرسنل</h4><div class="muted">در این بخش فقط هویت ارتباطی پرسنل، نقش و محدوده ارتباط با خانواده‌ها را تعریف می‌کنید. پرسنل Mini App جداگانه ندارند.</div></div><div class="flex"><button id="addSamanStaffBtn" class="btn success btn-sm"><i class="fa-solid fa-user-plus"></i> تعریف پرسنل</button><button id="refreshSamanStaffAuthBtn" class="btn btn-sm"><i class="fa-solid fa-rotate"></i> تازه‌سازی</button></div></div>
   <div class="panel" style="background:linear-gradient(135deg,#eef4ff,#f7f5ff);border:1px solid #dfe7ff;margin-bottom:12px">
     <b>نکته</b><div class="muted" style="margin-top:5px;line-height:1.9">نقش پرسنلی از نقش خانواده جداست. یک فرد می‌تواند هم‌زمان <b>ولی</b> و <b>پرسنل مدرسه</b> باشد. نقش‌های پرسنلی: مدیر، معاون، مشاور، نماینده کلاس.</div>
   </div>
@@ -889,30 +889,25 @@ async function loadSamanStaffAuth(){
   if(!rows.length){box.innerHTML='<div class="muted">هنوز هیچ پرسنلی تعریف نشده است.</div>';return;}
   const roleLabel=r=>r==='manager'?'مدیر':r==='deputy'?'معاون':r==='counselor'?'مشاور':r==='class_rep'?'نماینده کلاس':r;
   const scopesText=r=>{
-    const s=(r.scopes||[]);
-    if(!s.length)return '—';
-    if(s.some(x=>x.scope_type==='school'))return 'کل مدرسه';
-    const classes=s.filter(x=>x.scope_type==='class').map(x=>x.scope_value);
-    const others=s.filter(x=>x.scope_type!=='class').map(x=>`${x.scope_type}:${x.scope_value}`);
-    return [...classes,...others].join('، ')||'—';
+    const ss=(r.scopes||[]);
+    if(!ss.length)return 'کل مدرسه';
+    const classes=ss.filter(x=>x.scope_type==='class').map(x=>x.scope_value);
+    const others=ss.filter(x=>x.scope_type!=='class').map(x=>`${x.scope_type}:${x.scope_value}`);
+    return [...classes,...others].join('، ')||'کل مدرسه';
   };
-  let h='<table><thead><tr><th>نام</th><th>نام کاربری</th><th>نقش</th><th>محدوده</th><th>وضعیت</th><th>Telegram</th><th>Bale</th><th>عملیات</th></tr></thead><tbody>';
+  let h='<table><thead><tr><th>نام نمایشی</th><th>نقش</th><th>محدوده ارتباط</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
   rows.forEach(r=>{
     const role=roleLabel(r.role);
     const roleClass=(r.role==='manager'||r.role==='deputy')?'info':'secondary';
     const statusClass=r.active?'success':'danger';
     const statusText=r.active?'فعال':'حذف/غیرفعال';
-    const telegram=r.telegram_bound?'متصل':'متصل نیست';
-    const bale=r.bale_bound?'متصل':'متصل نیست';
     const actions=r.active
-      ? `<button class="btn primary btn-sm saman-staff-edit-btn" data-id="${esc(r.id)}" title="ویرایش"><i class="fa-solid fa-pen"></i></button>${r.username?`<button class="btn info btn-sm saman-staff-reset-btn" data-id="${esc(r.id)}" title="تغییر رمز"><i class="fa-solid fa-key"></i></button>`:`<button class="btn warning btn-sm saman-staff-login-btn" data-id="${esc(r.id)}" title="ساخت حساب ورود"><i class="fa-solid fa-lock"></i></button>`}<button class="btn danger btn-sm saman-staff-delete-btn" data-id="${esc(r.id)}" title="حذف"><i class="fa-solid fa-trash"></i></button>`
+      ? `<button class="btn primary btn-sm saman-staff-edit-btn" data-id="${esc(r.id)}" title="ویرایش"><i class="fa-solid fa-pen"></i></button><button class="btn danger btn-sm saman-staff-delete-btn" data-id="${esc(r.id)}" title="حذف"><i class="fa-solid fa-trash"></i></button>`
       : `<button class="btn success btn-sm saman-staff-restore-btn" data-id="${esc(r.id)}" title="فعال‌سازی"><i class="fa-solid fa-user-check"></i></button>`;
-    h+=`<tr><td><b>${esc(r.display_name||'-')}</b></td><td dir="ltr">${esc(r.username||'-')}</td><td><span class="badge ${roleClass}">${esc(role)}</span></td><td>${esc(scopesText(r))}</td><td><span class="badge ${statusClass}">${statusText}</span></td><td><span class="badge ${r.telegram_bound?'success':'secondary'}">${telegram}</span></td><td><span class="badge ${r.bale_bound?'success':'secondary'}">${bale}</span></td><td><div class="user-table-actions">${actions}</div></td></tr>`;
+    h+=`<tr><td><b>${esc(r.display_name||'-')}</b></td><td><span class="badge ${roleClass}">${esc(role)}</span></td><td>${esc(scopesText(r))}</td><td><span class="badge ${statusClass}">${statusText}</span></td><td><div class="user-table-actions">${actions}</div></td></tr>`;
   });
   h+='</tbody></table>';box.innerHTML=h;
   box.querySelectorAll('.saman-staff-edit-btn').forEach(b=>b.onclick=()=>openSamanStaffModal(b.dataset.id).catch(e=>toast(safeError(e),'error')));
-  box.querySelectorAll('.saman-staff-reset-btn').forEach(b=>b.onclick=()=>resetSamanStaffPassword(b.dataset.id).catch(e=>toast(safeError(e),'error')));
-  box.querySelectorAll('.saman-staff-login-btn').forEach(b=>b.onclick=()=>provisionSamanStaffLogin(b.dataset.id).catch(e=>toast(safeError(e),'error')));
   box.querySelectorAll('.saman-staff-delete-btn').forEach(b=>b.onclick=()=>deleteStaff(b.dataset.id).catch(e=>toast(safeError(e),'error')));
   box.querySelectorAll('.saman-staff-restore-btn').forEach(b=>b.onclick=()=>restoreStaff(b.dataset.id).catch(e=>toast(safeError(e),'error')));
   box.dataset.staffCache=JSON.stringify(rows);
@@ -933,41 +928,28 @@ async function openSamanStaffModal(staffId=null){
   const rows=JSON.parse($('samanStaffAuthContainer').dataset.staffCache||'[]');
   const staff=rows.find(x=>String(x.id)===String(staffId))||null;
   const classes=await getAllClassesForAdmin();
-  const needLogin=!staff || !staff.username; const html=`<form id="samanStaffForm"><div class="form-group"><label>نام و نام خانوادگی</label><input name="display_name" value="${esc(staff?.display_name||'')}" required></div><div class="form-group"><label>نام کاربری ورود پرسنل</label><input name="username" value="${esc(staff?.username||'')}" dir="ltr" ${needLogin?'':'readonly'} required placeholder="مثلاً manager1"><small class="muted">فقط حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط</small></div>${needLogin?'<div class="form-group"><label>رمز عبور اولیه</label><input name="password" type="password" autocomplete="new-password" minlength="8" required><small class="muted">حداقل ۸ کاراکتر</small></div>':''}<div class="form-group"><label>نوع پرسنل</label><select name="role" id="samanStaffRoleSelect"><option value="manager" ${staff?.role==='manager'?'selected':''}>مدیر</option><option value="deputy" ${staff?.role==='deputy'?'selected':''}>معاون</option><option value="counselor" ${staff?.role==='counselor'?'selected':''}>مشاور</option><option value="class_rep" ${staff?.role==='class_rep'||!staff?'selected':''}>نماینده کلاس</option></select></div><div id="samanStaffScopeHost"></div><div class="form-group"><label>شماره تماس (اختیاری)</label><input name="phone" value="${esc(staff?.phone||'')}" dir="ltr"></div>${staff?`<div class="form-group"><label><input name="active" type="checkbox" style="width:auto;height:auto;margin-left:6px" ${staff.active?'checked':''}> دسترسی پرسنلی فعال باشد</label></div>`:''}</form>`;
-  const result=await Swal.fire({title:staff?'ویرایش پرسنل':'تعریف پرسنل جدید',html,width:Math.min(820,window.innerWidth-20),showCancelButton:true,confirmButtonText:staff?'ذخیره تغییرات':'ساخت حساب پرسنلی',cancelButtonText:'لغو',focusConfirm:false,didOpen:()=>{
+  const html=`<form id="samanStaffForm"><div class="form-group"><label>نام نمایشی برای خانواده</label><input name="display_name" value="${esc(staff?.display_name||'')}" required placeholder="مثلاً آقای احمدی"></div><div class="form-group"><label>نقش پرسنلی</label><select name="role" id="samanStaffRoleSelect"><option value="manager" ${staff?.role==='manager'?'selected':''}>مدیر</option><option value="deputy" ${staff?.role==='deputy'?'selected':''}>معاون</option><option value="counselor" ${staff?.role==='counselor'?'selected':''}>مشاور</option><option value="class_rep" ${staff?.role==='class_rep'||!staff?'selected':''}>نماینده کلاس</option></select><small class="muted">خانواده این نام نمایشی را همراه نقش می‌بیند.</small></div><div id="samanStaffScopeHost"></div><div class="form-group"><label>شماره تماس (اختیاری)</label><input name="phone" value="${esc(staff?.phone||'')}" dir="ltr"></div>${staff?`<div class="form-group"><label><input name="active" type="checkbox" style="width:auto;height:auto;margin-left:6px" ${staff.active?'checked':''}> در فهرست ارتباطی فعال باشد</label></div>`:''}</form>`;
+  const result=await Swal.fire({title:staff?'ویرایش پرسنل':'تعریف پرسنل جدید',html,width:Math.min(820,window.innerWidth-20),showCancelButton:true,confirmButtonText:staff?'ذخیره تغییرات':'تعریف پرسنل',cancelButtonText:'لغو',focusConfirm:false,didOpen:()=>{
       const renderScope=()=>{const host=$('samanStaffScopeHost');host.innerHTML=samanStaffScopeForm(classes,{...(staff||{}),role:$('samanStaffRoleSelect')?.value||staff?.role||'class_rep'});};
       renderScope();$('samanStaffRoleSelect')?.addEventListener('change',renderScope);
-    },preConfirm:()=>{const form=document.getElementById('samanStaffForm');if(!form||!form.reportValidity())return false;const fd=new FormData(form);const role=String(fd.get('role')||'');const scopes=[];if(['class_rep','counselor'].includes(role)){[...form.querySelectorAll('input[name="staff_class_scope"]:checked')].forEach(x=>scopes.push({scope_type:'class',scope_value:x.value}));}return {display_name:String(fd.get('display_name')||'').trim(),username:String(fd.get('username')||'').trim().toLowerCase(),password:String(fd.get('password')||''),role,phone:String(fd.get('phone')||'').trim(),active:form.querySelector('input[name="active"]')?.checked??true,scopes};}});
+    },preConfirm:()=>{const form=document.getElementById('samanStaffForm');if(!form||!form.reportValidity())return false;const fd=new FormData(form);const role=String(fd.get('role')||'');const scopes=[];if(['class_rep','counselor'].includes(role)){[...form.querySelectorAll('input[name="staff_class_scope"]:checked')].forEach(x=>scopes.push({scope_type:'class',scope_value:x.value}));}return {display_name:String(fd.get('display_name')||'').trim(),role,phone:String(fd.get('phone')||'').trim(),active:form.querySelector('input[name="active"]')?.checked??true,scopes};}});
   if(!result.isConfirmed)return;
   const v=result.value;
-  if(['class_rep','counselor'].includes(v.role)&&!v.scopes.length)return toast('برای مشاور/نماینده کلاس حداقل یک محدوده دسترسی انتخاب کنید.','warning');
-  if(staff){await staffAdminCall('update',{staff_id:staff.id,...v});if(!staff.username)await staffAdminCall('provision_login',{staff_id:staff.id,username:v.username,password:v.password});toast('اطلاعات پرسنل بروزرسانی شد.');}
-  else {await staffAdminCall('create',v);toast(`حساب پرسنلی «${v.username}» ساخته شد.`);}
+  if(v.role==='class_rep'&&!v.scopes.some(x=>x.scope_type==='class'))return toast('برای نماینده کلاس حداقل یک کلاس انتخاب کنید.','warning');
+  await staffAdminCall(staff?'update':'create',staff?{staff_id:staff.id,...v}:v);
+  toast(staff?'اطلاعات پرسنل بروزرسانی شد.':'پرسنل با موفقیت تعریف شد.');
   await loadSamanStaffAuth();
-}
-
-async function provisionSamanStaffLogin(staffId){
-  const rows=JSON.parse($('samanStaffAuthContainer').dataset.staffCache||'[]');const staff=rows.find(x=>String(x.id)===String(staffId));if(!staff)return;
-  const result=await Swal.fire({title:'ساخت حساب ورود پرسنل',html:`<div style="text-align:right;margin-bottom:10px">${esc(staff.display_name||'')} — ${esc(samanStaffRoleLabel(staff.role))}</div><input id="provisionStaffUsername" class="swal2-input" dir="ltr" placeholder="نام کاربری"><input id="provisionStaffPassword" type="password" class="swal2-input" minlength="8" placeholder="رمز عبور (حداقل ۸ کاراکتر)">`,showCancelButton:true,confirmButtonText:'ساخت حساب',cancelButtonText:'لغو',preConfirm:()=>{const username=String(document.getElementById('provisionStaffUsername')?.value||'').trim().toLowerCase();const password=String(document.getElementById('provisionStaffPassword')?.value||'');if(!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(username)){Swal.showValidationMessage('نام کاربری معتبر نیست.');return false}if(password.length<8){Swal.showValidationMessage('رمز باید حداقل ۸ کاراکتر باشد.');return false}return{username,password}}});
-  if(!result.isConfirmed)return;await staffAdminCall('provision_login',{staff_id:staffId,...result.value});toast('حساب ورود پرسنل ساخته شد.');await loadSamanStaffAuth();
-}
-
-async function resetSamanStaffPassword(staffId){
-  const rows=JSON.parse($('samanStaffAuthContainer').dataset.staffCache||'[]');const staff=rows.find(x=>String(x.id)===String(staffId));if(!staff)return;
-  const result=await Swal.fire({title:'تغییر رمز پرسنل',html:`<div style="text-align:right;margin-bottom:10px">نام کاربری: <b dir="ltr">${esc(staff.username||'-')}</b></div><input id="newStaffPassword" type="password" class="swal2-input" minlength="8" placeholder="رمز جدید (حداقل ۸ کاراکتر)">`,showCancelButton:true,confirmButtonText:'ذخیره رمز',cancelButtonText:'لغو',preConfirm:()=>{const p=String(document.getElementById('newStaffPassword')?.value||'');if(p.length<8){Swal.showValidationMessage('رمز باید حداقل ۸ کاراکتر باشد.');return false}return p;}});
-  if(!result.isConfirmed)return;await staffAdminCall('reset_password',{staff_id:staffId,password:result.value});toast('رمز عبور پرسنل تغییر کرد.');
 }
 
 async function deleteStaff(id){
   const rows=JSON.parse($('samanStaffAuthContainer').dataset.staffCache||'[]');const staff=rows.find(x=>String(x.id)===String(id));
   if(!staff)return;
-  const self=String(staff.auth_user_id||'')===String(currentUser?.id||'');
-  const ok=await confirmDialog('حذف پرسنل',self?'این حساب پرسنلی حتی اگر حساب جاری شما باشد غیرفعال می‌شود؛ دسترسی او به پنل پرسنل از بین می‌رود. حساب خانواده/ولی او تحت تأثیر قرار نمی‌گیرد. ادامه می‌دهید؟':'این حساب پرسنلی غیرفعال می‌شود. حساب خانواده/ولی او تحت تأثیر قرار نمی‌گیرد و سوابق تاریخی حفظ می‌شوند. ادامه می‌دهید؟','حذف پرسنل');
+  const ok=await confirmDialog('حذف پرسنل',`«${staff.display_name||'این پرسنل'}» از فهرست ارتباطی خانواده‌ها غیرفعال می‌شود. سوابق گفتگوها حفظ می‌شوند.`,'حذف پرسنل');
   if(!ok)return;
-  try{await staffAdminCall('deactivate',{staff_id:id});toast('حساب پرسنلی حذف/غیرفعال شد.');await loadSamanStaffAuth();}catch(e){toast(safeError(e,'حذف پرسنل انجام نشد.'),'error')}
+  try{await staffAdminCall('deactivate',{staff_id:id});toast('پرسنل از فهرست ارتباطی حذف/غیرفعال شد.');await loadSamanStaffAuth();}catch(e){toast(safeError(e,'حذف پرسنل انجام نشد.'),'error')}
 }
 async function restoreStaff(id){
-  if(!(await confirmDialog('فعال‌سازی پرسنل','دسترسی این حساب پرسنلی دوباره فعال می‌شود؛ رمز و نام کاربری قبلی حفظ می‌شوند. ادامه می‌دهید؟','فعال‌سازی')))return;
+  if(!(await confirmDialog('فعال‌سازی پرسنل','این پرسنل دوباره در فهرست ارتباطی خانواده‌ها فعال می‌شود. ادامه می‌دهید؟','فعال‌سازی')))return;
   try{await staffAdminCall('restore',{staff_id:id});toast('حساب پرسنلی دوباره فعال شد.');await loadSamanStaffAuth()}catch(e){toast(safeError(e,'فعال‌سازی انجام نشد.'),'error')}
 }
 
