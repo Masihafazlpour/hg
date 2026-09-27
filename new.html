@@ -362,7 +362,7 @@ async function bootstrapFirstAdmin(){const {data,error}=await db.rpc('bootstrap_
 async function ensureAccess(){
   if(!currentUser)return false;
   let role=await getRole();
-  if(!role&&String(currentUser.email||'').toLowerCase()==='admin@school.local'){if(await bootstrapFirstAdmin())role=await getRole()}
+  if(!role&&String(currentUser.email||'').toLowerCase()==='admin@staff.saman.local'){if(await bootstrapFirstAdmin())role=await getRole()}
   if(!['admin','class_representative','class_assistant'].includes(role)){await db.auth.signOut();currentUser=null;currentRole=null;$('mainPage').classList.add('hidden');$('loginPage').classList.remove('hidden');$('loginPassword').value='';$('loginError').textContent='این حساب مجوز ورود به سامانه را ندارد.';return false}
   currentRole=role;return true
 }
@@ -384,7 +384,8 @@ function setupGlobalLive(){
     .subscribe();
 }
 async function finishSession(user){currentUser=user;if(!user)return false;const ok=await ensureAccess();if(!ok)return false;$('loginPage').classList.add('hidden');$('mainPage').classList.remove('hidden');$('userDisplay').innerHTML=`<span>${esc(user.email)}</span><span class="role-pill">${esc(roleLabel())}</span>`;applyRoleUI();activity();setupGlobalLive();await resetToRoleTab();return true}
-async function login(){let username=$('loginUsername').value.trim();const password=$('loginPassword').value;if(!username){$('loginError').textContent='نام کاربری را وارد کنید.';return}if(!username.includes('@'))username+='@school.local';try{$('loginBtn').disabled=true;const {data,error}=await db.auth.signInWithPassword({email:username,password});if(error)throw error;if(!data.user)throw new Error('حساب کاربری دریافت نشد.');await finishSession(data.user);$('loginError').textContent=''}catch(e){$('loginError').textContent=safeError(e,'ورود انجام نشد.')}finally{$('loginBtn').disabled=false}}
+function normalizeLoginEmail(value){let v=String(value||'').trim().toLowerCase();if(!v)return '';return v.includes('@')?v:`${v}@staff.saman.local`}
+async function login(){const input=$('loginUsername').value;const username=normalizeLoginEmail(input);const password=$('loginPassword').value;if(!username){$('loginError').textContent='نام کاربری را وارد کنید.';return}try{$('loginBtn').disabled=true;$('loginError').textContent='';const {data,error}=await db.auth.signInWithPassword({email:username,password});if(error)throw error;if(!data.user)throw new Error('حساب کاربری دریافت نشد.');await finishSession(data.user)}catch(e){$('loginError').textContent=safeError(e,'ورود انجام نشد.')}finally{$('loginBtn').disabled=false}}
 async function logout(timeout=false){
   if(!timeout&&currentTab==='attendance'&&attendanceDirty){
     const ok=await confirmUnsavedAttendance();
@@ -1008,7 +1009,7 @@ async function configureUserAccess(userId, role, active, classIds){
 
 async function createAuthUser(username,password){
   const cleanUsername=String(username||'').trim().toLowerCase();
-  const email=`${cleanUsername}@school.local`;
+  const email=`${cleanUsername}@staff.saman.local`;
   const {data,error}=await accountClient.auth.signUp({
     email,
     password,
