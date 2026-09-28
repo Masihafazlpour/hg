@@ -900,11 +900,26 @@ async function loadUnifiedUsers(){
   try{
     const p=await staffAdminCall('list_unified_users');
     const rows=p.users||[];
+    const classList=await getAllClassesForAdmin();
+    const classMap=new Map((classList||[]).map(c=>[String(c.id),c]));
+    const prettyScope=(scope)=>{
+      const type=String(scope?.scope_type||'');
+      const value=String(scope?.scope_value||'').trim();
+      if(!value)return '';
+      if(type==='class'){
+        const c=classMap.get(value);
+        return c ? `${c.name || ''}${c.grade ? ` · ${c.grade}` : ''}${c.major ? ` · ${c.major}` : ''}` : value;
+      }
+      if(type==='grade')return `پایه ${value}`;
+      if(type==='major')return `رشته ${value}`;
+      if(type==='student')return 'دانش‌آموز منتخب';
+      return value;
+    };
     let h='<table><thead><tr><th>نام کاربری</th><th>نام نمایشی خانواده</th><th>دسترسی پنل</th><th>نقش سازمانی</th><th>محدوده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
     if(!rows.length){h+='<tr><td colspan="7">کاربری تعریف نشده است.</td></tr>';}
     else rows.forEach(u=>{
-      const classes=(u.scopes||[]).filter(x=>x.scope_type==='class').map(x=>x.scope_value);
-      const scopeText=classes.length?classes.join('، '):(u.staff_role?((u.staff_role==='manager'||u.staff_role==='deputy')?'کل مدرسه':'بدون محدوده'):'—');
+      const scopes=(u.scopes||[]).map(prettyScope).filter(Boolean);
+      const scopeText=scopes.length?scopes.join('، '):(u.staff_role?((u.staff_role==='manager'||u.staff_role==='deputy')?'کل مدرسه':'بدون محدوده'):'—');
       const name=u.display_name||'—';
       const status=u.active?'فعال':'غیرفعال';
       const statusClass=u.active?'success':'danger';
@@ -919,7 +934,11 @@ function unifiedUserForm(classes,user=null){
   const staffRole=user?.staff_role||'';
   const panelRole=user?.panel_role||'class_representative';
   const selected=new Set((user?.scopes||[]).filter(x=>x.scope_type==='class').map(x=>String(x.scope_value)));
-  const classHtml=(classes||[]).map(c=>`<label class="permission-item"><input type="checkbox" name="unified_class_scope" value="${esc(c.id)}" ${selected.has(String(c.id))?'checked':''}><span>${esc(c.name)} <small class="muted">(${esc(c.grade||'')}${c.major?` - ${esc(c.major)}`:''})</small></span></label>`).join('');
+  const classHtml=(classes||[]).map(c=>{
+    const cid=String(c.id);
+    const checked=selected.has(cid) || selected.has(String(c.name||''));
+    return `<label class="permission-item"><input type="checkbox" name="unified_class_scope" value="${esc(cid)}" ${checked?'checked':''}><span>${esc(c.name)} <small class="muted">(${esc(c.grade||'')}${c.major?` - ${esc(c.major)}`:''})</small></span></label>`;
+  }).join('');
   return `<form id="unifiedUserForm">
     <div class="form-group"><label>نام کاربری</label><input name="username" value="${esc(user?.username||'')}" dir="ltr" required pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}"><small class="muted">فقط حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط؛ ۳ تا ۳۲ کاراکتر.</small></div>
     <div class="form-group"><label>نام نمایشی برای خانواده</label><input name="display_name" value="${esc(user?.display_name||'')}" required placeholder="مثلاً احمد رضایی"><small class="muted">خانواده این نام را همراه نقش سازمانی می‌بیند.</small></div>
