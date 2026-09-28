@@ -84,8 +84,13 @@ async function loadAll(){
     state.platform=channel;state.initReady=!!channel&&!!initData;
     if(!state.initReady)throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
     const p=await api('bootstrap');
+    if(!p?.me || p.me.type!=='family'){
+      const e=new Error('FAMILY_ONLY');
+      e.code='FAMILY_ONLY';
+      throw e;
+    }
     state.me=p.me;state.conversations=p.conversations||[];state.notifications=p.notifications||[];state.unread=p.unread||0;state.students=p.me?.students||[];
-    try{const d=await api('directory');state.directory=d.items||[]}catch{state.directory=[]}
+    try{const d=await api('directory');state.directory=(d.items||[]).filter(x=>['manager','deputy','counselor','class_rep'].includes(String(x.role||'')))}catch{state.directory=[]}
     applyCapabilities();renderPage();
     if(routeId){const rid=routeId;routeId='';if(route==='conversation')openChat(rid).catch(()=>{});else if(route==='attendance')loadAttendance(rid).catch(()=>{});else if(route==='discipline')loadDiscipline(rid||'').catch(()=>{});else if(route==='notifications')openPage('notifications');}
   }catch(e){state.error=e.code||e.message;renderError(e)}finally{state.loading=false}
