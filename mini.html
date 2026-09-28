@@ -53,13 +53,15 @@ window.activeApi = async function(action, payload = {}) {
 (() => {
 'use strict';
 const API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-gateway';
-const BUILD_VERSION='family-only-2026-09-28';
+const BUILD_VERSION='family-only-2026-09-28-v5';
+const FAMILY_ENTRY_MODE='family';
 const tg=window.Telegram?.WebApp || null;
 try{tg?.ready();tg?.expand();}catch{}
 const bale=window.Bale?.WebApp || null;
 try{bale?.ready();bale?.expand();}catch{}
 const params=new URLSearchParams(location.search);
 let route=params.get('route')||'home', routeId=params.get('id')||'';
+let entryMode=FAMILY_ENTRY_MODE;
 let state={me:null,conversations:[],notifications:[],unread:0,students:[],directory:[],studentId:'',chat:null,attendance:[],discipline:[],disciplineSummary:{positive:0,negative:0,balance:0},loading:true,error:'',platform:'',initReady:false};
 const root=document.getElementById('root');
 const $=id=>document.getElementById(id);
@@ -71,7 +73,7 @@ function gregToJalali(v){try{const s=String(v||'').slice(0,10).split('-').map(Nu
 function getTodayJalali(){return gregToJalali(new Date().toISOString().slice(0,10))}
 function initials(name){const a=String(name||'س').trim().split(/\s+/);return (a[0]?.[0]||'س')+(a[1]?.[0]||'')}
 function channelInit(){ if(tg?.initData) return ['telegram',tg.initData]; const bi=bale?.initData||bale?.init_data||bale?.initDataRaw||''; if(bi) return ['bale',bi]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
-async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify({action,...payload})});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=msg.split(':')[0];e.payload=p;throw e;}return p;}
+async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData,'x-saman-entry-mode':FAMILY_ENTRY_MODE};const body={action,entry_mode:FAMILY_ENTRY_MODE,channel,initData,...payload};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify(body)});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=String(msg).split(':')[0];e.payload=p;throw e;}return p;}
 // Family-only Mini App: all operations use the family gateway; no staff API/login exists.
 async function activeApi(action,payload={}){return api(action,payload);}
 window.activeApi=activeApi;
@@ -81,7 +83,7 @@ async function loadAll(){
   state.loading=true;
   try{
     const [channel,initData]=channelInit();
-    state.platform=channel;state.initReady=!!channel&&!!initData;
+    state.platform=channel;state.initReady=!!channel&&!!initData;state.entryMode=FAMILY_ENTRY_MODE;
     if(!state.initReady)throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
     const p=await api('bootstrap');
     if(!p?.me || p.me.type!=='family'){
@@ -95,7 +97,7 @@ async function loadAll(){
     if(routeId){const rid=routeId;routeId='';if(route==='conversation')openChat(rid).catch(()=>{});else if(route==='attendance')loadAttendance(rid).catch(()=>{});else if(route==='discipline')loadDiscipline(rid||'').catch(()=>{});else if(route==='notifications')openPage('notifications');}
   }catch(e){state.error=e.code||e.message;renderError(e)}finally{state.loading=false}
 }
-function renderError(e){const auth=e.code==='AUTH_REQUIRED'||String(e.message||'').startsWith('AUTH_REQUIRED');root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${auth?'هویت Mini App دریافت نشد':(e.code==='MINI_APP_CONTEXT_MISSING'?'سامان باید از داخل ربات باز شود':'اتصال به سامان برقرار نشد')}</strong><p style="font-size:.72rem;line-height:1.9">${auth?'این صفحه باید از دکمه Mini App داخل ربات Telegram یا Bale باز شود. اگر داخل پیام‌رسان هستید، Mini App را یک‌بار ببندید و دوباره باز کنید.':(e.code==='MINI_APP_CONTEXT_MISSING'?'این صفحه را مستقیماً در مرورگر باز نکنید. از دکمه «ورود به سامان» داخل ربات وارد شوید.':'خطا: '+escapeHtml(e.message||'خطای ناشناخته'))}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
+function renderError(e){const auth=e.code==='AUTH_REQUIRED'||e.code==='AUTH_INVALID'||String(e.message||'').startsWith('AUTH_');root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${auth?'هویت Mini App معتبر نیست':(e.code==='MINI_APP_CONTEXT_MISSING'?'سامان باید از داخل ربات باز شود':'اتصال به سامان برقرار نشد')}</strong><p style="font-size:.72rem;line-height:1.9">${auth?'Mini App باید مستقیماً از دکمه «ورود به سامان» داخل ربات باز شود و داده احراز هویت معتبر ارسال شود. اگر همین حالا از داخل ربات باز کرده‌اید، Mini App را کامل ببندید و دوباره باز کنید.':(e.code==='MINI_APP_CONTEXT_MISSING'?'این صفحه را مستقیماً در مرورگر باز نکنید. از دکمه «ورود به سامان» داخل ربات وارد شوید.':'خطا: '+escapeHtml(e.message||'خطای ناشناخته'))}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
 window.loadAll=loadAll;
 
 function home(){setNav('home');const m=state.me||{};const unread=state.unread||0;return shell(`<section class="hero"><div class="hero-row"><div><div class="eyebrow">درگاه خانواده</div><h2>${escapeHtml(m.name||'خوش آمدید')} 👋</h2><p>همه ارتباط‌های شما با مدرسه، یکجا و همیشه در دسترس.</p></div><div class="role-chip"><span class="online"></span>اولیا</div></div></section>
