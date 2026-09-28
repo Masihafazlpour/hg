@@ -13,6 +13,7 @@
 :root{--primary:#4361ee;--primary-dark:#3048c9;--primary-light:#eef0ff;--success:#2eaf68;--danger:#df4b3f;--warning:#e79a18;--info:#2495d5;--gray:#6c757d;--light:#f5f7fb;--border:#e2e8f0;--text:#263247;--muted:#718096;--white:#fff;--shadow:0 4px 18px rgba(67,97,238,.10);--r:12px;--rs:8px;--h:42px}
 *{box-sizing:border-box;margin:0;padding:0}html,body{min-height:100%;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--light);color:var(--text)}body{padding:10px}button,input,select,textarea{font:inherit}button{touch-action:manipulation}.container{max-width:1450px;margin:auto}.hidden{display:none!important}.flex{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.between{justify-content:space-between}.center{justify-content:center}.panel{background:#fff;border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(67,97,238,.06);padding:14px}.grid-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.card{text-align:center}.card .num{font-size:1.7rem;font-weight:800;color:var(--primary)}.card .lbl{font-size:.8rem;color:var(--muted);margin-top:4px}.btn{min-height:var(--h);padding:0 16px;border:0;border-radius:var(--rs);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#e7ecf3;color:var(--text);transition:.18s;white-space:nowrap}.btn:hover{transform:translateY(-1px)}.btn:active{transform:scale(.98)}.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}.btn-sm{min-height:32px;padding:0 11px;font-size:.78rem}.btn-block{width:100%}.primary{background:var(--primary);color:#fff}.danger{background:var(--danger);color:#fff}.success{background:var(--success);color:#fff}.warning{background:var(--warning);color:#fff}.info{background:var(--info);color:#fff}input,select,textarea{width:100%;height:var(--h);padding:0 12px;border:2px solid var(--border);border-radius:var(--rs);background:#fff;color:var(--text);outline:none;transition:.18s}textarea{height:auto;min-height:95px;padding-top:10px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(67,97,238,.12)}select{appearance:none;-webkit-appearance:none;appearance:none;display:block;min-width:0;line-height:normal;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234361ee' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 10px center;padding-left:30px}.form-group{margin-bottom:11px;flex:1;min-width:140px}.form-group label{display:block;font-size:.82rem;font-weight:700;color:#4a5568;margin-bottom:5px}.form-row{display:flex;gap:10px;flex-wrap:wrap}.filter-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:9px}.filter-row .form-group{min-width:0;margin-bottom:0}.filter-row select{height:44px;padding-right:12px;padding-left:38px;direction:rtl;text-align:right}.filter-row label{margin-bottom:6px}.header{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;padding:10px 14px;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px}.header-title{font-weight:800;color:var(--primary-dark);font-size:1.06rem}.sidebar{display:flex;gap:6px;flex-wrap:wrap;background:#fff;padding:9px 10px;border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:12px}.sidebar .btn{flex:1 1 auto}.menu-toggle{display:none;background:transparent;border:0;color:var(--primary);font-size:1.3rem;cursor:pointer}.content-title{font-size:1.05rem;font-weight:800;color:var(--primary-dark)}table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);font-size:.83rem}th{background:var(--primary-light);color:var(--primary-dark);font-weight:800;padding:10px 7px;border-bottom:2px solid #dde3ff;text-align:center}td{padding:9px 7px;border-bottom:1px solid #edf2f7;text-align:center;vertical-align:middle}tbody tr:hover,table tr:hover td{background:#fafbff}table tr:last-child td{border-bottom:0}.badge{display:inline-flex;align-items:center;justify-content:center;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:800}.badge.success{background:#dff6e7;color:#17653a}.badge.danger{background:#fde3e1;color:#8c241e}.badge.warning{background:#fff0ce;color:#8c5c05}.badge.secondary{background:#e7ebef;color:#4c5663}.badge.info{background:#dff2ff;color:#145a7c}.status-buttons{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}.status-btn{height:34px;min-width:72px;padding:0 10px;border:2px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}.status-btn.present.active{background:#dff6e7;border-color:var(--success);color:#17653a}.status-btn.late_excused.active{background:#e9f2ff;border-color:#4a90e2;color:#245b91}.status-btn.late_unexcused.active{background:#fff0ce;border-color:var(--warning);color:#8c5c05}.status-btn.excused.active{background:#f4e8ff;border-color:#9b59b6;color:#6f3188}.status-btn.absent.active{background:#fde3e1;border-color:var(--danger);color:#8c241e}.pager{display:flex;gap:5px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:13px}.pager button{min-width:35px;height:35px;border:2px solid var(--border);background:#fff;border-radius:8px;cursor:pointer}.pager button.active{background:var(--primary);border-color:var(--primary);color:#fff}.muted{color:var(--muted);font-size:.8rem}.datepicker{position:relative}.datepicker-popup{position:absolute;top:calc(100% + 4px);right:0;z-index:10000;background:#fff;border:2px solid var(--border);border-radius:var(--r);padding:11px;min-width:280px;box-shadow:0 12px 35px rgba(0,0,0,.15)}.dp-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px}.dp-head button{border:0;background:var(--primary-light);color:var(--primary-dark);border-radius:8px;cursor:pointer;height:34px;padding:0 9px}.dp-title{display:flex;gap:5px;flex:1;justify-content:center}.dp-title button{font-weight:800}.dp-week,.dp-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}.dp-week span{text-align:center;color:var(--muted);font-size:.72rem;padding:4px 0;font-weight:800}.dp-days button{border:0;background:transparent;border-radius:7px;min-height:34px;cursor:pointer;font-size:.78rem}.dp-days button:hover{background:var(--primary-light)}.dp-days .other{color:#c3cad5}.dp-days .selected{background:var(--primary);color:#fff}.dp-days .today{outline:2px solid var(--primary)}.picker-list{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:210px;overflow:auto}.picker-list button{border:0;background:var(--primary-light);color:var(--primary-dark);border-radius:8px;padding:8px;cursor:pointer}.section-grid{display:grid;grid-template-columns:1.1fr 1.9fr;gap:14px}.login-wrap{max-width:420px;margin:60px auto}.login-wrap .panel{padding:25px}.danger-zone{border:1px solid #f0c0bd;background:#fff8f7}.table-wrap{overflow:auto}.stat-list{display:grid;gap:7px;margin-top:9px}.stat-list div{display:flex;justify-content:space-between;gap:10px}.stat-list b{font-weight:800}.small-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}.toast-mini{font-size:.85rem}.mobile-only{display:none}.role-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;background:var(--primary-light);color:var(--primary-dark);font-size:.72rem;font-weight:800}.permission-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:280px;overflow:auto;padding:4px}.permission-item{display:flex;align-items:center;gap:8px;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer}.permission-item input{width:auto;height:auto}.user-table-actions{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}@media(max-width:900px){.grid-cards{grid-template-columns:repeat(2,1fr)}.section-grid{grid-template-columns:1fr}.sidebar .btn{flex:1 1 120px}}@media(max-width:700px){body{padding:6px}.menu-toggle{display:block}.sidebar{display:none;flex-direction:column}.sidebar.open{display:flex}.sidebar .btn{width:100%}.header-title{font-size:.9rem}.grid-cards{gap:7px}.card .num{font-size:1.25rem}.card .lbl{font-size:.7rem}.form-row{flex-direction:column;gap:0}.filter-row{grid-template-columns:1fr;gap:8px}.filter-row .form-group{min-width:100%}.form-group{min-width:100%}.table-wrap{margin:0 -2px}table{font-size:.7rem}th,td{padding:6px 4px}.status-btn{min-width:58px;font-size:.68rem;padding:0 6px}.datepicker-popup{right:-8px;min-width:260px}.mobile-only{display:inline-flex}}@media(max-width:460px){.grid-cards{grid-template-columns:1fr 1fr}.btn{padding:0 11px}.header{padding:8px}.header .btn-sm{min-width:34px;padding:0}}
 </style>
+<style id="hide-legacy-staff-management">#samanStaffAuthSection,#samanStaffAuthContainer,#staffManagementSection{display:none!important}</style>
 </head>
 <body>
 <div class="container">
@@ -157,13 +158,15 @@
         <div class="panel" style="max-width:720px">
           <section style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><h4 style="margin-bottom:11px">🔑 تغییر رمز عبور</h4><div class="form-group"><label>رمز فعلی</label><input type="password" id="currentPassword"></div><div class="form-group"><label>رمز جدید</label><input type="password" id="newPassword"></div><div class="form-group"><label>تکرار رمز جدید</label><input type="password" id="confirmPassword"></div><button id="changePasswordBtn" class="btn primary">تغییر رمز</button><div id="passwordChangeResult" style="margin-top:8px;min-height:20px"></div></section>
           <section style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><h4 style="margin-bottom:11px">⏰ تنظیمات زنگ‌ها</h4><div class="form-group"><label>تعداد زنگ‌ها (۱ تا ۱۰)</label><input type="number" id="bellCount" min="1" max="10" value="4"></div><div id="bellNamesContainer"></div><div class="form-group"><label><input type="checkbox" id="fullDayEnabled" style="width:auto;height:auto;margin-left:6px"> فعال بودن «کل روز»</label></div><button id="saveSettings" class="btn primary">ذخیره تنظیمات</button></section>
-          <section id="userManagementSection" style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><div class="flex between" style="margin-bottom:10px"><h4>👤 مدیریت کاربران عمومی</h4><button id="addUserBtn" class="btn success btn-sm"><i class="fa-solid fa-user-plus"></i> کاربر جدید</button></div><p class="muted" style="line-height:1.8;margin-bottom:10px">این بخش برای حساب‌های عمومی سامانه است. حساب پرسنلی در بخش مستقل زیر ساخته می‌شود و نام کاربری/رمز عبور مخصوص پنل پرسنل دارد.</p><div id="usersTableContainer" class="table-wrap"></div></section>
-          <section id="samanStaffAuthSection" style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7">
-  <div class="flex between" style="margin-bottom:10px"><div><h4 style="margin-bottom:4px">👨‍💼 مدیریت پرسنل</h4><div class="muted">در این بخش فقط هویت ارتباطی پرسنل، نقش و محدوده ارتباط با خانواده‌ها را تعریف می‌کنید. پرسنل Mini App جداگانه ندارند.</div></div><div class="flex"><button id="addSamanStaffBtn" class="btn success btn-sm"><i class="fa-solid fa-user-plus"></i> تعریف پرسنل</button><button id="refreshSamanStaffAuthBtn" class="btn btn-sm"><i class="fa-solid fa-rotate"></i> تازه‌سازی</button></div></div>
-  <div class="panel" style="background:linear-gradient(135deg,#eef4ff,#f7f5ff);border:1px solid #dfe7ff;margin-bottom:12px">
-    <b>نکته</b><div class="muted" style="margin-top:5px;line-height:1.9">نقش پرسنلی از نقش خانواده جداست. یک فرد می‌تواند هم‌زمان <b>ولی</b> و <b>پرسنل مدرسه</b> باشد. نقش‌های پرسنلی: مدیر، معاون، مشاور، نماینده کلاس.</div>
+          <section id="userManagementSection" style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7">
+  <div class="flex between" style="margin-bottom:10px">
+    <div><h4 style="margin-bottom:4px">👤 مدیریت کاربران</h4><div class="muted">حساب سامانه، دسترسی پنل، نقش سازمانی و نام نمایشی مورد استفاده خانواده‌ها در یک بخش مدیریت می‌شود.</div></div>
+    <div class="flex"><button id="addUserBtn" class="btn success btn-sm"><i class="fa-solid fa-user-plus"></i> کاربر جدید</button><button id="refreshUnifiedUsersBtn" class="btn btn-sm"><i class="fa-solid fa-rotate"></i> تازه‌سازی</button></div>
   </div>
-  <div id="samanStaffAuthContainer" class="table-wrap"></div>
+  <div class="panel" style="background:linear-gradient(135deg,#eef4ff,#f7f5ff);border:1px solid #dfe7ff;margin-bottom:12px">
+    <b>ساختار واحد</b><div class="muted" style="margin-top:5px;line-height:1.9">نقش سازمانی خانواده و نقش پرسنلی در یک فیلد ادغام نمی‌شوند. یک حساب می‌تواند هم‌زمان والد و پرسنل مدرسه باشد. نام نمایشی اینجا همان نامی است که خانواده در «ارتباط با مدرسه» می‌بیند.</div>
+  </div>
+  <div id="usersTableContainer" class="table-wrap"></div>
 </section>
           <section style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><h4 style="margin-bottom:11px">💾 پشتیبان‌گیری</h4><p class="muted" style="line-height:1.8;margin-bottom:10px">پشتیبان شامل کلاس‌ها، دانش‌آموزان، حضور و غیاب، تاریخچه، انضباط، تنظیمات و دسترسی کاربران است.</p><button id="backupJsonBtn" class="btn success">دریافت پشتیبان JSON</button></section>
           <section style="padding-bottom:18px;margin-bottom:18px;border-bottom:1px solid #edf2f7"><h4 style="margin-bottom:11px">📥 بارگذاری پشتیبان</h4><p class="muted" style="line-height:1.8;margin-bottom:10px">فایل JSON پشتیبان تولیدشده توسط سامان را انتخاب کنید. حساب‌های Auth و رمز عبور از فایل پشتیبان بازیابی نمی‌شوند و فقط کاربران موجود در Auth قابل بازگردانی هستند.</p><div class="form-group"><label>فایل پشتیبان JSON</label><input type="file" id="restoreBackupFile" accept="application/json,.json"></div><button id="restoreBackupBtn" class="btn info" disabled>بارگذاری پشتیبان</button></section>
@@ -209,7 +212,7 @@ async function staffAdminCall(action,payload={}){
   const token=await getStaffAdminAccessToken();
   const r=await fetch(`${SUPABASE_URL}/functions/v1/${STAFF_ADMIN_FUNCTION}`,{method:'POST',headers:{'content-type':'application/json','authorization':`Bearer ${token}`,'apikey':SUPABASE_ANON_KEY},body:JSON.stringify({action,...payload})});
   const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرویس پرسنل'}));
-  if(!r.ok||p.ok===false){const e=new Error(p.message||'خطای سرویس مدیریت پرسنل');e.code=p.message;throw e;}
+  if(!r.ok||p.ok===false){const msg=p.message||'خطای سرویس مدیریت کاربران';const e=new Error(msg);e.code=msg;throw e;}
   return p;
 }
 const PAGE_SIZE = 50;
@@ -448,6 +451,11 @@ function setSelectOptions(id,items,first=''){const el=$(id);if(!el)return;el.inn
 async function getActiveClasses(){
   let q=db.from('classes').select('id,name,grade,major').eq('active',true).order('grade').order('name');
   const {data,error}=await q;
+  if(error)throw error;
+  return data||[];
+}
+async function getAllClassesForAdmin(){
+  const {data,error}=await db.from('classes').select('id,name,grade,major,active').order('grade').order('name');
   if(error)throw error;
   return data||[];
 }
@@ -879,265 +887,83 @@ async function showStudentDiscipline(studentId){
 }
 
 /* ===== Settings / Backup / Wipe ===== */
-async function loadSettings(){if(!isAdmin())return;const {data,error}=await db.from('attendance_settings').select('*').order('updated_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;if(!data)throw new Error('تنظیمات سامانه پیدا نشد. SQL دیتابیس را اجرا کنید.');$('bellCount').value=data.bell_count||4;$('fullDayEnabled').checked=data.full_day_enabled!==false;renderBellInputs(data.bell_count||4,data);await loadManagedUsers();await loadSamanStaffAuth()}
+async function loadSettings(){if(!isAdmin())return;const {data,error}=await db.from('attendance_settings').select('*').order('updated_at',{ascending:false}).limit(1).maybeSingle();if(error)throw error;if(!data)throw new Error('تنظیمات سامانه پیدا نشد. SQL دیتابیس را اجرا کنید.');$('bellCount').value=data.bell_count||4;$('fullDayEnabled').checked=data.full_day_enabled!==false;renderBellInputs(data.bell_count||4,data);await loadUnifiedUsers()}
 function renderBellInputs(count,data={}){count=Math.min(10,Math.max(1,Number(count)||1));let h='';for(let i=1;i<=count;i++)h+=`<div class="form-group"><label>نام زنگ ${toFa(i)}</label><input id="bellName_${i}" value="${esc(data?.[`bell_${i}_name`]||`زنگ ${i}`)}"></div>`;$('bellNamesContainer').innerHTML=h}
-async function loadSamanStaffAuth(){
+/* ===== Unified User Management ===== */
+function unifiedPanelRoleLabel(role){return role==='admin'?'مدیر':role==='class_representative'?'نماینده کلاس':role==='class_assistant'?'دستیار نماینده':'—'}
+function unifiedStaffRoleLabel(role){return role==='manager'?'مدیر':role==='deputy'?'معاون':role==='counselor'?'مشاور':role==='class_rep'?'نماینده کلاس':'بدون نقش سازمانی'}
+
+async function loadUnifiedUsers(){
   if(!isAdmin())return;
-  const box=$('samanStaffAuthContainer'); if(!box)return;
-  box.innerHTML='<div class="muted">در حال بارگذاری پرسنل...</div>';
-  const p=await staffAdminCall('list');
-  const rows=p.staff||[];
-  if(!rows.length){box.innerHTML='<div class="muted">هنوز هیچ پرسنلی تعریف نشده است.</div>';return;}
-  const roleLabel=r=>r==='manager'?'مدیر':r==='deputy'?'معاون':r==='counselor'?'مشاور':r==='class_rep'?'نماینده کلاس':r;
-  const scopesText=r=>{
-    const ss=(r.scopes||[]);
-    if(!ss.length)return 'کل مدرسه';
-    const classes=ss.filter(x=>x.scope_type==='class').map(x=>x.scope_value);
-    const others=ss.filter(x=>x.scope_type!=='class').map(x=>`${x.scope_type}:${x.scope_value}`);
-    return [...classes,...others].join('، ')||'کل مدرسه';
-  };
-  let h='<table><thead><tr><th>نام نمایشی</th><th>نقش</th><th>محدوده ارتباط</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
-  rows.forEach(r=>{
-    const role=roleLabel(r.role);
-    const roleClass=(r.role==='manager'||r.role==='deputy')?'info':'secondary';
-    const statusClass=r.active?'success':'danger';
-    const statusText=r.active?'فعال':'حذف/غیرفعال';
-    const actions=r.active
-      ? `<button class="btn primary btn-sm saman-staff-edit-btn" data-id="${esc(r.id)}" title="ویرایش"><i class="fa-solid fa-pen"></i></button><button class="btn danger btn-sm saman-staff-delete-btn" data-id="${esc(r.id)}" title="حذف"><i class="fa-solid fa-trash"></i></button>`
-      : `<button class="btn success btn-sm saman-staff-restore-btn" data-id="${esc(r.id)}" title="فعال‌سازی"><i class="fa-solid fa-user-check"></i></button>`;
-    h+=`<tr><td><b>${esc(r.display_name||'-')}</b></td><td><span class="badge ${roleClass}">${esc(role)}</span></td><td>${esc(scopesText(r))}</td><td><span class="badge ${statusClass}">${statusText}</span></td><td><div class="user-table-actions">${actions}</div></td></tr>`;
-  });
-  h+='</tbody></table>';box.innerHTML=h;
-  box.querySelectorAll('.saman-staff-edit-btn').forEach(b=>b.onclick=()=>openSamanStaffModal(b.dataset.id).catch(e=>toast(safeError(e),'error')));
-  box.querySelectorAll('.saman-staff-delete-btn').forEach(b=>b.onclick=()=>deleteStaff(b.dataset.id).catch(e=>toast(safeError(e),'error')));
-  box.querySelectorAll('.saman-staff-restore-btn').forEach(b=>b.onclick=()=>restoreStaff(b.dataset.id).catch(e=>toast(safeError(e),'error')));
-  box.dataset.staffCache=JSON.stringify(rows);
+  const box=$('usersTableContainer'); if(!box)return;
+  box.innerHTML='<div class="muted">در حال بارگذاری کاربران...</div>';
+  try{
+    const p=await staffAdminCall('list_unified_users');
+    const rows=p.users||[];
+    let h='<table><thead><tr><th>نام کاربری</th><th>نام نمایشی خانواده</th><th>دسترسی پنل</th><th>نقش سازمانی</th><th>محدوده</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
+    if(!rows.length){h+='<tr><td colspan="7">کاربری تعریف نشده است.</td></tr>';}
+    else rows.forEach(u=>{
+      const classes=(u.scopes||[]).filter(x=>x.scope_type==='class').map(x=>x.scope_value);
+      const scopeText=classes.length?classes.join('، '):(u.staff_role?((u.staff_role==='manager'||u.staff_role==='deputy')?'کل مدرسه':'بدون محدوده'):'—');
+      const name=u.display_name||'—';
+      const status=u.active?'فعال':'غیرفعال';
+      const statusClass=u.active?'success':'danger';
+      const actions=u.user_id===currentUser.id?`<button class="btn primary btn-sm unified-edit-btn" data-user-id="${esc(u.user_id)}">ویرایش</button>`:`<button class="btn primary btn-sm unified-edit-btn" data-user-id="${esc(u.user_id)}">ویرایش</button><button class="btn ${u.active?'danger':'success'} btn-sm unified-toggle-btn" data-user-id="${esc(u.user_id)}">${u.active?'غیرفعال':'فعال'}</button><button class="btn danger btn-sm unified-delete-btn" data-user-id="${esc(u.user_id)}">حذف</button>`;
+      h+=`<tr><td dir="ltr">${esc(u.username||u.email||'-')}</td><td><b>${esc(name)}</b></td><td><span class="badge ${u.panel_role==='admin'?'info':'secondary'}">${esc(unifiedPanelRoleLabel(u.panel_role))}</span></td><td><span class="badge ${u.staff_role?'info':'secondary'}">${esc(unifiedStaffRoleLabel(u.staff_role))}</span></td><td>${esc(scopeText)}</td><td><span class="badge ${statusClass}">${status}</span></td><td><div class="user-table-actions">${actions}</div></td></tr>`;
+    });
+    h+='</tbody></table>';box.innerHTML=h;box.dataset.userCache=JSON.stringify(rows);
+  }catch(e){box.innerHTML=`<div class="muted" style="color:var(--danger)">${esc(safeError(e,'دریافت کاربران انجام نشد.'))}</div>`;}
 }
 
-function samanStaffRoleLabel(role){return role==='manager'?'مدیر':role==='deputy'?'معاون':role==='counselor'?'مشاور':'نماینده کلاس'}
-function samanStaffScopeForm(classes,staff){
-  const role=staff?.role||'class_rep';
-  const scopes=staff?.scopes||[];
-  const selectedClasses=new Set(scopes.filter(x=>x.scope_type==='class').map(x=>String(x.scope_value)));
-  const classHtml=(classes||[]).map(c=>`<label class="permission-item"><input type="checkbox" name="staff_class_scope" value="${esc(c.id)}" ${selectedClasses.has(String(c.id))?'checked':''}><span>${esc(c.name)} <small class="muted">(${esc(c.grade||'')}${c.major?` - ${esc(c.major)}`:''})</small></span></label>`).join('');
-  const canScope=['class_rep','counselor'].includes(role);
-  return `<div class="form-group ${canScope?'':'hidden'}" id="samanStaffScopeBox"><label>کلاس‌های تحت پوشش</label><div class="muted" style="margin-bottom:6px">برای نماینده کلاس و مشاور، کلاس‌های قابل دسترسی را انتخاب کنید.</div><div id="samanStaffClassScopeGrid" class="permission-grid">${classHtml||'<div class="muted">کلاسی تعریف نشده است.</div>'}</div></div>`;
+function unifiedUserForm(classes,user=null){
+  const staffRole=user?.staff_role||'';
+  const panelRole=user?.panel_role||'class_representative';
+  const selected=new Set((user?.scopes||[]).filter(x=>x.scope_type==='class').map(x=>String(x.scope_value)));
+  const classHtml=(classes||[]).map(c=>`<label class="permission-item"><input type="checkbox" name="unified_class_scope" value="${esc(c.id)}" ${selected.has(String(c.id))?'checked':''}><span>${esc(c.name)} <small class="muted">(${esc(c.grade||'')}${c.major?` - ${esc(c.major)}`:''})</small></span></label>`).join('');
+  return `<form id="unifiedUserForm">
+    <div class="form-group"><label>نام کاربری</label><input name="username" value="${esc(user?.username||'')}" dir="ltr" required pattern="[A-Za-z0-9][A-Za-z0-9._-]{2,31}"><small class="muted">فقط حروف انگلیسی، عدد، نقطه، خط تیره و زیرخط؛ ۳ تا ۳۲ کاراکتر.</small></div>
+    <div class="form-group"><label>نام نمایشی برای خانواده</label><input name="display_name" value="${esc(user?.display_name||'')}" required placeholder="مثلاً احمد رضایی"><small class="muted">خانواده این نام را همراه نقش سازمانی می‌بیند.</small></div>
+    <div class="form-group"><label>دسترسی پنل سامانه</label><select name="panel_role"><option value="admin" ${panelRole==='admin'?'selected':''}>مدیر سامانه</option><option value="class_representative" ${panelRole==='class_representative'?'selected':''}>نماینده کلاس</option><option value="class_assistant" ${panelRole==='class_assistant'?'selected':''}>دستیار نماینده</option></select></div>
+    <div class="form-group"><label>نقش سازمانی برای ارتباط با خانواده</label><select name="staff_role" id="unifiedStaffRole"><option value="manager" ${staffRole==='manager'?'selected':''}>مدیر</option><option value="deputy" ${staffRole==='deputy'?'selected':''}>معاون</option><option value="counselor" ${staffRole==='counselor'?'selected':''}>مشاور</option><option value="class_rep" ${staffRole==='class_rep'?'selected':''}>نماینده کلاس</option></select></div>
+    <div class="form-group"><label>شماره تماس (اختیاری)</label><input name="phone" value="${esc(user?.phone||'')}" dir="ltr"></div>
+    <div id="unifiedScopeHost" class="form-group ${(staffRole==='class_rep'||staffRole==='counselor')?'':'hidden'}"><label>کلاس‌های تحت پوشش</label><div class="permission-grid">${classHtml||'<div class="muted">کلاسی تعریف نشده است.</div>'}</div></div>
+    ${user?`<div class="form-group"><label><input name="active" type="checkbox" style="width:auto;height:auto;margin-left:6px" ${user.active?'checked':''}> حساب فعال باشد</label></div>`:''}
+    ${`<div class="form-group"><label>${user?'رمز عبور جدید (اختیاری)':'رمز عبور اولیه'}</label><input name="password" type="password" minlength="8" autocomplete="new-password" ${user?'':'required'}><small class="muted">${user?'خالی بگذارید تا رمز فعلی حفظ شود.':'حداقل ۸ کاراکتر'}</small></div>`}
+  </form>`;
 }
 
-async function openSamanStaffModal(staffId=null){
+async function openUnifiedUserModal(userId=null){
   if(!isAdmin())return;
-  const rows=JSON.parse($('samanStaffAuthContainer').dataset.staffCache||'[]');
-  const staff=rows.find(x=>String(x.id)===String(staffId))||null;
+  const rows=JSON.parse($('usersTableContainer').dataset.userCache||'[]');
+  const user=rows.find(x=>String(x.user_id)===String(userId))||null;
   const classes=await getAllClassesForAdmin();
-  const html=`<form id="samanStaffForm"><div class="form-group"><label>نام نمایشی برای خانواده</label><input name="display_name" value="${esc(staff?.display_name||'')}" required placeholder="مثلاً آقای احمدی"></div><div class="form-group"><label>نقش پرسنلی</label><select name="role" id="samanStaffRoleSelect"><option value="manager" ${staff?.role==='manager'?'selected':''}>مدیر</option><option value="deputy" ${staff?.role==='deputy'?'selected':''}>معاون</option><option value="counselor" ${staff?.role==='counselor'?'selected':''}>مشاور</option><option value="class_rep" ${staff?.role==='class_rep'||!staff?'selected':''}>نماینده کلاس</option></select><small class="muted">خانواده این نام نمایشی را همراه نقش می‌بیند.</small></div><div id="samanStaffScopeHost"></div><div class="form-group"><label>شماره تماس (اختیاری)</label><input name="phone" value="${esc(staff?.phone||'')}" dir="ltr"></div>${staff?`<div class="form-group"><label><input name="active" type="checkbox" style="width:auto;height:auto;margin-left:6px" ${staff.active?'checked':''}> در فهرست ارتباطی فعال باشد</label></div>`:''}</form>`;
-  const result=await Swal.fire({title:staff?'ویرایش پرسنل':'تعریف پرسنل جدید',html,width:Math.min(820,window.innerWidth-20),showCancelButton:true,confirmButtonText:staff?'ذخیره تغییرات':'تعریف پرسنل',cancelButtonText:'لغو',focusConfirm:false,didOpen:()=>{
-      const renderScope=()=>{const host=$('samanStaffScopeHost');host.innerHTML=samanStaffScopeForm(classes,{...(staff||{}),role:$('samanStaffRoleSelect')?.value||staff?.role||'class_rep'});};
-      renderScope();$('samanStaffRoleSelect')?.addEventListener('change',renderScope);
-    },preConfirm:()=>{const form=document.getElementById('samanStaffForm');if(!form||!form.reportValidity())return false;const fd=new FormData(form);const role=String(fd.get('role')||'');const scopes=[];if(['class_rep','counselor'].includes(role)){[...form.querySelectorAll('input[name="staff_class_scope"]:checked')].forEach(x=>scopes.push({scope_type:'class',scope_value:x.value}));}return {display_name:String(fd.get('display_name')||'').trim(),role,phone:String(fd.get('phone')||'').trim(),active:form.querySelector('input[name="active"]')?.checked??true,scopes};}});
+  const result=await Swal.fire({title:user?'ویرایش کاربر':'تعریف کاربر جدید',html:unifiedUserForm(classes,user),width:Math.min(860,window.innerWidth-20),showCancelButton:true,confirmButtonText:user?'ذخیره تغییرات':'ایجاد کاربر',cancelButtonText:'لغو',focusConfirm:false,didOpen:()=>{const sel=$('unifiedStaffRole');const host=$('unifiedScopeHost');const refresh=()=>host.classList.toggle('hidden',!['class_rep','counselor'].includes(sel.value));sel?.addEventListener('change',refresh);refresh();},preConfirm:()=>{const f=$('unifiedUserForm');if(!f||!f.reportValidity())return false;const fd=new FormData(f);const staffRole=String(fd.get('staff_role')||'');const scopes=[...f.querySelectorAll('input[name="unified_class_scope"]:checked')].map(x=>({scope_type:'class',scope_value:x.value}));if(!['manager','deputy','counselor','class_rep'].includes(staffRole)){Swal.showValidationMessage('یکی از چهار نقش مدیر، معاون، مشاور یا نماینده کلاس را انتخاب کنید.');return false;}if(['class_rep','counselor'].includes(staffRole)&&!scopes.length){Swal.showValidationMessage('برای مشاور یا نماینده کلاس حداقل یک کلاس انتخاب کنید.');return false;}return {username:String(fd.get('username')||'').trim().toLowerCase(),display_name:String(fd.get('display_name')||'').trim(),panel_role:String(fd.get('panel_role')||''),staff_role:staffRole,phone:String(fd.get('phone')||'').trim(),password:String(fd.get('password')||''),active:f.querySelector('input[name="active"]')?.checked??true,scopes};}});
   if(!result.isConfirmed)return;
   const v=result.value;
-  if(v.role==='class_rep'&&!v.scopes.some(x=>x.scope_type==='class'))return toast('برای نماینده کلاس حداقل یک کلاس انتخاب کنید.','warning');
-  await staffAdminCall(staff?'update':'create',staff?{staff_id:staff.id,...v}:v);
-  toast(staff?'اطلاعات پرسنل بروزرسانی شد.':'پرسنل با موفقیت تعریف شد.');
-  await loadSamanStaffAuth();
-}
-
-async function deleteStaff(id){
-  const rows=JSON.parse($('samanStaffAuthContainer').dataset.staffCache||'[]');const staff=rows.find(x=>String(x.id)===String(id));
-  if(!staff)return;
-  const ok=await confirmDialog('حذف پرسنل',`«${staff.display_name||'این پرسنل'}» از فهرست ارتباطی خانواده‌ها غیرفعال می‌شود. سوابق گفتگوها حفظ می‌شوند.`,'حذف پرسنل');
-  if(!ok)return;
-  try{await staffAdminCall('deactivate',{staff_id:id});toast('پرسنل از فهرست ارتباطی حذف/غیرفعال شد.');await loadSamanStaffAuth();}catch(e){toast(safeError(e,'حذف پرسنل انجام نشد.'),'error')}
-}
-async function restoreStaff(id){
-  if(!(await confirmDialog('فعال‌سازی پرسنل','این پرسنل دوباره در فهرست ارتباطی خانواده‌ها فعال می‌شود. ادامه می‌دهید؟','فعال‌سازی')))return;
-  try{await staffAdminCall('restore',{staff_id:id});toast('حساب پرسنلی دوباره فعال شد.');await loadSamanStaffAuth()}catch(e){toast(safeError(e,'فعال‌سازی انجام نشد.'),'error')}
-}
-
-async function saveSettings(){let count=Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||4));const update={bell_count:count,full_day_enabled:$('fullDayEnabled').checked};for(let i=1;i<=10;i++)update[`bell_${i}_name`]=i<=count?(normalizeFa($(`bellName_${i}`)?.value)||`زنگ ${i}`):null;const {data:setting,error:settingError}=await db.from('attendance_settings').select('id').order('updated_at',{ascending:false}).limit(1).maybeSingle();if(settingError)throw settingError;if(!setting)throw new Error('تنظیمات سامانه پیدا نشد. SQL دیتابیس را اجرا کنید.');const {error}=await db.from('attendance_settings').update(update).eq('id',setting.id);if(error)throw error;await loadSettings();await loadBellsForAttendance();toast('تنظیمات ذخیره شد')}
-async function fetchAllRows(table,select='*'){const rows=[];let from=0;while(true){const {data,error}=await db.from(table).select(select).range(from,from+999);if(error)throw error;const batch=data||[];rows.push(...batch);if(batch.length<1000)break;from+=1000}return rows}
-async function backupJson(){
-  const ok=await confirmDialog('تهیه پشتیبان','از همه اطلاعات فعلی یک فایل JSON تهیه می‌شود.','ایجاد پشتیبان');
-  if(!ok)return;
-  Swal.fire({title:'در حال تهیه پشتیبان...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
+  if(user?.user_id===currentUser.id && (!v.active || v.panel_role!=='admin'))return toast('حساب مدیر فعلی را نمی‌توان غیرفعال یا از نقش مدیر خارج کرد.','warning');
   try{
-    const [classes,students,records,history,logs,settings,appUsers,profiles,permissions,sessions,assistantRequests,attendanceTickets,disciplineRecords]=await Promise.all([
-      fetchAllRows('classes'),fetchAllRows('students'),fetchAllRows('attendance_records'),fetchAllRows('attendance_history'),fetchAllRows('import_logs'),fetchAllRows('attendance_settings'),fetchAllRows('app_users'),fetchAllRows('profiles'),fetchAllRows('user_class_permissions'),fetchAllRows('attendance_sessions'),fetchAllRows('assistant_access_requests'),fetchAllRows('attendance_submission_requests'),fetchAllRows('discipline_records')
-    ]);
-    const backup={backup_version:8,application:'سامان | سامانه حضور و غیاب مدرسه',created_at:new Date().toISOString(),created_by:currentUser?.email||null,data:{classes,students,attendance_records:records,attendance_history:history,import_logs:logs,attendance_settings:settings,app_users:appUsers,profiles,user_class_permissions:permissions,attendance_sessions:sessions,assistant_access_requests:assistantRequests,attendance_submission_requests:attendanceTickets,discipline_records:disciplineRecords}};
-    downloadJson(`saman-backup-${new Date().toISOString().replace(/[:.]/g,'-')}.json`,backup);
-    Swal.close();toast('پشتیبان JSON با موفقیت ایجاد شد');
-  }catch(e){Swal.close();toast(safeError(e,'تهیه پشتیبان انجام نشد.'),'error')}
+    await staffAdminCall('save_unified_user',{user_id:user?.user_id||null,...v});
+    toast(user?'کاربر بروزرسانی شد.':'کاربر با موفقیت ایجاد شد.');
+    await loadUnifiedUsers();
+  }catch(e){toast(safeError(e,'ذخیره کاربر انجام نشد.'),'error');}
 }
 
-async function restoreBackupJson(){
-  if(!isAdmin())return;
-  const input=$('restoreBackupFile');
-  const file=input?.files?.[0];
-  if(!file)return toast('فایل JSON پشتیبان را انتخاب کنید.','warning');
-  const r=await Swal.fire({title:'بازگردانی پشتیبان',html:'<div style="text-align:right;line-height:2">اطلاعات عملیاتی فعلی جایگزین اطلاعات موجود در پشتیبان می‌شود.<br><b>کاربران Auth و رمزهای عبور تغییر نمی‌کنند.</b><br>آیا ادامه می‌دهید؟</div>',icon:'warning',showCancelButton:true,confirmButtonText:'بازگردانی',cancelButtonText:'لغو',confirmButtonColor:'#2495d5'});
-  if(!r.isConfirmed)return;
-  Swal.fire({title:'در حال بازگردانی...',allowOutsideClick:false,allowEscapeKey:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
-  try{
-    const text=await file.text();
-    let backup;try{backup=JSON.parse(text)}catch{throw new Error('فایل JSON معتبر نیست.')}
-    if(!backup?.data)throw new Error('ساختار فایل پشتیبان معتبر نیست.');
-    const {error}=await db.rpc('admin_restore_backup',{p_backup:backup});
-    if(error)throw error;
-    const {error:ticketError}=await db.rpc('admin_restore_attendance_tickets',{p_backup:backup});
-    if(ticketError)throw ticketError;
-    if(Array.isArray(backup.data.discipline_records)){await db.from('discipline_records').delete().neq('id','00000000-0000-0000-0000-000000000000');const disc=backup.data.discipline_records.map(r=>{const x={...r};delete x.students;return x});for(let i=0;i<disc.length;i+=500){const {error:e}=await db.from('discipline_records').insert(disc.slice(i,i+500));if(e)throw e}}
-    Swal.close();
-    $('restoreBackupFile').value='';
-    toast('پشتیبان با موفقیت بازگردانی شد');
-    await loadAllSelects();
-    await loadDashboard();
-    await loadSettings();
-  }catch(e){Swal.close();toast(safeError(e,'بازگردانی پشتیبان انجام نشد.'),'error')}
-}
-
-async function wipeData(){const r=await Swal.fire({title:'⚠️ حذف کامل اطلاعات',html:'<p style="text-align:right;line-height:2">برای تأیید عبارت <b dir="ltr">DELETE</b> را دقیقاً وارد کنید.</p><input id="wipeConfirm" class="swal2-input" dir="ltr" autocomplete="off">',showCancelButton:true,confirmButtonText:'حذف کامل',cancelButtonText:'لغو',focusConfirm:false,preConfirm:()=>{const v=document.getElementById('wipeConfirm').value.trim();if(v!=='DELETE'){Swal.showValidationMessage('عبارت باید دقیقاً DELETE باشد.');return false}return true}});if(!r.isConfirmed)return;Swal.fire({title:'در حال حذف...',allowOutsideClick:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});try{const {data,error}=await db.rpc('wipe_all_data');if(error)throw error;Swal.close();selectedStudentIds.clear();await loadSettings();await loadAllSelects();await loadDashboard();toast('تمام اطلاعات سامانه پاک و تنظیمات پیش‌فرض شد')}catch(e){Swal.close();toast(safeError(e,'حذف کامل انجام نشد.'),'error')}}
-async function changePassword(){const current=$('currentPassword').value,newPwd=$('newPassword').value,confirm=$('confirmPassword').value;if(!current||!newPwd||!confirm){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">همه فیلدها را کامل کنید.</span>';return}if(newPwd.length<6){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">رمز جدید باید حداقل ۶ کاراکتر باشد.</span>';return}if(newPwd!==confirm){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">تکرار رمز جدید مطابقت ندارد.</span>';return}try{const {error:loginError}=await db.auth.signInWithPassword({email:currentUser.email,password:current});if(loginError){$('passwordChangeResult').innerHTML='<span style="color:var(--danger)">رمز فعلی اشتباه است.</span>';return}const {error}=await db.auth.updateUser({password:newPwd});if(error)throw error;$('passwordChangeResult').innerHTML='<span style="color:var(--success)">✅ رمز عبور تغییر کرد.</span>';['currentPassword','newPassword','confirmPassword'].forEach(x=>$(x).value='');toast('رمز عبور تغییر کرد')}catch(e){$('passwordChangeResult').textContent=safeError(e)}}
-
-/* ===== User Management (Admin only / بدون Edge Function) ===== */
-async function configureUserAccess(userId, role, active, classIds){
-  const {data,error}=await db.rpc('admin_configure_user',{p_user_id:userId,p_role:role,p_active:active,p_class_ids:classIds||[]});
-  if(error)throw error;
-  if(data && data.success===false)throw new Error(data.message||'تنظیم دسترسی کاربر انجام نشد.');
-  return data;
-}
-
-async function createAuthUser(username,password){
-  const cleanUsername=String(username||'').trim().toLowerCase();
-  const email=`${cleanUsername}@staff.saman.local`;
-  const {data,error}=await accountClient.auth.signUp({
-    email,
-    password,
-    options:{data:{username:cleanUsername}}
-  });
-  if(error)throw error;
-  if(!data?.user?.id)throw new Error('حساب کاربری ایجاد نشد.');
-  try{await accountClient.auth.signOut()}catch{}
-  return {userId:data.user.id,email};
-}
-
-async function getAllClassesForAdmin(){
-  const {data,error}=await db
-    .from('classes')
-    .select('id,name,grade,major,active')
-    .eq('active',true)
-    .order('grade')
-    .order('name');
-  if(error) throw error;
-  return data || [];
-}
-
-async function loadManagedUsers(){
-  if(!isAdmin())return;
-  const [{data:users,error:ue},{data:permissions,error:pe},classes]=await Promise.all([
-    db.rpc('admin_list_users'),
-    db.from('user_class_permissions').select('user_id,class_id,active'),
-    getAllClassesForAdmin()
-  ]);
-  if(ue)throw ue;
-  if(pe)throw pe;
-  const classMap=new Map(classes.map(c=>[c.id,c]));
-  const permissionMap=new Map();
-  (permissions||[]).forEach(p=>{
-    if(!p.active)return;
-    if(!permissionMap.has(p.user_id))permissionMap.set(p.user_id,[]);
-    permissionMap.get(p.user_id).push(p.class_id);
-  });
-  const normalized=(users||[]).map(u=>({...u,class_ids:permissionMap.get(u.user_id)||[],id:u.user_id}));
-  let h='<table><thead><tr><th>نام کاربری</th><th>نوع</th><th>کلاس‌های مجاز</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody>';
-  if(!normalized.length)h+='<tr><td colspan="5">کاربری تعریف نشده است.</td></tr>';
-  else normalized.forEach(u=>{
-    const names=(u.class_ids||[]).map(id=>classMap.get(id)?.name).filter(Boolean);
-    h+=`<tr><td dir="ltr">${esc(u.username||'-')}</td><td><span class="badge ${u.role==='admin'?'info':'secondary'}">${esc(userRoleLabel(u.role))}</span></td><td>${u.role==='admin'?'همه دسترسی‌ها':esc(names.join('، ')||'بدون کلاس')}</td><td><span class="badge ${u.active?'success':'danger'}">${u.active?'فعال':'غیرفعال'}</span></td><td><div class="user-table-actions"><button class="btn primary btn-sm" data-user-action="edit" data-user-id="${esc(u.user_id)}"><i class="fa-solid fa-pen"></i></button>${u.user_id!==currentUser.id?`<button class="btn ${u.active?'danger':'success'} btn-sm" data-user-action="toggle" data-user-id="${esc(u.user_id)}" title="${u.active?'غیرفعال کردن':'فعال کردن'}"><i class="fa-solid ${u.active?'fa-user-slash':'fa-user-check'}"></i></button><button class="btn danger btn-sm" data-user-action="delete" data-user-id="${esc(u.user_id)}" title="حذف کاربر"><i class="fa-solid fa-trash"></i></button>`:''}</div></td></tr>`;
-  });
-  h+='</tbody></table>';
-  $('usersTableContainer').innerHTML=h;
-  $('usersTableContainer').dataset.userCache=JSON.stringify(normalized);
-}
-
-function userRoleLabel(role){return role==='admin'?'مدیر':role==='class_assistant'?'دستیار نماینده':'نماینده کلاس'}
-
-function userFormFields(classes,user=null){
-  const role=user?.role||'class_representative';
-  const selected=new Set(user?.class_ids||[]);
-  const classHtml=classes.map(c=>`<label class="permission-item"><input type="checkbox" name="class_id" value="${esc(c.id)}" ${selected.has(c.id)?'checked':''}><span>${esc(c.name)} <small class="muted">(${esc(c.grade)}${c.major?` - ${esc(c.major)}`:''})</small></span></label>`).join('');
-  return `<form id="userModalForm"><div class="form-group"><label>نام کاربری</label><input name="username" value="${esc(user?.username||'')}" ${user?'readonly':''} dir="ltr" required></div><div class="form-group"><label>رمز عبور${user?' (برای ویرایش قابل تغییر نیست)':''}</label><input name="password" type="password" autocomplete="new-password" ${user?'disabled':'required'} minlength="6"></div><div class="form-group"><label>نوع کاربر</label><select name="role" id="userRoleSelect"><option value="admin" ${role==='admin'?'selected':''}>مدیر</option><option value="class_representative" ${role==='class_representative'?'selected':''}>نماینده کلاس</option><option value="class_assistant" ${role==='class_assistant'?'selected':''}>دستیار نماینده</option></select></div><div id="classPermissionBox" class="form-group ${role==='class_representative'||role==='class_assistant'?'':'hidden'}"><label>کلاس‌های مجاز</label><div class="permission-grid">${classHtml||'<div class="muted">کلاسی تعریف نشده است.</div>'}</div></div>${user?`<div class="form-group"><label><input name="active" type="checkbox" style="width:auto;height:auto;margin-left:6px" ${user.active?'checked':''}> حساب فعال باشد</label></div>`:''}</form>`;
-}
-
-async function openUserModal(userId=null){
-  if(!isAdmin())return;
-  const users=JSON.parse($('usersTableContainer').dataset.userCache||'[]');
-  const user=users.find(x=>x.user_id===userId)||null;
-  const classes=await getAllClassesForAdmin();
-  const result=await Swal.fire({
-    title:user?'ویرایش کاربر':'تعریف کاربر جدید',
-    html:userFormFields(classes,user),
-    width:Math.min(760,window.innerWidth-20),
-    showCancelButton:true,
-    confirmButtonText:user?'ذخیره تغییرات':'ایجاد کاربر',
-    cancelButtonText:'لغو',
-    focusConfirm:false,
-    didOpen:()=>{
-      const rs=$('userRoleSelect');
-      rs?.addEventListener('change',()=>{$('classPermissionBox').classList.toggle('hidden',!['class_representative','class_assistant'].includes(rs.value));});
-    },
-    preConfirm:()=>{
-      const form=document.getElementById('userModalForm');
-      if(!form||!form.reportValidity())return false;
-      const fd=new FormData(form);
-      return {username:String(fd.get('username')||'').trim(),password:String(fd.get('password')||''),role:String(fd.get('role')||''),class_ids:[...form.querySelectorAll('input[name="class_id"]:checked')].map(x=>x.value),active:form.querySelector('input[name="active"]')?.checked??true};
-    }
-  });
+async function deleteUnifiedUser(userId){
+  if(!isAdmin()||String(userId)===String(currentUser.id))return;
+  const rows=JSON.parse($('usersTableContainer').dataset.userCache||'[]');
+  const u=rows.find(x=>String(x.user_id)===String(userId));if(!u)return;
+  const result=await Swal.fire({title:'حذف کاربر',html:`<div style="text-align:right;line-height:2">حساب <b>${esc(u.username||u.display_name||'')}</b> و دسترسی ورود آن حذف می‌شود.<br><span style="color:#b42318">این عملیات قابل بازگشت نیست.</span></div>`,icon:'warning',showCancelButton:true,confirmButtonText:'حذف کاربر',cancelButtonText:'لغو',confirmButtonColor:'#d92d20'});
   if(!result.isConfirmed)return;
-  const v=result.value;
-  if(['class_representative','class_assistant'].includes(v.role)&&!v.class_ids.length)return toast('برای این نوع کاربر حداقل یک کلاس را انتخاب کنید.','warning');
-  if(user){
-    if(user.user_id===currentUser.id&&(v.role!=='admin'||!v.active))return toast('حساب مدیر فعلی را نمی‌توان غیرفعال یا به نماینده تبدیل کرد.','warning');
-    await configureUserAccess(user.user_id,v.role,v.active,['class_representative','class_assistant'].includes(v.role)?v.class_ids:[]);
-    toast('کاربر بروزرسانی شد');
-  }else{
-    const created=await createAuthUser(v.username,v.password);
-    try{
-      await configureUserAccess(created.userId,v.role,true,['class_representative','class_assistant'].includes(v.role)?v.class_ids:[]);
-    }catch(e){
-      try{await accountClient.auth.signOut()}catch{}
-      throw e;
-    }
-    toast('کاربر با موفقیت ایجاد شد');
-  }
-  await loadManagedUsers();
+  try{await staffAdminCall('delete_unified_user',{user_id:u.user_id});toast('کاربر حذف شد.');await loadUnifiedUsers();}
+  catch(e){toast(safeError(e,'حذف کاربر انجام نشد.'),'error');}
 }
 
-async function toggleManagedUser(userId){
-  if(!isAdmin()||userId===currentUser.id)return;
-  const users=JSON.parse($('usersTableContainer').dataset.userCache||'[]');
-  const user=users.find(x=>x.user_id===userId);if(!user)return;
-  await configureUserAccess(user.user_id,user.role,!user.active,user.class_ids||[]);
-  toast(user.active?'کاربر غیرفعال شد':'کاربر فعال شد');
-  await loadManagedUsers();
+async function toggleUnifiedUser(userId){
+  if(!isAdmin()||String(userId)===String(currentUser.id))return;
+  const rows=JSON.parse($('usersTableContainer').dataset.userCache||'[]');const u=rows.find(x=>String(x.user_id)===String(userId));if(!u)return;
+  try{await staffAdminCall('save_unified_user',{user_id:u.user_id,username:u.username,display_name:u.display_name||u.username,panel_role:u.panel_role,staff_role:u.staff_role||'',phone:u.phone||'',active:!u.active,scopes:u.scopes||[],password:''});toast(u.active?'کاربر غیرفعال شد.':'کاربر فعال شد.');await loadUnifiedUsers();}catch(e){toast(safeError(e,'تغییر وضعیت کاربر انجام نشد.'),'error');}
 }
-async function deleteManagedUser(userId){
-  if(!isAdmin())return;
-  if(userId===currentUser.id)return toast('مدیر فعلی را نمی‌توان حذف کرد.','warning');
-  const users=JSON.parse($('usersTableContainer').dataset.userCache||'[]');
-  const user=users.find(x=>x.user_id===userId);if(!user)return;
-  const r=await Swal.fire({title:'حذف کاربر',html:`<div style="text-align:right;line-height:2">آیا از حذف کاربر <b dir="ltr">${esc(user.username||user.email||'')}</b> مطمئن هستید؟<br><span style="color:var(--danger);font-weight:700">این عملیات قابل بازگشت نیست.</span></div>`,icon:'warning',showCancelButton:true,confirmButtonText:'حذف کامل',cancelButtonText:'لغو',confirmButtonColor:'#df4b3f'});
-  if(!r.isConfirmed)return;
-  Swal.fire({title:'در حال حذف...',allowOutsideClick:false,allowEscapeKey:false,showConfirmButton:false,didOpen:()=>Swal.showLoading()});
-  try{
-    const {data,error}=await db.rpc('admin_delete_user',{p_user_id:userId});
-    if(error)throw error;
-    if(data&&data.success===false)throw new Error(data.message||'حذف کاربر انجام نشد.');
-    Swal.close();
-    toast('کاربر با موفقیت حذف شد');
-    await loadManagedUsers();
-  }catch(e){Swal.close();toast(safeError(e,'حذف کاربر انجام نشد.'),'error');}
-}
+
 /* ===== Attendance submission tickets ===== */
 function ticketStatusLabel(status){return {pending:'در انتظار تأیید',approved:'تأیید و ثبت شد',rejected:'رد شده',discarded:'کنار گذاشته شد'}[status]||status}
 function ticketStatusClass(status){return {pending:'warning',approved:'success',rejected:'danger',discarded:'secondary'}[status]||'secondary'}
@@ -1280,9 +1106,9 @@ function classKey(name,grade,major){return [normalizeFa(name),normalizeFa(grade)
 /* ===== Events ===== */
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',async e=>{e.preventDefault();await showTab(b.dataset.tab)}));
 $('menuToggle').onclick=()=>$('sidebarMenu').classList.toggle('open');$('loginBtn').onclick=login;$('loginPassword').onkeydown=e=>{if(e.key==='Enter')login()};$('logoutBtn').onclick=()=>logout(false);
-$('disciplineGradeFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineMajorFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineClassFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineStudentFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineTypeFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('sendAbsenceMessagesBtn').onclick=()=>openAbsenceMessagesModal().catch(e=>toast(safeError(e),'error'));$('addDisciplineBtn').onclick=()=>addDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('loadDisciplineBtn').onclick=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('addClassBtn').onclick=()=>addClass().catch(e=>toast(safeError(e),'error'));$('addStudentBtn').onclick=()=>addStudent().catch(e=>toast(safeError(e),'error'));$('applyStudentFilters').onclick=async()=>{studentFilters={search:normalizeFa($('studentSearch').value),grade:$('filterGrade').value,major:$('filterMajor').value,classId:$('filterClass').value,active:$('filterStatus').value};selectedStudentIds.clear();await loadStudents(1)};$('bulkDeleteBtn').onclick=async()=>{const ids=[...selectedStudentIds];if(!ids.length)return;if(!(await confirmDialog('غیرفعال‌سازی گروهی',`تعداد ${toFa(ids.length)} دانش‌آموز غیرفعال می‌شوند. ادامه می‌دهید؟`,'غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).in('id',ids);if(error)return toast(safeError(error),'error');selectedStudentIds.clear();toast('دانش‌آموزان غیرفعال شدند');await loadStudents(currentStudentPage)};$('bulkEditBtn').onclick=()=>bulkEdit().catch(e=>toast(safeError(e),'error'));$('loadAttendance').onclick=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('saveAttendance').onclick=()=>saveAttendance().catch(()=>{});$('attendanceDate').onchange=()=>handleAttendanceContextChange();$('attendanceClass').onchange=()=>handleAttendanceContextChange();$('attendanceScope').onchange=()=>handleAttendanceContextChange();$('attendanceBell').onchange=()=>handleAttendanceContextChange();$('reportCategory').onchange=()=>updateReportControls();$('reportType').onchange=()=>updateReportControls();$('generateReport').onclick=()=>generateReport().catch(e=>toast(safeError(e),'error'));$('exportExcel').onclick=exportReport;$('bellCount').oninput=()=>renderBellInputs(Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||1)),{});$('saveSettings').onclick=()=>saveSettings().catch(e=>toast(safeError(e),'error'));$('refreshSamanStaffAuthBtn').onclick=()=>loadSamanStaffAuth().catch(e=>toast(safeError(e),'error'));$('changePasswordBtn').onclick=()=>changePassword();$('backupJsonBtn').onclick=()=>backupJson();$('wipeDataBtn').onclick=()=>wipeData();$('restoreBackupFile').onchange=()=>{$('restoreBackupBtn').disabled=!$('restoreBackupFile').files.length};$('restoreBackupBtn').onclick=()=>restoreBackupJson();$('refreshAttendanceTickets').onclick=()=>loadAttendanceSubmissionTickets(true);$('excelFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const ab=await file.arrayBuffer();const wb=XLSX.read(new Uint8Array(ab),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!json.length)throw new Error('فایل خالی است.');excelHeaders=json[0].map(x=>String(x));excelData=json.slice(1);columnMap={};showExcelPreview();$('importExcelBtn').disabled=!excelData.length}catch(err){toast(safeError(err),'error')}}
-$('importExcelBtn').onclick=()=>importExcel().catch(e=>toast(safeError(e),'error'));$('addUserBtn').onclick=()=>openUserModal().catch(e=>toast(safeError(e),'error'));$('addSamanStaffBtn')?.addEventListener('click',()=>openSamanStaffModal().catch(e=>toast(safeError(e),'error')));$('attendanceSubmissionTicketsContainer').addEventListener('click',async e=>{const b=e.target.closest('[data-id]');if(!b)return;const id=b.dataset.id;try{if(b.classList.contains('attendance-ticket-action')){const a=b.dataset.action;if(a==='approve'||a==='reject')await reviewAttendanceSubmissionTicket(id,a);else if(a==='edit')await editAttendanceSubmissionTicket(id);else if(a==='discard')await discardAttendanceSubmissionTicket(id)}else if(b.classList.contains('attendance-ticket-details'))await showAttendanceTicketDetails(id)}catch(err){toast(safeError(err),'error')}});
-$('usersTableContainer').addEventListener('click',async e=>{const b=e.target.closest('[data-user-action]');if(!b)return;const id=b.dataset.userId;const a=b.dataset.userAction;try{if(a==='edit')await openUserModal(id);else if(a==='toggle')await toggleManagedUser(id);else if(a==='delete')await deleteManagedUser(id)}catch(err){toast(safeError(err),'error')}});
+$('disciplineGradeFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineMajorFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineClassFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineStudentFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('disciplineTypeFilter').onchange=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('sendAbsenceMessagesBtn').onclick=()=>openAbsenceMessagesModal().catch(e=>toast(safeError(e),'error'));$('addDisciplineBtn').onclick=()=>addDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('loadDisciplineBtn').onclick=()=>loadDisciplineAdmin().catch(e=>toast(safeError(e),'error'));$('addClassBtn').onclick=()=>addClass().catch(e=>toast(safeError(e),'error'));$('addStudentBtn').onclick=()=>addStudent().catch(e=>toast(safeError(e),'error'));$('applyStudentFilters').onclick=async()=>{studentFilters={search:normalizeFa($('studentSearch').value),grade:$('filterGrade').value,major:$('filterMajor').value,classId:$('filterClass').value,active:$('filterStatus').value};selectedStudentIds.clear();await loadStudents(1)};$('bulkDeleteBtn').onclick=async()=>{const ids=[...selectedStudentIds];if(!ids.length)return;if(!(await confirmDialog('غیرفعال‌سازی گروهی',`تعداد ${toFa(ids.length)} دانش‌آموز غیرفعال می‌شوند. ادامه می‌دهید؟`,'غیرفعال‌سازی')))return;const {error}=await db.from('students').update({active:false}).in('id',ids);if(error)return toast(safeError(error),'error');selectedStudentIds.clear();toast('دانش‌آموزان غیرفعال شدند');await loadStudents(currentStudentPage)};$('bulkEditBtn').onclick=()=>bulkEdit().catch(e=>toast(safeError(e),'error'));$('loadAttendance').onclick=()=>loadAttendance().catch(e=>toast(safeError(e),'error'));$('saveAttendance').onclick=()=>saveAttendance().catch(()=>{});$('attendanceDate').onchange=()=>handleAttendanceContextChange();$('attendanceClass').onchange=()=>handleAttendanceContextChange();$('attendanceScope').onchange=()=>handleAttendanceContextChange();$('attendanceBell').onchange=()=>handleAttendanceContextChange();$('reportCategory').onchange=()=>updateReportControls();$('reportType').onchange=()=>updateReportControls();$('generateReport').onclick=()=>generateReport().catch(e=>toast(safeError(e),'error'));$('exportExcel').onclick=exportReport;$('bellCount').oninput=()=>renderBellInputs(Math.min(10,Math.max(1,Number(normalizeDigits($('bellCount').value))||1)),{});$('saveSettings').onclick=()=>saveSettings().catch(e=>toast(safeError(e),'error'));$('changePasswordBtn').onclick=()=>changePassword();$('backupJsonBtn').onclick=()=>backupJson();$('wipeDataBtn').onclick=()=>wipeData();$('restoreBackupFile').onchange=()=>{$('restoreBackupBtn').disabled=!$('restoreBackupFile').files.length};$('restoreBackupBtn').onclick=()=>restoreBackupJson();$('refreshAttendanceTickets').onclick=()=>loadAttendanceSubmissionTickets(true);$('excelFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const ab=await file.arrayBuffer();const wb=XLSX.read(new Uint8Array(ab),{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});if(!json.length)throw new Error('فایل خالی است.');excelHeaders=json[0].map(x=>String(x));excelData=json.slice(1);columnMap={};showExcelPreview();$('importExcelBtn').disabled=!excelData.length}catch(err){toast(safeError(err),'error')}}
+$('importExcelBtn').onclick=()=>importExcel().catch(e=>toast(safeError(e),'error'));$('addUserBtn').onclick=()=>openUnifiedUserModal().catch(e=>toast(safeError(e),'error'));$('refreshUnifiedUsersBtn').onclick=()=>loadUnifiedUsers().catch(e=>toast(safeError(e),'error'));$('attendanceSubmissionTicketsContainer').addEventListener('click',async e=>{const b=e.target.closest('[data-id]');if(!b)return;const id=b.dataset.id;try{if(b.classList.contains('attendance-ticket-action')){const a=b.dataset.action;if(a==='approve'||a==='reject')await reviewAttendanceSubmissionTicket(id,a);else if(a==='edit')await editAttendanceSubmissionTicket(id);else if(a==='discard')await discardAttendanceSubmissionTicket(id)}else if(b.classList.contains('attendance-ticket-details'))await showAttendanceTicketDetails(id)}catch(err){toast(safeError(err),'error')}});
+$('usersTableContainer').addEventListener('click',async e=>{const edit=e.target.closest('.unified-edit-btn');const toggle=e.target.closest('.unified-toggle-btn');const del=e.target.closest('.unified-delete-btn');try{if(edit)await openUnifiedUserModal(edit.dataset.userId);else if(toggle)await toggleUnifiedUser(toggle.dataset.userId);else if(del)await deleteUnifiedUser(del.dataset.userId);}catch(err){toast(safeError(err),'error')}});
 $('classesTableContainer').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;const a=b.dataset.action;const fn=a==='edit-class'?editClass:a==='delete-class'?deleteClass:a==='toggle-class'?toggleClass:null;if(fn)fn(id).catch(err=>toast(safeError(err),'error'))});
 $('studentsTableContainer').addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const id=b.dataset.id;const a=b.dataset.action;const fn=a==='edit-student'?editStudent:a==='disable-student'?disableStudent:a==='student-absences'?showStudentAbsences:a==='student-discipline'?showStudentDiscipline:null;if(fn)fn(id).catch(err=>toast(safeError(err),'error'))});
 const assistantRequestsContainer=$('assistantRequestsContainer');if(assistantRequestsContainer)assistantRequestsContainer.addEventListener('click',e=>{const b=e.target.closest('.assistant-review-btn');if(!b)return;reviewAssistantRequest(b.dataset.id,b.dataset.action);});
