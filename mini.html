@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0f172a">
 <title>سامان | ارتباط یکپارچه با مدرسه</title>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script src="https://telegram.org/js/telegram-web-app.js?63"></script>
 <style>
 :root{
   --bg:#f4f7fb;--surface:rgba(255,255,255,.90);--surface-strong:#fff;--ink:#132238;--muted:#7d8a9e;
@@ -27,8 +29,6 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
 .btn{border:0;border-radius:16px;min-height:48px;padding:0 15px;font-weight:800;cursor:pointer}.btn.primary{background:linear-gradient(135deg,#2b6ef3,#6558f5);color:white}.btn.ghost{background:#eef3fb;color:#32435d}.btn.block{width:100%}.row{display:flex;gap:8px}.row>*{flex:1}.notice{padding:13px 14px;background:linear-gradient(135deg,#fff8e7,#fff4d6);border:1px solid #ffe2a4;border-radius:18px;font-size:.72rem;color:#76520e;line-height:1.8}.empty{padding:28px 18px;text-align:center;color:var(--muted);background:rgba(255,255,255,.65);border-radius:22px;border:1px dashed #dbe2ec}.empty .big{font-size:28px;margin-bottom:8px}.back{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--primary);font-weight:900;padding:2px 0 12px}.list-gap{display:grid;gap:9px}.attendance-item{display:flex;align-items:center;gap:10px}.status{padding:5px 9px;border-radius:999px;font-size:.62rem;font-weight:900}.status.absent{background:#ffe8ed;color:#b51e48}.status.late{background:#fff2d7;color:#9b6100}.status.excused{background:#e9f8ef;color:#197347}.status.present{background:#edf7f2;color:#2b7d59}
 @media (max-width:390px){.hero h2{font-size:1.28rem}.contact-grid{grid-template-columns:1fr}.stats{gap:6px}}
 </style>
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script src="https://telegram.org/js/telegram-web-app.js?63"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -52,19 +52,13 @@ window.activeApi = async function(action, payload = {}) {
 <script>
 (() => {
 'use strict';
-const API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-gateway';
-const BUILD_VERSION='family-only-bale-fixed-2026-09-29-v6';
+const API='https://njinbgaatbnpuulnmoui.supabase.co/functions/v1/saman-family-gateway';
+const BUILD_VERSION='family-only-2026-09-29-v7';
 const FAMILY_ENTRY_MODE='family';
 const tg=window.Telegram?.WebApp || null;
 try{tg?.ready();tg?.expand();}catch{}
 const bale=window.Bale?.WebApp || null;
 try{bale?.ready();bale?.expand();}catch{}
-if(bale && bale.isMiniAppSupported===false){
-  document.addEventListener('DOMContentLoaded',()=>{
-    const root=document.getElementById('root');
-    if(root) root.innerHTML='<div class="empty"><div class="big">⚠️</div><strong>نسخه بله از Mini App پشتیبانی نمی‌کند</strong><p style="font-size:.76rem;line-height:1.9">بله را به‌روزرسانی کنید و دوباره سامان را باز کنید.</p></div>';
-  },{once:true});
-}
 const params=new URLSearchParams(location.search);
 let route=params.get('route')||'home', routeId=params.get('id')||'';
 let entryMode=FAMILY_ENTRY_MODE;
@@ -78,7 +72,7 @@ function date(v){try{return new Intl.DateTimeFormat('fa-IR',{weekday:'short',day
 function gregToJalali(v){try{const s=String(v||'').slice(0,10).split('-').map(Number);if(s.length!==3||s.some(Number.isNaN))return '';const f=new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'UTC'});const parts=f.formatToParts(new Date(Date.UTC(s[0],s[1]-1,s[2]))),o={};parts.forEach(x=>{if(['year','month','day'].includes(x.type))o[x.type]=x.value});return `${o.year}/${o.month}/${o.day}`}catch{return String(v||'')}}
 function getTodayJalali(){return gregToJalali(new Date().toISOString().slice(0,10))}
 function initials(name){const a=String(name||'س').trim().split(/\s+/);return (a[0]?.[0]||'س')+(a[1]?.[0]||'')}
-function channelInit(){ const bi=bale?.initData||bale?.init_data||bale?.initDataRaw||''; if(bi) return ['bale',bi]; if(tg?.initData) return ['telegram',tg.initData]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
+function channelInit(){ const bi=bale?.initData||''; if(bi) return ['bale',bi]; if(tg?.initData) return ['telegram',tg.initData]; const hash=String(location.hash||''); const q=hash.startsWith('#')?hash.slice(1):hash; const hp=new URLSearchParams(q); const baleHash=hp.get('tgWebAppData')||hp.get('baleWebAppData')||''; if(baleHash)return ['bale',baleHash]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
 async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData,'x-saman-entry-mode':FAMILY_ENTRY_MODE};const body={action,entry_mode:FAMILY_ENTRY_MODE,channel,initData,...payload};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify(body)});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=String(msg).split(':')[0];e.payload=p;throw e;}return p;}
 // Family-only Mini App: all operations use the family gateway; no staff API/login exists.
 async function activeApi(action,payload={}){return api(action,payload);}
@@ -91,6 +85,13 @@ async function loadAll(){
     const [channel,initData]=channelInit();
     state.platform=channel;state.initReady=!!channel&&!!initData;state.entryMode=FAMILY_ENTRY_MODE;
     if(!state.initReady)throw Object.assign(new Error('MINI_APP_CONTEXT_MISSING'),{code:'MINI_APP_CONTEXT_MISSING'});
+    const authCheck=await api('family_auth_check');
+    if(authCheck?.stage!=='family_authenticated'){
+      const e=new Error(String(authCheck?.code||'FAMILY_AUTH_FAILED'));
+      e.code=String(authCheck?.code||'FAMILY_AUTH_FAILED');
+      e.payload=authCheck;
+      throw e;
+    }
     const p=await api('bootstrap');
     if(!p?.me || p.me.type!=='family'){
       const e=new Error('FAMILY_ONLY');
@@ -103,7 +104,14 @@ async function loadAll(){
     if(routeId){const rid=routeId;routeId='';if(route==='conversation')openChat(rid).catch(()=>{});else if(route==='attendance')loadAttendance(rid).catch(()=>{});else if(route==='discipline')loadDiscipline(rid||'').catch(()=>{});else if(route==='notifications')openPage('notifications');}
   }catch(e){state.error=e.code||e.message;renderError(e)}finally{state.loading=false}
 }
-function renderError(e){const auth=e.code==='AUTH_REQUIRED'||e.code==='AUTH_INVALID'||String(e.message||'').startsWith('AUTH_');root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${auth?'هویت Mini App معتبر نیست':(e.code==='MINI_APP_CONTEXT_MISSING'?'سامان باید از داخل ربات باز شود':'اتصال به سامان برقرار نشد')}</strong><p style="font-size:.72rem;line-height:1.9">${auth?'Mini App باید مستقیماً از دکمه «ورود به سامان» داخل ربات باز شود و داده احراز هویت معتبر ارسال شود. اگر همین حالا از داخل ربات باز کرده‌اید، Mini App را کامل ببندید و دوباره باز کنید.':(e.code==='MINI_APP_CONTEXT_MISSING'?'این صفحه را مستقیماً در مرورگر باز نکنید. از دکمه «ورود به سامان» داخل ربات وارد شوید.':'خطا: '+escapeHtml(e.message||'خطای ناشناخته'))}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`}
+function renderError(e){
+  const payload=e?.payload||{};
+  const code=String(e?.code||payload?.code||e?.message||'UNKNOWN');
+  const version=String(payload?.version||'');
+  const auth=code.startsWith('AUTH_') || code.includes('TELEGRAM_') || code.includes('BALE_') || code==='FAMILY_ENTRY_REQUIRED';
+  root.innerHTML=`<div class="empty"><div class="big">⚠️</div><strong>${auth?'خطای احراز هویت Mini App':'اتصال به سامان برقرار نشد'}</strong><p style="font-size:.72rem;line-height:1.9;direction:ltr;word-break:break-word">${escapeHtml(code)}${version?`<br>Gateway: ${escapeHtml(version)}`:''}</p><button class="btn primary" style="margin-top:12px" onclick="loadAll()">تلاش دوباره</button></div>`;
+}
+
 window.loadAll=loadAll;
 
 function home(){setNav('home');const m=state.me||{};const unread=state.unread||0;return shell(`<section class="hero"><div class="hero-row"><div><div class="eyebrow">درگاه خانواده</div><h2>${escapeHtml(m.name||'خوش آمدید')} 👋</h2><p>همه ارتباط‌های شما با مدرسه، یکجا و همیشه در دسترس.</p></div><div class="role-chip"><span class="online"></span>اولیا</div></div></section>
@@ -131,7 +139,8 @@ function contacts(){
       const name=x.name||x.display_name||'پرسنل';
       const sid=String(x.staff_id||x.id||'').replace(/'/g,"\'");
       const stid=String(s.id||'').replace(/'/g,"\'");
-      return '<button class="contact" onclick="startContact(\''+escapeHtml(x.role||'')+'\',\''+sid+'\',\''+stid+'\')"><div class="conversation"><div class="ci" style="margin:0">'+roleIcon(x.role)+'</div><div class="grow"><strong>'+escapeHtml(name)+'</strong><span style="display:block;font-size:.68rem;color:var(--muted);margin-top:4px">'+escapeHtml(x.role_label||role)+'</span></div><span>›</span></div></button>';
+      const scopeText=x.scope_label?` · ${x.scope_label}`:'';
+      return '<button class="contact" onclick="startContact(\''+escapeHtml(x.role||'')+'\',\''+sid+'\',\''+stid+'\')"><div class="conversation"><div class="ci" style="margin:0">'+roleIcon(x.role)+'</div><div class="grow"><strong>'+escapeHtml(name)+'</strong><span style="display:block;font-size:.68rem;color:var(--muted);margin-top:4px">'+escapeHtml((x.role_label||role))+escapeHtml(scopeText)+'</span></div><span>›</span></div></button>';
     }).join('');
     return '<div class="card"><div style="font-size:.78rem;font-weight:900;margin-bottom:9px">'+escapeHtml((s.first_name||'')+' '+(s.last_name||''))+' <span style="color:var(--muted);font-weight:600">· '+escapeHtml(s.grade||'')+'</span></div><div class="list-gap">'+(buttons||'<div class="muted">مخاطب فعالی برای این دانش‌آموز وجود ندارد.</div>')+'</div></div>';
   }).join('');
