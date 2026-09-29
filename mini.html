@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0f172a">
 <title>سامان | ارتباط یکپارچه با مدرسه</title>
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script src="https://telegram.org/js/telegram-web-app.js?63"></script>
 <style>
 :root{
   --bg:#f4f7fb;--surface:rgba(255,255,255,.90);--surface-strong:#fff;--ink:#132238;--muted:#7d8a9e;
@@ -29,6 +27,8 @@ body{padding:14px 12px 100px}.app{max-width:520px;margin:auto}.hidden{display:no
 .btn{border:0;border-radius:16px;min-height:48px;padding:0 15px;font-weight:800;cursor:pointer}.btn.primary{background:linear-gradient(135deg,#2b6ef3,#6558f5);color:white}.btn.ghost{background:#eef3fb;color:#32435d}.btn.block{width:100%}.row{display:flex;gap:8px}.row>*{flex:1}.notice{padding:13px 14px;background:linear-gradient(135deg,#fff8e7,#fff4d6);border:1px solid #ffe2a4;border-radius:18px;font-size:.72rem;color:#76520e;line-height:1.8}.empty{padding:28px 18px;text-align:center;color:var(--muted);background:rgba(255,255,255,.65);border-radius:22px;border:1px dashed #dbe2ec}.empty .big{font-size:28px;margin-bottom:8px}.back{display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--primary);font-weight:900;padding:2px 0 12px}.list-gap{display:grid;gap:9px}.attendance-item{display:flex;align-items:center;gap:10px}.status{padding:5px 9px;border-radius:999px;font-size:.62rem;font-weight:900}.status.absent{background:#ffe8ed;color:#b51e48}.status.late{background:#fff2d7;color:#9b6100}.status.excused{background:#e9f8ef;color:#197347}.status.present{background:#edf7f2;color:#2b7d59}
 @media (max-width:390px){.hero h2{font-size:1.28rem}.contact-grid{grid-template-columns:1fr}.stats{gap:6px}}
 </style>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script src="https://telegram.org/js/telegram-web-app.js?63"></script>
 </head>
 <body>
 <div class="app" id="app">
@@ -72,8 +72,8 @@ function date(v){try{return new Intl.DateTimeFormat('fa-IR',{weekday:'short',day
 function gregToJalali(v){try{const s=String(v||'').slice(0,10).split('-').map(Number);if(s.length!==3||s.some(Number.isNaN))return '';const f=new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'UTC'});const parts=f.formatToParts(new Date(Date.UTC(s[0],s[1]-1,s[2]))),o={};parts.forEach(x=>{if(['year','month','day'].includes(x.type))o[x.type]=x.value});return `${o.year}/${o.month}/${o.day}`}catch{return String(v||'')}}
 function getTodayJalali(){return gregToJalali(new Date().toISOString().slice(0,10))}
 function initials(name){const a=String(name||'س').trim().split(/\s+/);return (a[0]?.[0]||'س')+(a[1]?.[0]||'')}
-function channelInit(){ const bi=bale?.initData||''; if(bi) return ['bale',bi]; if(tg?.initData) return ['telegram',tg.initData]; const hash=String(location.hash||''); const q=hash.startsWith('#')?hash.slice(1):hash; const hp=new URLSearchParams(q); const baleHash=hp.get('tgWebAppData')||hp.get('baleWebAppData')||''; if(baleHash)return ['bale',baleHash]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
-async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const headers={'content-type':'application/json','x-channel':channel,'x-mini-init-data':initData,'x-saman-entry-mode':FAMILY_ENTRY_MODE};const body={action,entry_mode:FAMILY_ENTRY_MODE,channel,initData,...payload};const r=await fetch(API,{method:'POST',headers,body:JSON.stringify(body)});const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=String(msg).split(':')[0];e.payload=p;throw e;}return p;}
+function channelInit(){ if(tg?.initData) return ['telegram',tg.initData]; const bi=bale?.initData||bale?.init_data||bale?.initDataRaw||''; if(bi) return ['bale',bi]; const ci=params.get('initData')||params.get('tgWebAppData')||params.get('baleWebAppData'); const cc=params.get('channel'); if(ci&&cc)return [String(cc).toLowerCase(),ci]; return ['', '']; }
+async function api(action,payload={}){const [channel,initData]=channelInit();if(!channel||!initData){const e=new Error('AUTH_REQUIRED: Mini App باید از داخل Telegram یا Bale باز شود.');e.code='AUTH_REQUIRED';throw e;}const body={action,entry_mode:FAMILY_ENTRY_MODE,channel,initData,...payload};let r;try{r=await fetch(API,{method:'POST',headers:{'content-type':'text/plain'},body:JSON.stringify(body),cache:'no-store',redirect:'follow',credentials:'omit'});}catch(err){const e=new Error('GATEWAY_NETWORK_ERROR: ارتباط Mini App با سرور سامان برقرار نشد.');e.code='GATEWAY_NETWORK_ERROR';e.cause=err;throw e;}const p=await r.json().catch(()=>({ok:false,message:'پاسخ نامعتبر سرور'}));if(!r.ok||p.ok===false){const msg=String(p.message||'خطای سامانه');const e=new Error(msg);e.code=String(msg).split(':')[0];e.payload=p;throw e;}return p;}
 // Family-only Mini App: all operations use the family gateway; no staff API/login exists.
 async function activeApi(action,payload={}){return api(action,payload);}
 window.activeApi=activeApi;
